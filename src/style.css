@@ -1,0 +1,46 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+:root{--gold:#c58c45;--teal:#0391ab;--amber:#f7b52a;--ink:#434343;--bg:#f3f4f5;--card:#fff;--line:#e3e5e8;--tx:#262626;--mu:#6b7076;--bad:#c0392b;color-scheme:light;padding-top:env(safe-area-inset-top)}
+@media(prefers-color-scheme:dark){:root{--bg:#151515;--card:#212121;--line:#363636;--tx:#f0ede8;--mu:#a5a39e;--ink:#d9d6d0;color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--teal);outline-offset:2px}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);position:sticky;top:0;z-index:5}
+.logo{height:44px;background:#fff;border-radius:10px;padding:4px 8px}
+.sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mu);background:var(--bg);border-radius:99px;padding:4px 10px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--teal)}
+/* Sentuhan Samarinda: tenun sarung (kotak-kotak) dan gigi ukiran Dayak */
+.tenun{height:12px;background:repeating-linear-gradient(90deg,var(--gold) 0 18px,var(--teal) 18px 22px,var(--gold) 22px 40px,var(--amber) 40px 44px),repeating-linear-gradient(0deg,rgba(0,0,0,.3) 0 2px,transparent 2px 6px);background-blend-mode:multiply}
+.zig{height:10px;background:conic-gradient(from -45deg at 50% 100%,var(--gold) 90deg,transparent 0) 0 0/20px 100%}
+nav{display:flex;gap:6px;padding:12px 16px 0;max-width:1100px;margin:0 auto;overflow-x:auto}
+nav button{border:0;background:none;padding:8px 14px;border-radius:99px;font-weight:600;color:var(--mu);cursor:pointer;white-space:nowrap}
+nav button.on{background:var(--ink);color:var(--bg)}
+main{max-width:1100px;margin:0 auto;padding:16px 16px 48px}
+.hero{background:#2d2d2d;color:#f5efe6;border-radius:18px;overflow:hidden;margin-bottom:16px}
+.hero div{padding:24px 22px 18px}.hero h2{margin:0;font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-.02em;color:var(--amber)}
+.hero p{margin:4px 0 0;opacity:.8}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.card h3{margin:0 0 10px;font-size:15px}
+.db{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px}.db label{font-weight:600}
+input,select{border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:8px 10px;width:100%}
+.db input{width:auto}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line);background:var(--card);border-radius:10px;padding:8px 14px;font-weight:600;cursor:pointer;width:auto}
+.btn.pri{background:var(--teal);border-color:var(--teal);color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:12px}
+.kpi{border-left:4px solid var(--gold)}.kpi b{display:block;font-size:26px;font-weight:800;letter-spacing:-.02em}.kpi small{color:var(--mu)}
+.lgd{display:flex;gap:14px;font-size:12px;color:var(--mu);margin-bottom:6px}.lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px}
+.tw{overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--card)}
+table{border-collapse:collapse;width:100%;font-size:13px;white-space:nowrap}
+th{background:var(--bg);color:var(--mu);text-align:left;font-weight:600}th,td{padding:8px 10px;border-bottom:1px solid var(--line)}
+.g{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.g label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:2px}
+.err{color:var(--bad);margin:8px 0;font-size:13px;min-height:1px}
+.bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.bar input,.bar select{flex:1;min-width:150px}
+.file{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line);text-decoration:none;color:inherit}
+.file small{display:block;color:var(--mu)}.file b{overflow-wrap:anywhere}.empty{color:var(--mu);padding:20px 0;text-align:center}
+.lg{max-width:400px;margin:8vh auto;background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.lg form{padding:24px}.lg img{height:64px;display:block;margin:0 auto 12px;background:#fff;border-radius:10px;padding:6px 10px}
+.lg h1{font-size:19px;text-align:center;margin:0 0 16px}.lg label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin:10px 0 2px}.lg .btn{width:100%;margin-top:8px}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;z-index:9}#toast.s{opacity:1}
+@media(min-width:800px){.kpis{grid-template-columns:repeat(4,1fr)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
