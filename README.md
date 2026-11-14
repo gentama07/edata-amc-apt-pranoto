@@ -69,6 +69,10 @@ GitHub Pages gratis memerlukan repo **public**; pastikan tidak ada rahasia yang 
 - Apps Script dibuka untuk "Anyone", jadi satu-satunya penjaga adalah token. Gunakan token panjang dan acak, dan ganti (di skrip dan di secret Supabase) bila bocor.
 - Ini sistem demo TA. Untuk data operasional sungguhan di bandara, minta izin unit dan tinjauan keamanan terlebih dahulu.
 
+## Laporan dan notifikasi
+
+Menu **Laporan** menyusun Apron Movement Control Sheet harian dan rekap bulanan langsung dari database. Tombol **Cetak / Simpan PDF** memakai fitur cetak browser (pilih *Save as PDF*). Di **Ringkasan**, grafik kepadatan apron dihitung dari Block ON sampai Block OFF, dan notifikasi anomali muncul untuk apron padat (4 pesawat atau lebih bersamaan), kedatangan terlambat lebih dari 30 menit, dan penerbangan yang punya catatan remark.
+
 ## Belum ada
 
-Laporan harian/bulanan otomatis (PDF), notifikasi anomali kepadatan apron, dan antarmuka input yang dioptimalkan untuk HP.
+Antarmuka input yang dioptimalkan untuk HP, dan perbandingan sistem manual vs digital.

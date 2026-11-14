@@ -44,3 +44,16 @@ th{background:var(--bg);color:var(--mu);text-align:left;font-weight:600}th,td{pa
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;z-index:9}#toast.s{opacity:1}
 @media(min-width:800px){.kpis{grid-template-columns:repeat(4,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.mu{color:var(--mu);font-size:12px;margin:8px 0 0}.mu b{color:var(--tx)}
+.two{display:grid;gap:12px}
+.bars{display:flex;align-items:flex-end;gap:3px;height:96px}.bars b{flex:1;border-radius:4px 4px 0 0;background:var(--teal);min-height:3px}.bars b.pk{background:var(--amber)}
+.ax{display:flex;justify-content:space-between;font-size:10px;color:var(--mu);margin-top:4px}
+.al{padding:10px 12px;border-radius:10px;background:var(--bg);margin-bottom:8px;font-size:13px;border-left:4px solid var(--teal)}.al b{display:block}.al.w{border-left-color:var(--amber)}
+.paper{background:#fff;color:#111;border-radius:14px;padding:22px;border:1px solid var(--line)}
+.paper h4{margin:0;text-align:center;font-size:12px;letter-spacing:.04em}.paper h4.t3{margin:4px 0 14px}
+.paper .tw{background:#fff;border:0;border-radius:0}.paper table{font-size:12px}
+.paper th{background:#eef0f2;color:#444;text-transform:none}.paper th,.paper td{border:1px solid #d4d7db;padding:5px 7px}
+.paper .sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.paper .sum div{background:#f3f4f6;border-radius:8px;padding:10px;font-size:12px}.paper .sum b{display:block;font-size:18px}
+.sig{margin:18px 0 0 auto;width:220px;text-align:center;font-size:12px}
+@media(min-width:800px){.two{grid-template-columns:1.2fr 1fr;margin-bottom:12px}.paper .sum{grid-template-columns:repeat(4,1fr)}}
+@media print{header,.tenun,nav,.db,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0;margin:0;max-width:none}.paper{border:0;padding:0}.paper .tw{overflow:visible}}
