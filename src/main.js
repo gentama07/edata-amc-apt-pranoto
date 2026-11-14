@@ -58,7 +58,7 @@ function dash() {
   <div class="card"><h3>Pergerakan per hari bulan ini</h3><div class="lgd"><span><i style="background:var(--teal)"></i>Datang</span><span><i style="background:var(--amber)"></i>Berangkat</span></div>${chart()}</div>`
 }
 const log = () => `${dateBar()}<div class="tw"><table><thead><tr>${['Operator', 'Reg', 'Flt ARR', 'Flt DEP', 'Rute', 'ATA', 'Block ON', 'Block OFF', 'ATD', 'GH', 'PS', 'Pax ARR', 'Pax DEP', 'Remark'].map((h) => `<th>${h}</th>`).join('')}</tr></thead><tbody>${
-  S.rows.map((r) => `<tr><td>${esc(r.operator)}</td><td>${esc(r.reg)}</td><td>${esc(r.flt_arr || '-')}</td><td>${esc(r.flt_dep || '-')}</td><td>${esc(r.orig || '-')}–${esc(r.dest || '-')}</td><td>${hm(r.ata)}</td><td>${hm(r.block_on)}</td><td>${hm(r.block_off)}</td><td>${hm(r.atd)}</td><td>${esc(r.gh)}</td><td>${esc(r.parking_stand)}</td><td>${r.pax_arr}</td><td>${r.pax_dep}</td><td>${esc(r.remark)}</td></tr>`).join('') ||
+  S.rows.map((r) => `<tr><td>${esc(r.operator)}</td><td>${esc(r.reg)}</td><td>${esc(r.flt_arr || '-')}</td><td>${esc(r.flt_dep || '-')}</td><td>${esc([r.orig, r.dest].filter(Boolean).join('–') || '-')}</td><td>${hm(r.ata)}</td><td>${hm(r.block_on)}</td><td>${hm(r.block_off)}</td><td>${hm(r.atd)}</td><td>${esc(r.gh)}</td><td>${esc(r.parking_stand)}</td><td>${r.pax_arr}</td><td>${r.pax_dep}</td><td>${esc(r.remark)}</td></tr>`).join('') ||
   '<tr><td colspan="14" class="empty">Belum ada pergerakan pada tanggal ini.</td></tr>'}</tbody></table></div>`
 
 const F = [['operator', 'Operator', 's', Object.keys(OPS)], ['reg', 'Registrasi', 't'], ['flt_arr', 'Flight ARR', 't'], ['flt_dep', 'Flight DEP', 't'], ['orig', 'Origin', 's', RT], ['dest', 'Destination', 's', RT], ['parking_stand', 'Parking stand', 'n'], ['riu', 'RIU', 's', ['22', '04']],

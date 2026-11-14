@@ -1,0 +1,6 @@
+project_id = "edata-amc-apt-pranoto"
+
+# Fungsi memeriksa login dan peran sendiri (profiles.role), jadi gerbang JWT dimatikan
+# agar kompatibel dengan kunci publishable (sb_publishable_...).
+[functions.drive]
+verify_jwt = false
