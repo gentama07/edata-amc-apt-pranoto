@@ -5,7 +5,7 @@
 body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.55 'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif}
 button,input,select{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--teal);outline-offset:2px}
-header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);position:sticky;top:0;z-index:5}
+header{display:flex;align-items:center;gap:10px;padding:10px max(16px,calc((100vw - 1100px) / 2 + 16px));background:var(--card);position:sticky;top:0;z-index:5}
 .logo{height:44px;background:#fff;border-radius:10px;padding:4px 8px}
 .sp{flex:1}
 .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mu);background:var(--bg);border-radius:99px;padding:4px 10px}
@@ -18,7 +18,7 @@ nav button{border:0;background:none;padding:8px 14px;border-radius:99px;font-wei
 nav button.on{background:var(--ink);color:var(--bg)}
 main{max-width:1100px;margin:0 auto;padding:16px 16px 48px}
 .hero{background:#2d2d2d;color:#f5efe6;border-radius:18px;overflow:hidden;margin-bottom:16px}
-.hero div{padding:24px 22px 18px}.hero h2{margin:0;font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-.02em;color:var(--amber)}
+.hero>div:first-child{padding:24px 22px 18px}.hero h2{margin:0;font-size:clamp(24px,5vw,38px);font-weight:800;letter-spacing:-.02em;color:var(--amber)}
 .hero p{margin:4px 0 0;opacity:.8}
 .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
 .card h3{margin:0 0 10px;font-size:15px}
@@ -42,7 +42,7 @@ th{background:var(--bg);color:var(--mu);text-align:left;font-weight:600}th,td{pa
 .lg form{padding:24px}.lg img{height:64px;display:block;margin:0 auto 12px;background:#fff;border-radius:10px;padding:6px 10px}
 .lg h1{font-size:19px;text-align:center;margin:0 0 16px}.lg label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin:10px 0 2px}.lg .btn{width:100%;margin-top:8px}
 #toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;opacity:0;pointer-events:none;transition:opacity .25s;max-width:90vw;z-index:9}#toast.s{opacity:1}
-@media(min-width:800px){.kpis{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:1024px){.kpis{grid-template-columns:repeat(4,1fr)}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 .mu{color:var(--mu);font-size:12px;margin:8px 0 0}.mu b{color:var(--tx)}
 .two{display:grid;gap:12px}
@@ -55,7 +55,7 @@ th{background:var(--bg);color:var(--mu);text-align:left;font-weight:600}th,td{pa
 .paper th{background:#eef0f2;color:#444;text-transform:none}.paper th,.paper td{border:1px solid #d4d7db;padding:5px 7px}
 .paper .sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px}.paper .sum div{background:#f3f4f6;border-radius:8px;padding:10px;font-size:12px}.paper .sum b{display:block;font-size:18px}
 .sig{margin:18px 0 0 auto;width:220px;text-align:center;font-size:12px}
-@media(min-width:800px){.two{grid-template-columns:1.2fr 1fr;margin-bottom:12px}.paper .sum{grid-template-columns:repeat(4,1fr)}}
+@media(min-width:800px){.two{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);margin-bottom:12px}.paper .sum{grid-template-columns:repeat(4,1fr)}}
 @media print{header,.tenun,nav,.db,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0;margin:0;max-width:none}.paper{border:0;padding:0}.paper .tw{overflow:visible}}
 /* Input nyaman di HP: huruf 16px (cegah zoom iOS), target sentuh 44-48px, bilah aksi menempel di bawah */
 input,select{font-size:16px;min-height:48px}
@@ -72,4 +72,11 @@ input,select{font-size:16px;min-height:48px}
 .g{grid-template-columns:1fr}
 .actbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
 .actbar .btn{flex:1;min-height:48px}.actbar .btn.pri{flex:2}.actsp{height:76px}
-@media(min-width:800px){.g{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.actbar{position:static;border:0;background:none;padding:0;margin-top:12px;max-width:340px}.actsp{display:none}}
+/* Formulir input punya tiga keadaan lebar: 1 kolom (HP), 2 kolom (640px), 3 kolom (1024px).
+   Pilihan chip selalu selebar baris agar operator dan rute tidak tertumpuk di kolom sempit. */
+.fld,.fld .row input{min-width:0}
+.fld:has(.chips){grid-column:1/-1}
+#f{max-width:880px}
+@media(min-width:640px){.g{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1024px){.g{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:800px){.actbar{position:static;border:0;background:none;padding:0;margin-top:12px;max-width:340px}.actsp{display:none}}
