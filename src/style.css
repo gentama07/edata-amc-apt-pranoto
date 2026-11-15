@@ -57,3 +57,19 @@ th{background:var(--bg);color:var(--mu);text-align:left;font-weight:600}th,td{pa
 .sig{margin:18px 0 0 auto;width:220px;text-align:center;font-size:12px}
 @media(min-width:800px){.two{grid-template-columns:1.2fr 1fr;margin-bottom:12px}.paper .sum{grid-template-columns:repeat(4,1fr)}}
 @media print{header,.tenun,nav,.db,.noprint,#toast{display:none!important}body{background:#fff}main{padding:0;margin:0;max-width:none}.paper{border:0;padding:0}.paper .tw{overflow:visible}}
+/* Input nyaman di HP: huruf 16px (cegah zoom iOS), target sentuh 44-48px, bilah aksi menempel di bawah */
+input,select{font-size:16px;min-height:48px}
+.btn:disabled{opacity:.4;cursor:default}
+.fld label{display:block;font-size:12px;font-weight:600;color:var(--mu);margin-bottom:4px}
+.row{display:flex;gap:8px}.row .btn{flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:44px;padding:8px 14px;border:1px solid var(--line);background:var(--bg);border-radius:99px;font-weight:600;cursor:pointer}
+.chip.on{background:var(--teal);border-color:var(--teal);color:#fff}
+.steps{display:flex;gap:6px;list-style:none;padding:0;margin:0 0 14px}
+.steps li{flex:1;display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--mu);padding-bottom:8px;border-bottom:3px solid var(--line)}
+.steps li span{display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--bg);font-size:11px}
+.steps li.on{color:var(--tx)}.steps li.on,.steps li.done{border-color:var(--gold)}.steps li.on span,.steps li.done span{background:var(--gold);color:#fff}
+.g{grid-template-columns:1fr}
+.actbar{position:fixed;left:0;right:0;bottom:0;z-index:6;display:flex;gap:10px;padding:10px 16px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line)}
+.actbar .btn{flex:1;min-height:48px}.actbar .btn.pri{flex:2}.actsp{height:76px}
+@media(min-width:800px){.g{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}.actbar{position:static;border:0;background:none;padding:0;margin-top:12px;max-width:340px}.actsp{display:none}}

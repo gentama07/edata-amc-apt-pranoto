@@ -7,7 +7,7 @@ const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<
 const n = (x) => Number(x || 0), fmt = (x) => n(x).toLocaleString('id-ID'), hm = (t) => (t ? t.slice(0, 5) : '-')
 const LOGO = import.meta.env.BASE_URL + 'logo.png', RT = ['BDJ', 'SUB', 'CGK', 'UPG', 'BEJ']
 const OPS = { 'Wings Air': ['AT7', 'GSA'], Citilink: ['A320', 'GAPURA'], 'Garuda Indonesia': ['B738', 'GAPURA'], 'Super Air Jet': ['A320', 'GSA'], 'Batik Air': ['A320', 'GSA'], 'Indonesia Army': ['B412', 'AMC'] }
-const S = { uid: null, role: null, view: 'dash', date: new Date(Date.now() + 288e5).toISOString().slice(0, 10), rows: [], month: [], surat: [], q: '', rp: 'd' } // 288e5 = WITA (UTC+8)
+const S = { uid: null, role: null, view: 'dash', date: new Date(Date.now() + 288e5).toISOString().slice(0, 10), rows: [], month: [], surat: [], q: '', rp: 'd', st: 0, draft: (() => { try { return JSON.parse(localStorage.getItem('amc-draft') || '{}') } catch { return {} } })() } // 288e5 = WITA (UTC+8)
 const can = () => S.role === 'personel' || S.role === 'admin'
 const dl = (d) => new Date(d + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
 const idle = () => !['INPUT', 'SELECT'].includes(document.activeElement?.tagName)
@@ -64,18 +64,37 @@ const log = () => `${dateBar()}<div class="tw"><table><thead><tr>${['Operator', 
 const F = [['operator', 'Operator', 's', Object.keys(OPS)], ['reg', 'Registrasi', 't'], ['flt_arr', 'Flight ARR', 't'], ['flt_dep', 'Flight DEP', 't'], ['orig', 'Origin', 's', RT], ['dest', 'Destination', 's', RT], ['parking_stand', 'Parking stand', 'n'], ['riu', 'RIU', 's', ['22', '04']],
   ['sched_arr', 'Sched ARR', 'h'], ['ata', 'ATA', 'h'], ['block_on', 'Block ON', 'h'], ['sched_dep', 'Sched DEP', 'h'], ['block_off', 'Block OFF', 'h'], ['atd', 'ATD', 'h'],
   ['pax_arr', 'Pax datang', 'n'], ['pax_dep', 'Pax berangkat', 'n'], ['bagasi_arr', 'Bagasi datang (kg)', 'n'], ['bagasi_dep', 'Bagasi berangkat (kg)', 'n'], ['kargo_arr', 'Kargo datang (kg)', 'n'], ['kargo_dep', 'Kargo berangkat (kg)', 'n'], ['remark', 'Remark', 't']]
-const field = ([id, l, t, o]) => `<div><label for="${id}">${l}</label>${t === 's' ? `<select id="${id}">${o.map((x) => `<option>${x}</option>`).join('')}</select>` : `<input id="${id}" type="${{ h: 'time', n: 'number', t: 'text' }[t]}" ${t === 'n' ? 'min="0"' : ''}>`}</div>`
-const inp = () => `${dateBar()}<form id="f" class="card"><h3>Pergerakan pesawat baru</h3><div class="g">${F.map(field).join('')}</div><p id="hint" class="err" style="color:var(--mu)"></p><p id="fe" class="err"></p><button class="btn pri">Simpan pergerakan</button></form>`
-async function save(e) {
-  e.preventDefault()
-  const v = (id) => $('#' + id).value.trim(), [t, gh] = OPS[v('operator')]
-  const o = { tanggal: S.date, operator: v('operator'), ac_type: t, gh, reg: v('reg').toUpperCase(), riu_arr: v('flt_arr') ? v('riu') : null, riu_dep: v('flt_dep') ? v('riu') : null, remark: v('remark') || null, parking_stand: +v('parking_stand') || null }
-  ;['flt_arr', 'flt_dep', 'orig', 'dest', 'sched_arr', 'ata', 'block_on', 'sched_dep', 'block_off', 'atd'].forEach((k) => (o[k] = v(k).toUpperCase() || null))
+const DEF = { operator: Object.keys(OPS)[0], orig: 'BDJ', dest: 'BDJ', riu: '22' }
+const STEPS = [['Penerbangan', ['operator', 'reg', 'flt_arr', 'flt_dep', 'orig', 'dest', 'parking_stand', 'riu']], ['Waktu', ['sched_arr', 'ata', 'block_on', 'sched_dep', 'block_off', 'atd']], ['Muatan', ['pax_arr', 'pax_dep', 'bagasi_arr', 'bagasi_dep', 'kargo_arr', 'kargo_dep', 'remark']]]
+const dv = (id) => S.draft[id] ?? DEF[id] ?? ''
+const persist = () => localStorage.setItem('amc-draft', JSON.stringify(S.draft)) // draf tersimpan di perangkat bila sinyal putus
+const nowWita = () => new Date(Date.now() + 288e5).toISOString().slice(11, 16)
+function field(id) {
+  const [, l, t, o] = F.find((x) => x[0] === id), v = dv(id)
+  if (t === 's') return `<div class="fld"><label>${l}</label><div class="chips">${o.map((x) => `<button type="button" class="chip ${v === x ? 'on' : ''}" data-c="${id}" data-v="${x}">${x}</button>`).join('')}</div></div>`
+  const at = t === 'n' ? 'inputmode="numeric" pattern="[0-9]*" min="0"' : ['reg', 'flt_arr', 'flt_dep'].includes(id) ? 'autocapitalize="characters" autocomplete="off"' : 'autocomplete="off"'
+  return `<div class="fld"><label for="${id}">${l}</label><div class="row"><input id="${id}" type="${{ h: 'time', n: 'number', t: 'text' }[t]}" ${at} value="${esc(v)}">${t === 'h' ? `<button type="button" class="btn" data-now="${id}">Sekarang</button>` : ''}</div></div>`
+}
+const stepBar = () => `<ol class="steps">${STEPS.map((x, i) => `<li class="${i === S.st ? 'on' : i < S.st ? 'done' : ''}"><span>${i + 1}</span>${x[0]}</li>`).join('')}</ol>`
+const inp = () => `${dateBar()}<form id="f" class="card" novalidate>${stepBar()}<p id="fe" class="err"></p><div class="g">${STEPS[S.st][1].map(field).join('')}</div>${S.st === 0 ? `<p class="mu">Otomatis: A/C ${OPS[dv('operator')][0]} · Ground handling ${OPS[dv('operator')][1]}</p>` : ''}</form><div class="actbar"><button type="button" class="btn" id="bk" ${S.st ? '' : 'disabled'}>Kembali</button><button type="button" class="btn pri" id="nx">${S.st === 2 ? 'Simpan pergerakan' : 'Lanjut'}</button></div><div class="actsp"></div>`
+function chk(st) {
+  if (st === 0) { if (!String(dv('reg')).trim()) return 'Isi registrasi pesawat.'; if (!String(dv('flt_arr')).trim() && !String(dv('flt_dep')).trim()) return 'Isi minimal satu nomor penerbangan (ARR atau DEP).' }
+  if (st === 1) { const a = tm(dv('ata')), b = tm(dv('block_on')), c = tm(dv('block_off')), d = tm(dv('atd'))
+    if (a != null && b != null && b < a) return 'Block-on tidak boleh mendahului ATA.'
+    if (b != null && c != null && c < b) return 'Block-off tidak boleh mendahului Block-on.'
+    if (c != null && d != null && d < c) return 'ATD tidak boleh mendahului Block-off.' }
+  return ''
+}
+async function next() {
+  const e = chk(S.st); if (e) return ($('#fe').textContent = e)
+  if (S.st < 2) { S.st++; render(); return window.scrollTo(0, 0) }
+  const [t, gh] = OPS[dv('operator')], v = (k) => String(dv(k)).trim(), fa = v('flt_arr').toUpperCase() || null, fd = v('flt_dep').toUpperCase() || null
+  const o = { tanggal: S.date, operator: v('operator'), ac_type: t, gh, reg: v('reg').toUpperCase(), flt_arr: fa, flt_dep: fd, orig: v('orig') || null, dest: v('dest') || null, riu_arr: fa ? v('riu') : null, riu_dep: fd ? v('riu') : null, remark: v('remark') || null, parking_stand: +v('parking_stand') || null }
+  ;['sched_arr', 'ata', 'block_on', 'sched_dep', 'block_off', 'atd'].forEach((k) => (o[k] = v(k) || null))
   ;['pax_arr', 'pax_dep', 'bagasi_arr', 'bagasi_dep', 'kargo_arr', 'kargo_dep'].forEach((k) => (o[k] = +v(k) || 0))
-  if (!o.reg) return ($('#fe').textContent = 'Isi registrasi pesawat.')
   const { error } = await sb.from('movements').insert(o)
-  if (error) return ($('#fe').textContent = error.message.includes('time_order') ? 'Urutan waktu tidak logis: ATA ≤ Block ON ≤ Block OFF ≤ ATD.' : error.message.includes('ada_flight') ? 'Isi minimal satu nomor penerbangan (ARR atau DEP).' : error.message)
-  toast('Pergerakan tersimpan'); S.view = 'log'; await load(); render()
+  if (error) { S.st = error.message.includes('time_order') ? 1 : S.st; render(); return ($('#fe').textContent = /fetch|network/i.test(error.message) ? 'Koneksi terputus. Data masih tersimpan di perangkat ini, coba simpan lagi saat sinyal kembali.' : error.message.includes('time_order') ? 'Urutan waktu tidak logis: ATA ≤ Block ON ≤ Block OFF ≤ ATD.' : error.message.includes('ada_flight') ? 'Isi minimal satu nomor penerbangan (ARR atau DEP).' : error.message) }
+  S.draft = {}; S.st = 0; localStorage.removeItem('amc-draft'); toast('Pergerakan tersimpan'); S.view = 'log'; await load(); render()
 }
 
 const sList = () => {
@@ -139,7 +158,12 @@ function render() {
   document.querySelectorAll('nav [data-v]').forEach((b) => (b.onclick = () => { S.view = b.dataset.v; S.q = ''; render() }))
   const dt = $('#dt'); if (dt) dt.onchange = async () => { if (dt.value) { S.date = dt.value; await load(); render() } }
   const q = $('#q'); if (q) q.oninput = () => { S.q = q.value; $('#sl').innerHTML = sList() }
-  const f = $('#f'); if (f) { const op = $('#operator'), h = () => ($('#hint').textContent = `Otomatis: A/C ${OPS[op.value][0]} · Ground handling ${OPS[op.value][1]}`); op.onchange = h; h(); f.onsubmit = save }
+  const f = $('#f'); if (f) {
+    f.querySelectorAll('input').forEach((x) => (x.oninput = () => { S.draft[x.id] = x.value; persist() }))
+    f.querySelectorAll('[data-c]').forEach((x) => (x.onclick = () => { S.draft[x.dataset.c] = x.dataset.v; persist(); render() }))
+    f.querySelectorAll('[data-now]').forEach((x) => (x.onclick = () => { S.draft[x.dataset.now] = nowWita(); persist(); render() }))
+    $('#nx').onclick = next; $('#bk').onclick = () => { S.st--; render(); window.scrollTo(0, 0) }
+  }
   document.querySelectorAll('[data-rp]').forEach((b) => (b.onclick = () => { S.rp = b.dataset.rp; render() })); const pr = $('#pr'); if (pr) pr.onclick = () => window.print()
   const sy = $('#sync'); if (sy) sy.onclick = () => drive({ action: 'sync' })
   const up = $('#up'); if (up) up.onchange = () => { if (up.files[0]) { const fd = new FormData(); fd.append('file', up.files[0]); fd.append('kategori', $('#kat').value); drive(fd) } }

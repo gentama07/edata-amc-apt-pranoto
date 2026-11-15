@@ -73,6 +73,10 @@ GitHub Pages gratis memerlukan repo **public**; pastikan tidak ada rahasia yang 
 
 Menu **Laporan** menyusun Apron Movement Control Sheet harian dan rekap bulanan langsung dari database. Tombol **Cetak / Simpan PDF** memakai fitur cetak browser (pilih *Save as PDF*). Di **Ringkasan**, grafik kepadatan apron dihitung dari Block ON sampai Block OFF, dan notifikasi anomali muncul untuk apron padat (4 pesawat atau lebih bersamaan), kedatangan terlambat lebih dari 30 menit, dan penerbangan yang punya catatan remark.
 
+## Input dari HP
+
+Menu **Input data** berupa tiga langkah (Penerbangan, Waktu, Muatan) dengan tombol besar, pilihan operator dan rute berbentuk chip, tombol **Sekarang** untuk mengisi jam WITA saat ini, keyboard angka untuk jumlah penumpang dan berat, serta bilah **Lanjut/Simpan** yang menempel di bawah layar. Isian disimpan sebagai draf di perangkat (`localStorage`), jadi tidak hilang bila sinyal putus atau halaman termuat ulang; draf dihapus setelah berhasil disimpan. Validasi urutan waktu dijalankan di layar dan di database.
+
 ## Belum ada
 
-Antarmuka input yang dioptimalkan untuk HP, dan perbandingan sistem manual vs digital.
+Perbandingan sistem manual vs digital.
