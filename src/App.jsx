@@ -18,8 +18,10 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(airportDate());
   const [editing, setEditing] = useState(null);
   const portalMode = new URLSearchParams(location.search).get('portal') === 'ground-handling';
-  useEffect(() => { if (!app.profile) { setActive('summary'); setEditing(null); } else if (app.profile.role === 'ground_handling') setActive('letters'); }, [app.profile]);
+  useEffect(() => { if (!app.profile) { setActive('summary'); setEditing(null); window.scrollTo(0, 0); } else if (app.profile.role === 'ground_handling') setActive('letters'); }, [app.profile]);
   if (app.passwordRecovery) return <PasswordRecovery finishPasswordRecovery={app.finishPasswordRecovery} />;
+  if (!app.recoveryChecked && new URLSearchParams(location.search).get('recovery') === '1') return <main className="password-recovery-screen"><section className="panel password-recovery-card" role="status">Memeriksa tautan pemulihan…</section></main>;
+  if (app.recoveryInvalid) return <PasswordRecovery invalid finishPasswordRecovery={app.finishPasswordRecovery} />;
   if (!app.profile) return <Login app={app} portalMode={portalMode} />;
   const canWrite = ['admin', 'personel'].includes(app.profile.role);
   const currentPage = app.profile.role === 'ground_handling' ? 'letters' : active;
