@@ -18,7 +18,7 @@ export function useEdata() {
   const [letters, setLetters] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const demo = !isSupabaseConfigured || !session;
+  const demo = !isSupabaseConfigured;
   const modeLabel = 'Pratinjau lokal terisolasi';
 
   const loadDemo = useCallback(() => {
@@ -74,6 +74,7 @@ export function useEdata() {
     if (authError) throw authError;
   };
   const signInDemo = (role) => {
+    if (isSupabaseConfigured) throw new Error('Akun demo hanya tersedia saat Supabase belum dikonfigurasi.');
     const account = demoAccounts.find(item => item.role === role);
     setProfile({ id: `demo-${role}`, name: account.label, role, email: account.email, active: true });
     loadDemo();
