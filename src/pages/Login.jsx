@@ -44,6 +44,19 @@ function ServiceStatus({ demo }) {
   </span>;
 }
 
+function passwordResetError(message = '') {
+  if (/redirect|url/i.test(message)) {
+    return 'Tautan pemulihan belum dapat dikirim. Minta Admin memeriksa URL pengalihan pada konfigurasi Auth Supabase.';
+  }
+  if (/email.*invalid|invalid.*email/i.test(message)) {
+    return 'Alamat email tidak dapat diproses. Periksa kembali formatnya atau hubungi Admin untuk memastikan alamat akun Anda.';
+  }
+  if (/rate|too many|security purposes/i.test(message)) {
+    return 'Permintaan terlalu sering. Tunggu beberapa menit sebelum meminta tautan pemulihan lagi.';
+  }
+  return 'Tautan pemulihan belum dapat dikirim. Coba lagi beberapa saat atau hubungi Admin AMC.';
+}
+
 export default function Login({ app, portalMode = false }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -65,8 +78,8 @@ export default function Login({ app, portalMode = false }) {
         await app.signIn(email.trim(), password);
       }
     } catch (error) {
-      const text = forgot && /redirect|url/i.test(error.message || '')
-        ? 'Tautan pemulihan belum dapat dikirim. Minta Admin memeriksa URL pengalihan di konfigurasi Auth Supabase.'
+      const text = forgot
+        ? passwordResetError(error.message || '')
         : error.message || 'Permintaan gagal diproses. Coba lagi beberapa saat.';
       setMessage({ type: 'error', text });
     } finally {
