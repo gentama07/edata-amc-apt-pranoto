@@ -11,4 +11,6 @@ export const demoAccounts = [
   { role: 'admin', label: 'Admin', email: 'admin@demo.local', password: 'demo1234' },
   { role: 'personel', label: 'Personel AMC', email: 'personel@demo.local', password: 'demo1234' },
   { role: 'pimpinan', label: 'Pimpinan', email: 'pimpinan@demo.local', password: 'demo1234' },
+  { role: 'ground_handling', label: 'Ground Handling · Gapura', email: 'gapura@demo.local', organization: 'Gapura Angkasa', password: 'demo1234' },
 ];
+

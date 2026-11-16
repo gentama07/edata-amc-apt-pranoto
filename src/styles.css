@@ -218,6 +218,10 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 @keyframes pulse { to { opacity: .35; } }
 .toast-error, .inline-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; padding: 10px 12px; border: 1px solid #f0c8c4; border-radius: 8px; color: var(--red); background: var(--red-bg); font-size: 11px; }
 .toast-error button { border: 0; color: inherit; background: transparent; font-size: 19px; cursor: pointer; }
+
+Warning: truncated output (original token count: 5184)
+Total output lines: 221
+
 .bottom-nav { position: fixed; z-index: 15; right: 0; bottom: 0; left: 0; height: 64px; align-items: center; justify-content: space-around; padding: 4px 7px max(4px, env(safe-area-inset-bottom)); border-top: 1px solid var(--border); background: color-mix(in srgb, var(--card) 94%, transparent); backdrop-filter: blur(18px); }
 .bottom-nav button { min-width: 50px; height: 52px; display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: 0; color: var(--muted); background: transparent; font-size: 8px; cursor: pointer; }
 .bottom-nav .bottom-active { color: var(--blue); font-weight: 600; }
@@ -317,13 +321,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .report-table td, .users-table td { padding: 11px 14px; border-bottom: 1px solid var(--hairline); font-size: 10px; }
 .report-table td strong { color: var(--blue); }
 
-/* Incoming letters and account administration */
-.inline-notice { display: flex; align-items: center; gap: 9px; margin: -4px 0 14px; padding: 11px 13px; border: 1px solid #ead6ad; border-radius: 8px; color: #795a24; background: #fff8e9; font-size: 10px; }
-:root[data-theme="dark"] .inline-notice { color: #efd6a5; border-color: #55462a; background: #342b1e; }
-.letter-form-panel, .letters-panel, .users-panel { margin-bottom: 15px; overflow: hidden; }
-.letter-form-panel form { padding: 17px; }
-.close-form { width: 28px; height: 28px; display: grid; place-items: center; border: 0; border-radius: 6px; color: var(--muted); background: transparent; font-size: 18px; cursor: pointer; }
-.close-form:hover { background: var(--hover); }
+/* I…184 tokens truncated…
 .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 15px; }
 .letter-list { padding: 0 17px; }
 .letter-row { min-height: 110px; display: flex; align-items: center; gap: 14px; padding: 14px 0; border-bottom: 1px solid var(--hairline); }
@@ -438,6 +436,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .topbar { padding: 0 17px; }
   .clock-date { display: none; }
   .clock-block { margin-right: 0; }
+
   .sidebar { width: 190px; flex-basis: 190px; }
   .main-content { width: calc(100% - 190px); padding: 24px 19px 35px; }
   .app-footer { padding-left: 210px; padding-right: 19px; }
@@ -560,6 +559,71 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+.role-ground_handling { color: #f4dfc5; background: rgba(157,98,36,.27); }
+.login-forgot, .ground-handler-link { color: var(--blue); text-decoration: none; }
+.login-forgot { align-self: center; border: 0; background: transparent; font-size: 10px; cursor: pointer; }
+.login-forgot:hover, .ground-handler-link:hover { text-decoration: underline; }
+.ground-handler-link { display: block; margin-top: 17px; text-align: center; font-size: 11px; font-weight: 600; }
+.password-modal { position: relative; width: min(100%, 420px); }
+.password-modal-close { position: absolute; top: 13px; right: 13px; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 50%; color: var(--muted); background: var(--card); cursor: pointer; }
+.password-modal form { display: flex; flex-direction: column; gap: 11px; margin-top: 16px; }
+.password-recovery-screen { min-height: 100vh; display: grid; place-items: center; padding: 20px; background: var(--canvas); }
+.password-recovery-card { width: min(100%, 430px); padding: 26px; }
+.password-recovery-card h1 { margin: 8px 0 5px; font: 600 27px/1.12 "SF Pro Display", system-ui, sans-serif; letter-spacing: -.4px; }
+.password-recovery-card p { color: var(--muted); font-size: 12px; }
+.password-recovery-card form { display: flex; flex-direction: column; gap: 13px; margin-top: 17px; }
+.password-recovery-card > .button-primary { margin-top: 10px; text-decoration: none; }
+.user-create-panel { margin-bottom: 15px; }
+.user-create-panel form { padding: 17px; }
+.own-email-form { display: flex; align-items: flex-end; gap: 12px; padding: 0 17px 17px; }
+.own-email-form .field { width: min(100%, 380px); }
+.own-email-form [role="status"] { color: var(--green); font-size: 10px; }
+.correspondence-row { align-items: center; }
+.letter-open { min-width: 0; display: flex; flex: 1; flex-direction: column; align-items: flex-start; gap: 2px; padding: 0; border: 0; color: var(--ink); background: transparent; text-align: left; cursor: pointer; }
+.letter-open:hover .letter-subject { color: var(--blue); }
+.letter-subject { font-size: 14px; font-weight: 600; letter-spacing: -.14px; }
+.letter-sender { color: var(--muted); font-size: 11px; }
+.letter-selected { background: var(--hover); }
+.delete-letter { color: var(--red); }
+.retry-letter-upload { min-height: 32px; white-space: nowrap; }
+.correspondence-thread { margin-top: 15px; overflow: hidden; }
+.correspondence-thread .panel-heading { align-items: flex-start; }
+.correspondence-thread .panel-heading p { margin: 5px 0 0; color: var(--muted); font-size: 10px; }
+.thread-body { display: flex; flex-direction: column; gap: 9px; max-height: 440px; overflow: auto; padding: 14px 17px; }
+.thread-entry { max-width: min(100%, 740px); padding: 11px 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--card-soft); }
+.thread-own { align-self: flex-end; border-color: rgba(0,102,204,.24); background: rgba(0,102,204,.06); }
+.thread-original { border-left: 3px solid var(--blue); }
+.thread-reply { border-left: 3px solid var(--green); }
+.thread-entry-heading { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; }
+.thread-entry-heading strong { font-size: 11px; }
+.thread-entry-heading time { color: var(--muted); font-size: 9px; }
+.thread-entry p { margin: 4px 0; font-size: 11px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.thread-entry a { color: var(--blue); font-size: 10px; }
+.thread-empty { color: var(--muted); font-size: 11px; text-align: center; }
+.thread-composer { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, .9fr); gap: 16px; padding: 14px 17px; border-top: 1px solid var(--hairline); }
+.thread-chat-form, .thread-file-form { display: flex; align-items: flex-end; gap: 10px; }
+.thread-chat-form .field, .thread-file-form .field { flex: 1; }
+.thread-chat-form textarea { min-height: 70px; resize: vertical; }
+.thread-file-form .button-secondary { white-space: nowrap; }
+.drive-delete-note { display: flex; align-items: center; gap: 7px; margin: 0; padding: 0 17px 14px; color: var(--muted); font-size: 9px; }
+
+@media (max-width: 767px) {
+  .password-open { display: none; }
+  .own-email-form { align-items: stretch; flex-direction: column; }
+  .own-email-form .field { width: 100%; }
+  .own-email-form button { width: 100%; }
+  .correspondence-row { align-items: flex-start; }
+  .letter-open { flex-basis: calc(100% - 44px); }
+  .letter-meta { flex-wrap: wrap; }
+  .letter-status { margin-left: 42px; }
+  .delete-letter { margin-left: auto; }
+  .retry-letter-upload { width: auto; min-height: 40px; margin-left: 42px; }
+  .thread-composer { grid-template-columns: 1fr; padding: 12px; }
+  .thread-chat-form, .thread-file-form { align-items: stretch; flex-direction: column; }
+  .thread-chat-form .button-primary, .thread-file-form .button-secondary { width: 100%; }
+  .password-recovery-card { padding: 20px; }
+}
 @media print {
   :root, :root[data-theme="dark"] { color-scheme: light; --ink: #1d1d1f; --muted: #74747a; --canvas: #fff; --card: #fff; --border: #ddd; --hairline: #eee; --chart-grid: #eee; }
   .demo-banner, .topbar, .sidebar, .bottom-nav, .app-footer, .page-heading-action, .report-filter-panel, .report-actions, .text-action { display: none !important; }
@@ -567,3 +631,4 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .panel, .report-kpis article { break-inside: avoid; box-shadow: none; }
   body { background: #fff; }
 }
+

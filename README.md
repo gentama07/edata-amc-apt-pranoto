@@ -1,6 +1,6 @@
 # E-data AMC · APT Pranoto · Samarinda
 
-Website pencatatan dan pemantauan operasional Apron Movement Control Bandar Udara A.P.T. Pranoto (AAP / WALS). Aplikasi menyediakan ringkasan harian, log pergerakan, laporan, surat masuk, kontrol peran, serta mode pratinjau lokal jika Supabase belum dikonfigurasi.
+Website pencatatan dan pemantauan operasional Apron Movement Control Bandar Udara A.P.T. Pranoto (AAP / WALS). Aplikasi menyediakan ringkasan harian, log pergerakan, laporan, Persuratan, kontrol peran, serta mode pratinjau lokal jika Supabase belum dikonfigurasi.
 
 ## Menjalankan pratinjau lokal
 
@@ -25,8 +25,9 @@ Di SQL Editor proyek Supabase, jalankan migrasi sesuai kebutuhan:
 
 1. Jika proyek belum pernah memakai skema AMC, jalankan `supabase/migrations/001_schema.sql`.
 2. Jalankan `supabase/migrations/002_react_app_compat.sql`.
+3. Jalankan `supabase/migrations/003_correspondence_portal.sql` untuk portal Ground Handling, percakapan real-time, status surat, dan kebijakan RLS peran baru.
 
-Jika proyek sudah menerapkan migrasi `001_schema.sql`, cukup jalankan migrasi `002_react_app_compat.sql`. Simpan cadangan database sebelum menerapkan perubahan skema.
+Jika proyek sudah menerapkan migrasi `001_schema.sql` dan `002_react_app_compat.sql`, jalankan hanya migrasi `003_correspondence_portal.sql`. Simpan cadangan database sebelum menerapkan perubahan skema.
 
 ### Auth dan peran
 
@@ -39,9 +40,9 @@ from auth.users u
 where p.id = u.id and u.email = 'admin@contoh.id';
 ```
 
-Peran `pimpinan` hanya dapat membaca data; `personel` dapat mengelola pergerakan dan surat; `admin` juga dapat mengatur profil. RLS dan trigger database menolak perubahan peran atau status akun oleh pemilik profil biasa.
+Peran `pimpinan` hanya dapat membaca data operasional dan mengubah status surat; `personel` dapat mengelola pergerakan dan surat; `admin` juga dapat mengatur profil dan akun; `ground_handling` hanya melihat surat milik perusahaannya dan mengirim chat. RLS memisahkan data pergerakan dari akun Ground Handling dan membatasi surat berdasarkan pengirim. Trigger melindungi peran/status akun dari perubahan pemilik profil.
 
-Aktifkan `movements` dan `incoming_letters` pada **Database → Publications → supabase_realtime** jika belum aktif.
+Akun tanpa registrasi publik dibuat oleh Admin. Fungsi `manage-users` menangani pembuatan akun, perubahan peran/status, dan email melalui Supabase Auth Admin API; jangan pernah menempatkan service role key di frontend. Aktifkan `movements`, `incoming_letters`, dan `correspondence_messages` pada **Database → Publications → supabase_realtime** jika belum aktif.
 
 ## Google Drive melalui Google Apps Script
 
@@ -53,9 +54,9 @@ Browser → Supabase Edge Function drive-sync → Google Apps Script Web App →
 
 Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya tidak dikirim ke browser dan tidak boleh dimasukkan ke repo.
 
-1. Buat folder Google Drive untuk arsip surat, lalu salin ID folder dari URL Drive.
-2. Buka [Google Apps Script](https://script.google.com), buat proyek, lalu salin `supabase/apps-script/Code.gs` ke editor.
-3. Isi konstanta `FOLDER_ID` dengan ID folder tadi. Buat token acak panjang, isi konstanta `TOKEN` dengan nilai yang sama persis, lalu simpan di Apps Script. Jangan commit nilai asli ke GitHub.
+1. Siapkan folder root `DATA AMC/SURAT` dengan subfolder `ADMIN/PIMPINAN` dan `GROUND HANDLING`.
+2. Buka [Google Apps Script](https://script.google.com), lalu salin `supabase/apps-script/Code.gs` ke proyek Web App.
+3. Simpan `APPS_SCRIPT_TOKEN` dan `DRIVE_ROOT_FOLDER_ID` di **Project Settings → Script properties**. Token yang sama disimpan sebagai Supabase secret `APPS_SCRIPT_TOKEN`. Jangan commit nilai asli ke GitHub.
 4. Pilih **Deploy → New deployment → Web app**, set **Execute as: Me** dan **Who has access: Anyone**. Berikan izin Drive pada akun Google yang dipakai. Salin URL yang berakhiran `/exec`.
 5. Deploy fungsi Supabase:
 
@@ -64,9 +65,9 @@ Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya
    supabase secrets set APPS_SCRIPT_URL="https://script.google.com/macros/s/ID_DEPLOYMENT/exec" APPS_SCRIPT_TOKEN="TOKEN_ACAK"
    ```
 
-   Gerbang JWT gateway untuk `drive-sync` dimatikan (`verify_jwt = false`) karena fungsi sendiri memvalidasi sesi Supabase melalui `auth.getUser()` dan memastikan peran aktif adalah `personel` atau `admin` sebelum meneruskan berkas ke Apps Script. Atur ini sama di Dashboard Supabase pada Function Settings.
+   Gerbang JWT gateway untuk `drive-sync` dan `manage-users` dimatikan (`verify_jwt = false`); fungsi memvalidasi sesi dengan `auth.getUser()`, memeriksa profil/peran aktif, dan memakai service role hanya di sisi server. Fungsi `drive-sync` menaruh surat masuk di `ADMIN/PIMPINAN` dan balasan di `GROUND HANDLING`.
 
-6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**.
+6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**. Setelah rotasi token, pastikan versi deployment terbaru dan Supabase secret berisi token yang sama.
 
 Apps Script berjalan atas nama pemilik deployment. Gunakan akun Google khusus yang hanya memiliki akses ke folder arsip yang diperlukan. Endpoint Web App dapat dijangkau publik karena setelan Google, sehingga token harus panjang dan disimpan hanya di Apps Script serta Supabase secrets.
 
@@ -91,6 +92,10 @@ npm run build
 
 `npm test` memeriksa KPI, validasi waktu, jam WITA, okupansi apron, peringatan keterlambatan/kepadatan, dan sanitasi CSV.
 
+## Persuratan dan kata sandi
+
+Menu **Persuratan** menyediakan portal pengiriman Ground Handling melalui tautan pada halaman login, status, percakapan, unggah surat PDF, serta balasan AMC. Arsip Google Drive tidak ikut dihapus saat catatan surat dihapus dari aplikasi. Admin membuat akun Ground Handling/Pimpinan di menu Pengguna. Portal lupa kata sandi mengirim tautan Supabase Auth; tambahkan URL situs GitHub Pages dengan query `?recovery=1` ke **Authentication → URL Configuration → Redirect URLs**. Pengguna yang masuk dapat mengubah kata sandi dari menu akun setelah mengisi kata sandi lama.
+
 ## Struktur utama
 
 ```text
@@ -103,3 +108,4 @@ supabase/          Migrasi SQL, Edge Function, dan source Apps Script
 .github/workflows/ Build dan deploy GitHub Pages
 public/assets/     Logo APT Pranoto dan AMC
 ```
+

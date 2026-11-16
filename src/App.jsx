@@ -9,6 +9,7 @@ const Reports = lazy(() => import('./pages/Reports'));
 import Users from './pages/Users';
 import MovementForm from './components/MovementForm';
 import { airportDate } from './lib/time';
+import PasswordRecovery from './pages/PasswordRecovery';
 import './styles.css';
 
 export default function App() {
@@ -16,19 +17,23 @@ export default function App() {
   const [active, setActive] = useState('summary');
   const [selectedDate, setSelectedDate] = useState(airportDate());
   const [editing, setEditing] = useState(null);
-  useEffect(() => { if (!app.profile) { setActive('summary'); setEditing(null); } }, [app.profile]);
-  if (!app.profile) return <Login app={app} />;
+  const portalMode = new URLSearchParams(location.search).get('portal') === 'ground-handling';
+  useEffect(() => { if (!app.profile) { setActive('summary'); setEditing(null); } else if (app.profile.role === 'ground_handling') setActive('letters'); }, [app.profile]);
+  if (app.passwordRecovery) return <PasswordRecovery finishPasswordRecovery={app.finishPasswordRecovery} />;
+  if (!app.profile) return <Login app={app} portalMode={portalMode} />;
   const canWrite = ['admin', 'personel'].includes(app.profile.role);
-  const openInput = row => { if (!canWrite) return; setEditing(row || null); setActive('input'); };
+  const currentPage = app.profile.role === 'ground_handling' ? 'letters' : active;
+  const openInput = row => { if (!canWrite || app.profile.role === 'ground_handling') return; setEditing(row || null); setActive('input'); };
   const saveMovement = async row => { await app.saveMovement(row); setActive('movements'); setEditing(null); };
-  const content = active === 'input' && canWrite ? <MovementForm date={selectedDate} initial={editing} onCancel={() => { setActive('movements'); setEditing(null); }} onSave={saveMovement} setError={app.setError} />
-    : active === 'movements' ? <Movements rows={app.movements} selectedDate={selectedDate} canWrite={canWrite} onInput={() => openInput()} onEdit={row => openInput(row)} onDelete={async id => { try { await app.deleteMovement(id); } catch (error) { app.setError(error.message); } }} />
-    : active === 'reports' ? <Reports rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-    : active === 'letters' ? <Letters letters={app.letters} canWrite={canWrite} demo={app.demo} onSave={app.saveLetter} onUpdate={app.updateLetter} syncDrive={app.syncDrive} setError={app.setError} />
-    : active === 'users' && app.profile.role === 'admin' ? <Users app={app} />
+  const content = currentPage === 'input' && canWrite ? <MovementForm date={selectedDate} initial={editing} onCancel={() => { setActive('movements'); setEditing(null); }} onSave={saveMovement} setError={app.setError} />
+    : currentPage === 'movements' ? <Movements rows={app.movements} selectedDate={selectedDate} canWrite={canWrite} onInput={() => openInput()} onEdit={row => openInput(row)} onDelete={async id => { try { await app.deleteMovement(id); } catch (error) { app.setError(error.message); } }} />
+    : currentPage === 'reports' ? <Reports rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
+    : currentPage === 'letters' ? <Letters letters={app.letters} messages={app.messages} profile={app.profile} canWrite={canWrite} canReply={['admin', 'personel', 'pimpinan'].includes(app.profile.role)} demo={app.demo} onCreate={app.createLetter} onReply={app.createReply} onMessage={app.sendMessage} onDelete={app.deleteLetter} onUpdate={app.updateLetter} syncDrive={app.syncDrive} setError={app.setError} />
+    : currentPage === 'users' && app.profile.role === 'admin' ? <Users app={app} />
     : <Dashboard rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
-  return <Shell app={app} active={active} setActive={id => { if (id === 'input' && !canWrite) return; setActive(id); setEditing(null); }}>
+  return <Shell app={app} active={currentPage} setActive={id => { if (id === 'input' && !canWrite) return; if (app.profile.role === 'ground_handling' && id !== 'letters') return; setActive(id); setEditing(null); }}>
     {app.busy && <div className="loading-strip"><span />Memuat data operasional…</div>}
     <Suspense fallback={<div className="panel loading-page">Membuka halaman…</div>}>{content}</Suspense>
   </Shell>;
 }
+
