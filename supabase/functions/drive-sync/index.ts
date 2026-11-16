@@ -53,21 +53,31 @@ Deno.serve(async (request) => {
       .from('profiles').select('role, active').eq('id', user.id).single()
     if (profileError) throw new Error('Profil pengguna tidak ditemukan.')
     if (!profile.active) return json({ error: 'Akun ini dinonaktifkan.' }, 403, origin)
-    if (!['personel', 'admin'].includes(profile.role)) return json({ error: 'Hanya personel AMC yang dapat mengakses Google Drive.' }, 403, origin)
+    if (!['personel', 'admin', 'pimpinan', 'ground_handling'].includes(profile.role)) return json({ error: 'Peran ini tidak dapat mengakses Persuratan.' }, 403, origin)
 
     const form = await request.formData()
     const file = form.get('file')
     const letterId = String(form.get('letterId') || '')
-    const category = String(form.get('kategori') || 'Lainnya')
     if (!(file instanceof File)) return json({ error: 'Berkas unggahan tidak ditemukan.' }, 400, origin)
     if (file.size === 0) return json({ error: 'Berkas kosong tidak dapat diunggah.' }, 400, origin)
     if (file.size > 10 * 1024 * 1024) return json({ error: 'Ukuran berkas maksimal 10 MB.' }, 400, origin)
+
+    if (!letterId) return json({ error: 'Data surat harus disimpan sebelum berkas dikirim.' }, 400, origin)
+    const { data: letter, error: letterError } = await userClient.from('incoming_letters')
+      .select('id,direction,requester_id').eq('id', letterId).single()
+    if (letterError || !letter) return json({ error: 'Surat tidak ditemukan atau Anda tidak memiliki akses.' }, 404, origin)
+    const destination = letter.direction === 'outbound' ? 'GROUND HANDLING' : 'ADMIN/PIMPINAN'
+    const { data: requester, error: requesterError } = await adminClient.from('profiles')
+      .select('email').eq('id', letter.requester_id).eq('active', true).single()
+    if (requesterError || !requester?.email) return json({ error: 'Email akun pemilik surat tidak ditemukan.' }, 422, origin)
 
     const drive = await callAppsScript({
       action: 'upload',
       name: file.name,
       mime: file.type || 'application/octet-stream',
       data: encodeBase64(await file.arrayBuffer()),
+      destination,
+      viewerEmail: requester.email,
     })
     const storedFile = drive.file
     if (!storedFile?.id) throw new Error('Google Apps Script tidak mengembalikan identitas berkas.')
@@ -76,27 +86,16 @@ Deno.serve(async (request) => {
       file_name: storedFile.name || file.name,
       drive_file_id: storedFile.id,
       drive_web_view_link: storedFile.webViewLink || null,
+      drive_folder: destination,
     }
-    if (letterId) {
-      const { data, error } = await adminClient.from('incoming_letters')
-        .update(attachment).eq('id', letterId).select('id').maybeSingle()
-      if (error) throw error
-      if (!data) return json({ error: 'Data surat yang akan dilampiri tidak ditemukan.' }, 404, origin)
-    } else {
-      const { error } = await adminClient.from('incoming_letters').insert({
-        reference: `DRIVE-${storedFile.id}`,
-        received_date: (storedFile.modifiedTime || new Date().toISOString()).slice(0, 10),
-        sender: 'Google Drive',
-        subject: storedFile.name || file.name,
-        status: 'Baru',
-        ...attachment,
-        created_by: user.id,
-      })
-      if (error) throw error
-    }
+    const { data: updated, error: updateError } = await adminClient.from('incoming_letters')
+      .update(attachment).eq('id', letterId).select('id').maybeSingle()
+    if (updateError) throw updateError
+    if (!updated) return json({ error: 'Data surat yang akan dilampiri tidak ditemukan.' }, 404, origin)
 
-    return json({ ok: true, file: attachment.file_name, driveFileId: attachment.drive_file_id, category }, 200, origin)
+    return json({ ok: true, file: attachment.file_name, driveFileId: attachment.drive_file_id, destination }, 200, origin)
   } catch (error) {
     return json({ error: error instanceof Error ? error.message : 'Unggah ke Google Drive gagal.' }, 500, origin)
   }
 })
+
