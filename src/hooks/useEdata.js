@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoAccounts } from '../config/airportOptions';
 import { initialLetters, initialMovements } from '../lib/demoData';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
@@ -21,7 +21,10 @@ export function useEdata() {
   const [messages, setMessages] = useState([]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [passwordRecovery, setPasswordRecovery] = useState(new URLSearchParams(location.search).get('recovery') === '1');
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [recoveryInvalid, setRecoveryInvalid] = useState(false);
+  const [recoveryChecked, setRecoveryChecked] = useState(!isSupabaseConfigured || new URLSearchParams(location.search).get('recovery') !== '1');
+  const recoveryEventSeen = useRef(false);
   const demo = !isSupabaseConfigured;
   const modeLabel = 'Pratinjau lokal terisolasi';
 
@@ -57,9 +60,16 @@ export function useEdata() {
   }, [loadDemo]);
   useEffect(() => {
     if (!isSupabaseConfigured) return;
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data, error: sessionError }) => {
+      setSession(data.session);
+      if (new URLSearchParams(location.search).get('recovery') === '1') {
+        setPasswordRecovery(recoveryEventSeen.current && Boolean(data.session) && !sessionError);
+        setRecoveryInvalid(!recoveryEventSeen.current || !data.session || Boolean(sessionError));
+      }
+      setRecoveryChecked(true);
+    });
     const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
-      if (event === 'PASSWORD_RECOVERY') setPasswordRecovery(true);
+      if (event === 'PASSWORD_RECOVERY') { recoveryEventSeen.current = true; setPasswordRecovery(true); setRecoveryInvalid(false); }
       setSession(nextSession);
     });
     return () => listener.subscription.unsubscribe();
@@ -217,9 +227,10 @@ export function useEdata() {
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
     if (updateError) throw updateError;
     setPasswordRecovery(false);
+    setRecoveryInvalid(false);
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
 
