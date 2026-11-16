@@ -126,7 +126,10 @@ export function useEdata() {
       reply_to_id: parent.id, file_name: row.fileName || null, created_by: session.user.id,
     }).select().single();
     if (insertError) throw insertError;
-    await supabase.from('incoming_letters').update({ status: 'Dibalas' }).eq('id', parent.id);
+    if (['admin', 'personel'].includes(profile?.role)) {
+      const { error: statusError } = await supabase.from('incoming_letters').update({ status: 'Dibalas' }).eq('id', parent.id);
+      if (statusError) throw statusError;
+    }
     await loadRemote();
     return { ...row, id: data.id };
   };
