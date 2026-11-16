@@ -19,7 +19,7 @@ function ServiceStatus({ demo }) {
         const options = { headers: { apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }, signal: controller.signal, cache: 'no-store' };
         const responses = await Promise.all([
           fetch(`${baseUrl}/auth/v1/health`, options),
-          fetch(`${baseUrl}/rest/v1/`, options),
+          fetch(`${baseUrl}/rest/v1/profiles?select=id&limit=0`, { ...options, method: 'HEAD' }),
         ]);
         if (!disposed) setState(responses.every(response => response.ok) ? 'online' : 'issue');
       } catch {
