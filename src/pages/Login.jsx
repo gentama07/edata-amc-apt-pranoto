@@ -93,7 +93,7 @@ export default function Login({ app, portalMode = false }) {
       <div className="login-brand">
         <div className="apt-mark login-apt-mark"><img width="810" height="306" fetchPriority="high" src={`${import.meta.env.BASE_URL}assets/logo-apt-login.png`} alt="Bandar Udara A.P.T. Pranoto" /></div>
         <div className="amc-mark"><img width="64" height="64" src={`${import.meta.env.BASE_URL}assets/logo-amc.png`} alt="Apron Movement Control" /></div>
-        <span>E-data AMC</span>
+        <span>E-data AMC Aji Pangeran Tumenggung Pranoto Samarinda</span>
       </div>
       <div className="login-story" data-enter>
         <div className="eyebrow">AAP · WALS · SAMARINDA</div>
