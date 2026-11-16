@@ -163,7 +163,7 @@ create policy "internal and ground handling submit correspondence" on public.inc
 
 drop policy if exists "internal update correspondence" on public.incoming_letters;
 create policy "internal update correspondence" on public.incoming_letters
-  for update to authenticated using (public.is_amc_internal()) with check (public.is_amc_internal());
+  for update to authenticated using (public.can_write_amc()) with check (public.can_write_amc());
 
 drop policy if exists "internal delete correspondence" on public.incoming_letters;
 create policy "internal delete correspondence" on public.incoming_letters
