@@ -18,6 +18,7 @@
   --card: #ffffff;
   --card-soft: #fafafc;
   --border: #e5e5e9;
+  --control-border: #8a8a92;
   --hairline: #ebebee;
   --hover: #f1f5fa;
   --shadow: none;
@@ -41,6 +42,7 @@
   --card: #232326;
   --card-soft: #29292c;
   --border: #39393d;
+  --control-border: #75757d;
   --hairline: #343438;
   --hover: #30343a;
   --shadow: 0 4px 16px rgba(0, 0, 0, .16);
@@ -751,4 +753,39 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .login-left::after, .service-online i, .service-checking i, .login-story[data-enter] { animation: none !important; }
 }
+
+/* Readability and contrast improvements from the full interface audit. */
+.field input, .field select, .field textarea, .filter-label select, .search-field,
+.report-filter-panel input, .letter-status-control select, .date-picker-label input {
+  border-color: var(--control-border);
+}
+.search-field:focus-within { border-color: var(--blue); }
+.field input::placeholder, .field textarea::placeholder { color: var(--muted); }
+
+.stat-label, .empty-day span, .panel-period, .panel-note, .alert-item span,
+.all-clear span:last-child, .remarks-list li, .remarks-empty, .stand-name,
+.empty-state p, .loading-strip, .report-filter-note, .own-email-form [role="status"],
+.table-summary, .text-action, .filter-reset, .search-field input, .movement-table td,
+.table-empty span, .report-kpis span, .report-table td, .users-table td,
+.letter-main p, .letters-empty span, .thread-entry p, .thread-empty, .thread-entry a,
+.field-hint, .field-error, .form-note, .form-section-intro p, .review-strip small,
+.required-note {
+  font-size: 11px;
+}
+.stat-note, .chart-legend, .alert-item strong, .all-clear strong, .time-labels,
+.timeline-caption, .occupancy-col span, .table-foot, .filter-label,
+.report-kpis small, .report-table th, .users-table th, .movement-table th,
+.letter-meta, .file-name, .drive-connected, .letter-status,
+.letter-status-control, .letter-status-control select, .thread-entry-heading time,
+.drive-delete-note, .login-security, .login-demo-banner span, .login-config-note span,
+.count-pill, .remarks-heading {
+  font-size: 10px;
+}
+.bottom-nav button { font-size: 10px; }
+.wizard-step, .field, .thread-entry-heading strong { font-size: 11px; }
+.field input, .field select, .field textarea, .filter-label select,
+.report-filter-panel input, .date-picker-label input, .letter-status-control select { font-size: 12px; }
+.empty-day strong, .table-empty strong, .letters-empty strong { font-size: 12px; }
+.login-forgot { min-height: 44px; }
+.login-footnote .motion-toggle { min-height: 36px; }
 

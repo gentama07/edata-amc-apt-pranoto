@@ -1,19 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { ArrowDownToLine, ArrowUpDown, Download, FilterX, Pencil, Plus, Search, Trash2 } from 'lucide-react';
 import { airportOptions } from '../config/airportOptions';
+import { useModalFocus } from '../hooks/useModalFocus';
 import { getDirection } from '../lib/analytics';
 import { downloadCsv } from '../lib/csv';
 import { PageHeading } from '../components/Shell';
 
 export default function Movements({ rows, selectedDate, canWrite, onInput, onEdit, onDelete }) {
   const [query, setQuery] = useState(''); const [operator, setOperator] = useState(''); const [direction, setDirection] = useState(''); const [confirm, setConfirm] = useState(null); const [sort, setSort] = useState({ key: 'date', asc: false }); const [page, setPage] = useState(0);
-  useEffect(() => {
-    if (!confirm) return undefined;
-    const closeOnEscape = event => { if (event.key === 'Escape') setConfirm(null); };
-    document.addEventListener('keydown', closeOnEscape);
-    requestAnimationFrame(() => document.querySelector('.confirm-modal .button-secondary')?.focus());
-    return () => document.removeEventListener('keydown', closeOnEscape);
-  }, [confirm]);
+  const dialogRef = useRef(null);
+  useModalFocus(dialogRef, { enabled: Boolean(confirm), onEscape: () => setConfirm(null), initialFocusSelector: '.button-secondary' });
   const filtered = useMemo(() => rows.filter(row => {
     const text = [row.operator, row.registration, row.flightArr, row.flightDep, row.origin, row.destination, row.remark].join(' ').toLocaleLowerCase('id-ID');
     const directionValue = getDirection(row);
@@ -41,6 +37,6 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
       </tr>) : <tr><td className="table-empty" colSpan={canWrite ? 22 : 21}><div className="empty-table-icon"><ArrowDownToLine size={18} /></div><strong>Tidak ada data yang cocok</strong><span>Coba ubah filter atau pilih tanggal operasional lain.</span></td></tr>}</tbody></table></div>
       <div className="table-foot"><span>Data diperbarui mengikuti koneksi aktif.</span><div className="table-pagination">{pageCount > 1 && <><button className="button-secondary" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Sebelumnya</button><span>Halaman {currentPage + 1} dari {pageCount}</span><button className="button-secondary" disabled={currentPage >= pageCount - 1} onClick={() => setPage(currentPage + 1)}>Berikutnya</button></>}</div><span>Arah: ARR · DEP · Transit</span></div>
     </section>
-    {confirm && <div className="modal-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && setConfirm(null)}><section className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title"><div className="confirm-icon"><Trash2 size={19} /></div><h2 id="delete-title">Hapus pergerakan?</h2><p>Data {confirm.registration} · {confirm.flightArr || confirm.flightDep || 'penerbangan ini'} akan dihapus dari log.</p><div className="modal-actions"><button className="button-secondary" onClick={() => setConfirm(null)}>Batal</button><button className="button-danger" onClick={confirmDelete}>Hapus data</button></div></section></div>}
+    {confirm && <div className="modal-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && setConfirm(null)}><section ref={dialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title" tabIndex="-1"><div className="confirm-icon"><Trash2 size={19} aria-hidden="true" /></div><h2 id="delete-title">Hapus pergerakan?</h2><p>Data {confirm.registration} · {confirm.flightArr || confirm.flightDep || 'penerbangan ini'} akan dihapus dari log.</p><div className="modal-actions"><button type="button" className="button-secondary" onClick={() => setConfirm(null)}>Batal</button><button type="button" className="button-danger" onClick={confirmDelete}>Hapus data</button></div></section></div>}
   </>;
 }
