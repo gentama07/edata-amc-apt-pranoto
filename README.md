@@ -64,7 +64,7 @@ Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya
    supabase secrets set APPS_SCRIPT_URL="https://script.google.com/macros/s/ID_DEPLOYMENT/exec" APPS_SCRIPT_TOKEN="TOKEN_ACAK"
    ```
 
-   `verify_jwt` untuk `drive-sync` tetap aktif. Fungsi memvalidasi sesi Supabase dan peran pengguna sebelum meneruskan berkas ke Apps Script.
+   Gerbang JWT gateway untuk `drive-sync` dimatikan (`verify_jwt = false`) karena fungsi sendiri memvalidasi sesi Supabase melalui `auth.getUser()` dan memastikan peran aktif adalah `personel` atau `admin` sebelum meneruskan berkas ke Apps Script. Atur ini sama di Dashboard Supabase pada Function Settings.
 
 6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**.
 

@@ -6,4 +6,4 @@ project_id = "edata-amc-apt-pranoto"
 verify_jwt = false
 
 [functions.drive-sync]
-verify_jwt = true
+verify_jwt = false
