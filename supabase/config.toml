@@ -4,3 +4,6 @@ project_id = "edata-amc-apt-pranoto"
 # agar kompatibel dengan kunci publishable (sb_publishable_...).
 [functions.drive]
 verify_jwt = false
+
+[functions.drive-sync]
+verify_jwt = true

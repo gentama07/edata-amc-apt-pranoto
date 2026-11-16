@@ -1,82 +1,105 @@
-# E-data AMC APT Pranoto
+# E-data AMC · APT Pranoto · Samarinda
 
-Sistem pelaporan Unit Apron Movement Control (AMC) Bandar Udara APT Pranoto Samarinda, versi online dengan database asli. Dikembangkan dari rancangan Tugas Akhir "Digitalisasi Sistem Pelaporan Unit AMC".
+Website pencatatan dan pemantauan operasional Apron Movement Control Bandar Udara A.P.T. Pranoto (AAP / WALS). Aplikasi menyediakan ringkasan harian, log pergerakan, laporan, surat masuk, kontrol peran, serta mode pratinjau lokal jika Supabase belum dikonfigurasi.
 
-| Lapisan | Teknologi |
-|---|---|
-| Tampilan | Vite + JavaScript, dihosting di GitHub Pages |
-| Database, login, real-time | Supabase (PostgreSQL, Auth, Row Level Security, Realtime) |
-| Surat masuk | Supabase Edge Function `drive` yang memanggil Google Apps Script untuk membaca dan menulis folder Google Drive |
+## Menjalankan pratinjau lokal
 
-Peran pengguna (kolom `profiles.role`): `pimpinan` hanya memantau, `personel` dan `admin` boleh input data dan mengakses Drive. Aturan ini dijaga di database (RLS) dan di Edge Function, bukan hanya di tampilan.
+Gunakan Node.js 20.19+ atau Node.js 22 LTS.
 
-```
-Browser ──login──> Supabase Auth
-   │                    │
-   ├─ baca/tulis ─> PostgreSQL (RLS)         (movements, surat, profiles)
-   └─ Sinkron/Unggah ─> Edge Function drive ─> Apps Script ─> Folder Drive
-```
-
-## 1. Database
-
-1. Buat proyek di https://supabase.com.
-2. Buka **SQL Editor**, tempel **isi** (bukan nama) file `supabase/migrations/001_schema.sql`, lalu Run. Opsional: lakukan hal yang sama untuk `supabase/seed.sql` (data nyata 1 Januari 2026 dari TA).
-3. Di **Authentication → Sign In / Providers**, matikan *Allow new users to sign up*. Tambahkan pengguna lewat **Authentication → Users → Add user** (centang *Auto Confirm User*). Semua akun baru otomatis berperan `pimpinan`.
-4. Beri peran personel atau admin lewat SQL Editor:
-   ```sql
-   update profiles set role = 'admin', nama = 'Nama Petugas' where id = (select id from auth.users where email = 'petugas@contoh.id');
-   ```
-
-## 2. Folder Google Drive (surat masuk)
-
-Tanpa Google Cloud dan tanpa biaya. Gunakan akun Google khusus unit atau akun cadangan, karena skrip berjalan atas nama pemilik akun.
-
-1. Buat folder di Drive. ID folder ada di URL setelah `/folders/`.
-2. Buat token acak panjang (jangan sama dengan sandi akun). Di PowerShell:
-   ```powershell
-   [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]]).Replace('+','-').Replace('/','_').TrimEnd('=')
-   ```
-3. Buka https://script.google.com, proyek baru, tempel `supabase/apps-script/Code.gs`, isi `FOLDER_ID` dan `TOKEN`. **Deploy → New deployment → Web app**, *Execute as: Me*, *Who has access: Anyone*. Setujui izin (Advanced → Go to ... → Allow). Salin URL berakhiran `/exec`. Setiap kali kode skrip diubah, deploy versi baru.
-4. Di Supabase: **Edge Functions → Deploy a new function → Via Editor**, nama `drive`, tempel `supabase/functions/drive/index.ts`, lalu Deploy. Di pengaturan fungsi matikan **Verify JWT**.
-5. **Edge Functions → Secrets**, tambahkan `APPS_SCRIPT_URL` (URL `/exec`) dan `APPS_SCRIPT_TOKEN` (token tadi).
-
-Cara lain: dengan Supabase CLI, `supabase functions deploy drive` dan `supabase secrets set APPS_SCRIPT_URL=... APPS_SCRIPT_TOKEN=...`. Pengaturan Verify JWT sudah ada di `supabase/config.toml`.
-
-Batas: unggahan maksimal 10 MB per berkas. Sinkron menyalin berkas baru di folder ke tabel `surat`. Kategori tebakan dari nama berkas (cancel, Re-ETD, PTR, selain itu Lainnya), tanggal diambil dari waktu terakhir berkas diubah di Drive.
-
-## 3. Jalankan lokal
-
-```bash
-cp .env.example .env     # Windows: copy .env.example .env
-```
-Isi `.env` dengan Project URL dan kunci publishable dari **Project Settings → API Keys**:
-```
-VITE_SUPABASE_URL=https://xxxx.supabase.co
-VITE_SUPABASE_ANON_KEY=sb_publishable_...
-```
-```bash
+```powershell
 npm install
 npm run dev
 ```
 
-## 4. Online di GitHub Pages
+Jika `.env.local` belum berisi konfigurasi Supabase, pilih peran demo pada layar masuk. Data pratinjau tersimpan hanya di browser itu dan bukan database operasional.
 
-GitHub Pages gratis memerlukan repo **public**; pastikan tidak ada rahasia yang ter-commit (`git ls-files` tidak boleh menampilkan `.env`). Di repo: **Settings → Pages → Source: GitHub Actions**, lalu **Settings → Secrets and variables → Actions** tambahkan `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY`. Setiap push ke `main` otomatis dibangun dan dipublikasikan ke `https://<akun>.github.io/<repo>/`.
+Untuk menghubungkan Supabase secara lokal, salin `.env.example` menjadi `.env.local`, lalu isi `VITE_SUPABASE_URL` dan `VITE_SUPABASE_ANON_KEY` dengan Project URL dan publishable/anon key dari **Project Settings → API**. Kunci tersebut memang dikirim ke browser. Jangan gunakan `service_role` atau secret key di variabel `VITE_`.
 
-## Keamanan
+## Supabase
 
-- Kunci publishable memang publik; data dilindungi login dan RLS. Jangan pernah commit kunci `secret`/`service_role`, token Apps Script, atau URL `/exec`.
-- Apps Script dibuka untuk "Anyone", jadi satu-satunya penjaga adalah token. Gunakan token panjang dan acak, dan ganti (di skrip dan di secret Supabase) bila bocor.
-- Ini sistem demo TA. Untuk data operasional sungguhan di bandara, minta izin unit dan tinjauan keamanan terlebih dahulu.
+### Migrasi database
 
-## Laporan dan notifikasi
+Repo sudah memiliki skema awal `supabase/migrations/001_schema.sql`. Migrasi `002_react_app_compat.sql` menambah kolom yang diperlukan aplikasi React dan membuat `incoming_letters`. Data pergerakan lama tetap berada di tabel `movements`; surat lama di `surat` disalin ke `incoming_letters`. Migrasi tidak menghapus tabel lama.
 
-Menu **Laporan** menyusun Apron Movement Control Sheet harian dan rekap bulanan langsung dari database. Tombol **Cetak / Simpan PDF** memakai fitur cetak browser (pilih *Save as PDF*). Di **Ringkasan**, grafik kepadatan apron dihitung dari Block ON sampai Block OFF, dan notifikasi anomali muncul untuk apron padat (4 pesawat atau lebih bersamaan), kedatangan terlambat lebih dari 30 menit, dan penerbangan yang punya catatan remark.
+Di SQL Editor proyek Supabase, jalankan migrasi sesuai kebutuhan:
 
-## Input dari HP
+1. Jika proyek belum pernah memakai skema AMC, jalankan `supabase/migrations/001_schema.sql`.
+2. Jalankan `supabase/migrations/002_react_app_compat.sql`.
 
-Menu **Input data** berupa tiga langkah (Penerbangan, Waktu, Muatan) dengan tombol besar, pilihan operator dan rute berbentuk chip, tombol **Sekarang** untuk mengisi jam WITA saat ini, keyboard angka untuk jumlah penumpang dan berat, serta bilah **Lanjut/Simpan** yang menempel di bawah layar. Isian disimpan sebagai draf di perangkat (`localStorage`), jadi tidak hilang bila sinyal putus atau halaman termuat ulang; draf dihapus setelah berhasil disimpan. Validasi urutan waktu dijalankan di layar dan di database.
+Jika proyek sudah menerapkan migrasi `001_schema.sql`, cukup jalankan migrasi `002_react_app_compat.sql`. Simpan cadangan database sebelum menerapkan perubahan skema.
 
-## Belum ada
+### Auth dan peran
 
-Perbandingan sistem manual vs digital.
+Matikan registrasi publik di **Authentication → Providers → Email**. Tambahkan akun melalui **Authentication → Users**. Trigger membuat profil `personel` untuk akun baru. Untuk menetapkan admin pertama, jalankan SQL berikut dengan alamat email admin:
+
+```sql
+update public.profiles p
+set role = 'admin', display_name = 'Admin AMC', nama = 'Admin AMC'
+from auth.users u
+where p.id = u.id and u.email = 'admin@contoh.id';
+```
+
+Peran `pimpinan` hanya dapat membaca data; `personel` dapat mengelola pergerakan dan surat; `admin` juga dapat mengatur profil. RLS dan trigger database menolak perubahan peran atau status akun oleh pemilik profil biasa.
+
+Aktifkan `movements` dan `incoming_letters` pada **Database → Publications → supabase_realtime** jika belum aktif.
+
+## Google Drive melalui Google Apps Script
+
+Arsitektur unggah:
+
+```text
+Browser → Supabase Edge Function drive-sync → Google Apps Script Web App → folder Drive
+```
+
+Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya tidak dikirim ke browser dan tidak boleh dimasukkan ke repo.
+
+1. Buat folder Google Drive untuk arsip surat, lalu salin ID folder dari URL Drive.
+2. Buka [Google Apps Script](https://script.google.com), buat proyek, lalu salin `supabase/apps-script/Code.gs` ke editor.
+3. Isi konstanta `FOLDER_ID` dengan ID folder tadi. Buat token acak panjang, isi konstanta `TOKEN` dengan nilai yang sama persis, lalu simpan di Apps Script. Jangan commit nilai asli ke GitHub.
+4. Pilih **Deploy → New deployment → Web app**, set **Execute as: Me** dan **Who has access: Anyone**. Berikan izin Drive pada akun Google yang dipakai. Salin URL yang berakhiran `/exec`.
+5. Deploy fungsi Supabase:
+
+   ```powershell
+   supabase functions deploy drive-sync
+   supabase secrets set APPS_SCRIPT_URL="https://script.google.com/macros/s/ID_DEPLOYMENT/exec" APPS_SCRIPT_TOKEN="TOKEN_ACAK"
+   ```
+
+   `verify_jwt` untuk `drive-sync` tetap aktif. Fungsi memvalidasi sesi Supabase dan peran pengguna sebelum meneruskan berkas ke Apps Script.
+
+6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**.
+
+Apps Script berjalan atas nama pemilik deployment. Gunakan akun Google khusus yang hanya memiliki akses ke folder arsip yang diperlukan. Endpoint Web App dapat dijangkau publik karena setelan Google, sehingga token harus panjang dan disimpan hanya di Apps Script serta Supabase secrets.
+
+## GitHub Pages
+
+Repo publik ini sudah memiliki workflow `.github/workflows/deploy.yml`. Pada GitHub, pastikan **Settings → Pages → Build and deployment → Source** disetel ke **GitHub Actions**. Di **Settings → Secrets and variables → Actions**, isi repository secrets:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_ANON_KEY`
+
+Workflow memeriksa dua nilai tersebut sebelum build. Push ke branch `main` akan membangun situs dengan base path repo dan menerbitkannya ke `https://gentama07.github.io/edata-amc-apt-pranoto/`.
+
+Nilai Supabase boleh disimpan sebagai Actions variables, namun secrets lebih konsisten dengan workflow yang ada. Publishable/anon key akan terlihat di bundle frontend. RLS tetap wajib aktif untuk setiap tabel.
+
+## Pengembangan dan pemeriksaan
+
+```powershell
+npm run lint
+npm test
+npm run build
+```
+
+`npm test` memeriksa KPI, validasi waktu, jam WITA, okupansi apron, peringatan keterlambatan/kepadatan, dan sanitasi CSV.
+
+## Struktur utama
+
+```text
+src/components/    Komponen aplikasi dan formulir pergerakan
+src/config/        Opsi bandar udara
+src/hooks/         Status Supabase dan pratinjau lokal
+src/lib/           Waktu, analitik, CSV, dan klien Supabase
+src/pages/         Ringkasan, log, input, laporan, surat, pengguna
+supabase/          Migrasi SQL, Edge Function, dan source Apps Script
+.github/workflows/ Build dan deploy GitHub Pages
+public/assets/     Logo APT Pranoto dan AMC
+```
