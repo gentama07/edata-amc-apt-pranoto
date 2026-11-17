@@ -21,20 +21,29 @@ export function Shell({ app, active, setActive, children }) {
   const [showOpening, setShowOpening] = useState(() => app.openingRequested && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const finishOpening = useCallback(() => setShowOpening(false), []);
   const [airportVideo, setAirportVideo] = useState('');
+  const [openingVideo, setOpeningVideo] = useState('');
   const [airportVideoLoading, setAirportVideoLoading] = useState(Boolean(app.session));
   useEffect(() => {
     if (!app.session || !supabase) { setAirportVideoLoading(false); return undefined; }
     let cancelled = false;
     const refresh = async () => {
-      const { data, error } = await supabase.storage.from('airport-video').createSignedUrl('airport-card.mp4', 3600);
-      if (cancelled) return;
-      setAirportVideoLoading(false);
-      if (error || !data?.signedUrl) {
+      try {
+        const [cardResult, openingResult] = await Promise.all([
+          supabase.storage.from('airport-video').createSignedUrl('airport-card.mp4', 3600),
+          supabase.storage.from('airport-video').createSignedUrl('animasi-logo.mp4', 3600),
+        ]);
+        if (cancelled) return;
+        setAirportVideoLoading(false);
+        setAirportVideo(cardResult.error ? '' : cardResult.data?.signedUrl || '');
+        setOpeningVideo(openingResult.error ? '' : openingResult.data?.signedUrl || '');
+        if (openingResult.error || !openingResult.data?.signedUrl) setShowOpening(false);
+      } catch {
+        if (cancelled) return;
+        setAirportVideoLoading(false);
         setAirportVideo('');
-        if (app.openingRequested) setShowOpening(false);
-        return;
+        setOpeningVideo('');
+        setShowOpening(false);
       }
-      setAirportVideo(data.signedUrl);
     };
     setAirportVideoLoading(true);
     refresh();
@@ -81,7 +90,7 @@ export function Shell({ app, active, setActive, children }) {
         </button></div>
       </aside>
       {menuOpen && <button className="nav-scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)} />}
-      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? airportVideo ? <Opening src={airportVideo} onDone={finishOpening} /> : airportVideoLoading ? <div className="opening-video" role="status" aria-label="Memuat video pembuka" /> : children : children}</main>
+      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? openingVideo ? <Opening src={openingVideo} onDone={finishOpening} /> : airportVideoLoading ? <div className="opening-video" role="status" aria-label="Memuat video pembuka" /> : children : children}</main>
     </div>
     <nav className="bottom-nav" aria-label="Navigasi bawah">{items.map(({ id, label, Icon }) => <button key={id} onClick={() => navigate(id)} className={active === id ? 'bottom-active' : ''} aria-current={active === id ? 'page' : undefined}><Icon size={19} /><span>{label === 'Log pergerakan' ? 'Log' : label === 'Input data' ? 'Input' : label === 'Pengguna' ? 'Pengguna' : label}</span></button>)}</nav>
   </div>;
@@ -99,5 +108,6 @@ export function PageHeading({ title, description, action }) {
 export function EmptyState({ title, body }) { return <div className="empty-state"><div className="empty-icon"><Activity size={22} /></div><strong>{title}</strong><p>{body}</p></div>; }
 
 export function StatCard({ label, value, note, Icon, tone = 'blue' }) { return <article className="stat-card"><div className={`stat-icon stat-${tone}`}><Icon size={19} strokeWidth={1.8} /></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></article>; }
+
 
 
