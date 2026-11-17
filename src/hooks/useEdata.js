@@ -37,12 +37,21 @@ export function useEdata() {
 
   const loadRemote = useCallback(async () => {
     if (!session) return;
-    const [profileResult, movementsResult, lettersResult, messageResult] = await Promise.all([
+    const [initialProfileResult, movementsResult, lettersResult, messageResult] = await Promise.all([
       supabase.from('profiles').select('id,display_name,email,role,active,organization,nip,position,avatar_url').eq('id', session.user.id).single(),
       supabase.from('movements').select('*').order('operating_date', { ascending: false }).order('created_at', { ascending: false }).limit(2000),
       supabase.from('incoming_letters').select('*').order('received_date', { ascending: false }).limit(500),
       supabase.from('correspondence_messages').select('*').order('created_at', { ascending: true }).limit(2000),
     ]);
+    let profileResult = initialProfileResult;
+    const profileSelections = [
+      'id,display_name,email,role,active,organization,nip,avatar_url',
+      'id,display_name,email,role,active,organization',
+    ];
+    for (const fields of profileSelections) {
+      if (!profileResult.error || !/column .* does not exist|could not find .* in the schema cache/i.test(profileResult.error.message || '')) break;
+      profileResult = await supabase.from('profiles').select(fields).eq('id', session.user.id).single();
+    }
     if (profileResult.error) throw profileResult.error;
     if (profileResult.data.active === false) { await supabase.auth.signOut(); throw new Error('Akun ini dinonaktifkan. Hubungi Admin AMC.'); }
     let avatarUrl = '';
@@ -201,11 +210,20 @@ export function useEdata() {
   const updateOwnProfile = async ({ name, nip, position }) => {
     const next = { name: name.trim(), nip: nip.trim(), position: position.trim() };
     if (!session) { setProfile(current => ({ ...current, ...next })); return; }
-    const { error: updateError } = await supabase.from('profiles')
-      .update({ display_name: next.name, nip: next.nip || null, position: next.position || null })
-      .eq('id', session.user.id);
+    let updates = { display_name: next.name, nip: next.nip || null, position: next.position || null };
+    let { error: updateError } = await supabase.from('profiles').update(updates).eq('id', session.user.id);
+    let omittedFields = [];
+    while (updateError && /column .* does not exist|could not find .* in the schema cache/i.test(updateError.message || '')) {
+      const missing = ['position', 'nip'].find(field => updates[field] !== undefined && new RegExp(`(?:profiles\\.)?${field}\\b`, 'i').test(updateError.message));
+      if (!missing) break;
+      omittedFields.push(missing);
+      delete updates[missing];
+      const retry = await supabase.from('profiles').update(updates).eq('id', session.user.id);
+      updateError = retry.error;
+    }
     if (updateError) throw updateError;
     await loadRemote();
+    if (omittedFields.includes('position')) throw new Error('Nama tersimpan, tetapi Jabatan belum dapat disimpan. Admin perlu menerapkan migrasi Supabase 007.');
   };
   const uploadProfilePhoto = async file => {
     if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Pilih foto JPG, PNG, atau WebP.');
