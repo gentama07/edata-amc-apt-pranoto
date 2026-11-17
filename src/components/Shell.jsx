@@ -71,3 +71,4 @@ export function EmptyState({ title, body }) { return <div className="empty-state
 
 export function StatCard({ label, value, note, Icon, tone = 'blue' }) { return <article className="stat-card"><div className={`stat-icon stat-${tone}`}><Icon size={19} strokeWidth={1.8} /></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></article>; }
 
+
