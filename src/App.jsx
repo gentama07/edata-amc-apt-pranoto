@@ -32,7 +32,7 @@ export default function App() {
   const content = currentPage === 'input' && canWrite ? <MovementForm date={selectedDate} initial={editing} onCancel={() => { setActive('movements'); setEditing(null); }} onSave={saveMovement} setError={app.setError} />
     : currentPage === 'movements' ? <Movements rows={app.movements} selectedDate={selectedDate} canWrite={canWrite} onInput={() => openInput()} onEdit={row => openInput(row)} onDelete={async id => { try { await app.deleteMovement(id); } catch (error) { app.setError(error.message); } }} />
     : currentPage === 'reports' ? <Reports rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-    : currentPage === 'letters' ? <Letters letters={app.letters} messages={app.messages} profile={app.profile} canWrite={canWrite} canReply={['admin', 'personel', 'pimpinan'].includes(app.profile.role)} demo={app.demo} onCreate={app.createLetter} onReply={app.createReply} onMessage={app.sendMessage} onDelete={app.deleteLetter} syncDrive={app.syncDrive} setError={app.setError} />
+    : currentPage === 'letters' ? <Letters letters={app.letters} messages={app.messages} profile={app.profile} canWrite={canWrite} canReply={['admin', 'personel', 'pimpinan'].includes(app.profile.role)} demo={app.demo} onCreate={app.createLetter} onReply={app.createReply} onMessage={app.sendMessage} onDelete={app.deleteLetter} syncDrive={app.syncDrive} confirmLetterComplete={app.confirmLetterComplete} setError={app.setError} />
     : currentPage === 'users' && app.profile.role === 'admin' ? <Users app={app} />
     : currentPage === 'profile' ? <Profile app={app} />
     : <Dashboard rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
