@@ -21,17 +21,26 @@ export function Shell({ app, active, setActive, children }) {
   const [showOpening, setShowOpening] = useState(() => app.openingRequested && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const finishOpening = useCallback(() => setShowOpening(false), []);
   const [airportVideo, setAirportVideo] = useState('');
+  const [airportVideoLoading, setAirportVideoLoading] = useState(Boolean(app.session));
   useEffect(() => {
-    if (!app.session || !supabase) return undefined;
+    if (!app.session || !supabase) { setAirportVideoLoading(false); return undefined; }
     let cancelled = false;
     const refresh = async () => {
       const { data, error } = await supabase.storage.from('airport-video').createSignedUrl('airport-card.mp4', 3600);
-      if (!cancelled && !error) setAirportVideo(data.signedUrl);
+      if (cancelled) return;
+      setAirportVideoLoading(false);
+      if (error || !data?.signedUrl) {
+        setAirportVideo('');
+        if (app.openingRequested) setShowOpening(false);
+        return;
+      }
+      setAirportVideo(data.signedUrl);
     };
+    setAirportVideoLoading(true);
     refresh();
     const timer = setInterval(refresh, 45 * 60 * 1000);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [app.session]);
+  }, [app.session, app.openingRequested]);
   useEffect(() => { const timer = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('amc-theme', theme); document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#18181a' : '#f5f5f7'); }, [theme]);
   useEffect(() => {
@@ -72,15 +81,15 @@ export function Shell({ app, active, setActive, children }) {
         </button></div>
       </aside>
       {menuOpen && <button className="nav-scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)} />}
-      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? <Opening onDone={finishOpening} /> : children}</main>
+      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? airportVideo ? <Opening src={airportVideo} onDone={finishOpening} /> : airportVideoLoading ? <div className="opening-video" role="status" aria-label="Memuat video pembuka" /> : children : children}</main>
     </div>
     <nav className="bottom-nav" aria-label="Navigasi bawah">{items.map(({ id, label, Icon }) => <button key={id} onClick={() => navigate(id)} className={active === id ? 'bottom-active' : ''} aria-current={active === id ? 'page' : undefined}><Icon size={19} /><span>{label === 'Log pergerakan' ? 'Log' : label === 'Input data' ? 'Input' : label === 'Pengguna' ? 'Pengguna' : label}</span></button>)}</nav>
   </div>;
 }
 
-function Opening({ onDone }) {
+function Opening({ src, onDone }) {
   useEffect(() => { const timeout = window.setTimeout(onDone, 45000); return () => window.clearTimeout(timeout); }, [onDone]);
-  return <div className="opening-video" aria-label="Animasi pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={`${import.meta.env.BASE_URL}assets/animasi-logo.mp4`} /></div>;
+  return <div className="opening-video" aria-label="Video pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={src} /></div>;
 }
 
 export function PageHeading({ title, description, action }) {
