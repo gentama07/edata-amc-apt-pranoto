@@ -44,7 +44,6 @@ export function Shell({ app, active, setActive, children }) {
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
         <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label="Ganti tema" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-        <button className="header-profile-button" title="Buka profil" aria-label="Buka profil" onClick={() => setActive('profile')}>Profil</button>
         <button className="logout-button" aria-label="Keluar" onClick={signOut}><LogOut size={16} /><span>Keluar</span></button>
       </div>
     </header>

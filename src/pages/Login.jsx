@@ -52,8 +52,8 @@ export default function Login({ app, portalMode = false }) {
         <span>E-data AMC Aji Pangeran Tumenggung Pranoto Samarinda</span>
       </div>
       <div className="login-story" data-enter>
-        <h1 id="login-story-title">Operasional apron<br /><em>APT Pranoto · Samarinda.</em></h1>
-        <p>Pencatatan pergerakan dan pemantauan aktivitas harian Apron Movement Control Bandar Udara A.P.T. Pranoto.</p>
+        <h1 id="login-story-title"><span className="login-headline-line">Operasional apron</span><em className="login-headline-line">APT Pranoto · Samarinda.</em></h1>
+        <p className="login-story-copy">Pencatatan pergerakan dan pemantauan aktivitas harian Apron Movement Control Bandar Udara A.P.T. Pranoto.</p>
       </div>
         <div className="login-footnote"><ServiceStatus demo={app.demo} /></div>
     </section>
