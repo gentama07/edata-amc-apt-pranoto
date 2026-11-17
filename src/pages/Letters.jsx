@@ -35,6 +35,8 @@ async function preparePdf(file) {
 
 function letterErrorMessage(error, fallback) {
   const message = String(error?.message || '');
+  const schemaMessage = schemaSetupMessage(message);
+  if (schemaMessage) return schemaMessage;
   if (/requested file could not be read|permission problems? .*file/i.test(message)) {
     return 'PDF tidak dapat dibaca dari lokasi asal. Unduh atau simpan PDF ke perangkat, lalu pilih ulang berkasnya.';
   }
@@ -52,16 +54,26 @@ function letterErrorMessage(error, fallback) {
 
 function driveErrorMessage(error) {
   const message = String(error?.message || 'Layanan Google Drive tidak memberi keterangan.');
+  const schemaMessage = schemaSetupMessage(message);
+  if (schemaMessage) return `${schemaMessage} PDF belum dikirim. Coba unggah lagi setelah skema diperbarui.`;
   if (/failed to fetch|networkerror|load failed/i.test(message)) {
-    return 'Koneksi ke layanan unggah terputus. Periksa internet, lalu tekan Kirim ke AMC lagi untuk melanjutkan.';
+    return 'Koneksi ke layanan unggah terputus. Periksa internet, lalu coba unggah lagi dari formulir ini.';
   }
   if (/401|invalid jwt|jwt expired|sesi login/i.test(message)) {
-    return 'Sesi unggah berakhir. Masuk kembali, lalu tekan Kirim ke AMC lagi untuk mengunggah PDF.';
+    return 'Sesi unggah berakhir. Masuk kembali, lalu coba unggah PDF lagi dari formulir ini.';
   }
   if (/403|permission denied|not authorized|unauthorized|akses.*ditolak/i.test(message)) {
     return 'Google Drive menolak akses unggah. Surat sudah tercatat, tetapi PDF belum tersimpan. Hubungi Admin AMC untuk memeriksa akses folder Drive.';
   }
-  return `Surat sudah tercatat, tetapi PDF belum terkirim ke Google Drive. ${message} Tekan Kirim ke AMC lagi untuk mencoba ulang.`;
+  return `Surat sudah tercatat, tetapi PDF belum terkirim ke Google Drive. ${message} Coba unggah lagi dari formulir ini.`;
+}
+
+function schemaSetupMessage(message) {
+  if (!/could not find.*column.*schema cache|column .* does not exist/i.test(message)) return '';
+  if (/recipient_role|sender_confirmed_at|recipient_confirmed_at|profiles\.position|\bposition\b/i.test(message)) {
+    return 'Skema Persuratan Supabase belum lengkap. Minta Admin menerapkan migrasi database 007, lalu muat ulang halaman sebelum mencoba lagi.';
+  }
+  return 'Struktur database belum diperbarui. Minta Admin memeriksa dan menerapkan migrasi Supabase yang sesuai, lalu coba lagi.';
 }
 
 export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, syncDrive, confirmLetterComplete, setError }) {

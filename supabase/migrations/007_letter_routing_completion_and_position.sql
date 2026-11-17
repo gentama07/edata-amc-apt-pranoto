@@ -17,7 +17,17 @@ set recipient_role = case
   when direction = 'outbound' then 'ground_handling'
   else recipient_role
 end
-where recipient_role is null;
+where recipient_role is null and reply_to_id is null;
+
+-- Preserve the recipient side of existing reply records instead of classifying
+-- every old outbound reply as a Ground Handling document.
+update public.incoming_letters reply
+set recipient_role = case
+  when parent.recipient_role = 'pimpinan' then 'amc'
+  else 'ground_handling'
+end
+from public.incoming_letters parent
+where reply.reply_to_id = parent.id and reply.recipient_role is null;
 
 create or replace function public.can_read_correspondence(target_id uuid)
 returns boolean language sql stable security definer set search_path = public
@@ -38,6 +48,7 @@ as $$
 $$;
 
 drop policy if exists "internal and ground handling submit correspondence" on public.incoming_letters;
+drop policy if exists "role routed correspondence insert" on public.incoming_letters;
 create policy "role routed correspondence insert" on public.incoming_letters
 for insert to authenticated with check (
   (
