@@ -78,8 +78,6 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .apt-mark { height: 39px; width: 56px; display: grid; place-items: center; padding: 5px 7px; border-radius: 7px; background: #fff; }
 .apt-mark-dark { background: #171719; border: 1px solid rgba(255,255,255,.12); }
 .apt-mark img { display: block; width: 100%; max-height: 27px; object-fit: contain; }
-.amc-mark { width: 36px; height: 39px; display: grid; place-items: center; padding: 2px; border-radius: 6px; background: #303034; }
-.amc-mark img { max-width: 100%; max-height: 100%; object-fit: contain; }
 .brand-copy { display: flex; flex-direction: column; gap: 0; margin-left: 4px; line-height: 1.15; }
 .brand-copy strong { font-size: 15px; font-weight: 600; letter-spacing: -.25px; }
 .brand-copy span { margin-top: 4px; color: #c2c2c7; font-size: 11px; }
@@ -379,7 +377,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-left::before { content: ""; position: absolute; right: -135px; bottom: 11%; width: 500px; height: 500px; border: 1px solid rgba(255,255,255,.055); border-radius: 50%; box-shadow: 0 0 0 78px rgba(255,255,255,.018), 0 0 0 158px rgba(255,255,255,.012); }
 .login-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; }
 .login-brand .apt-mark { width: 58px; height: 42px; }
-.login-brand .amc-mark { width: 39px; height: 42px; }
 .login-brand > span { margin-left: 5px; font-size: 14px; font-weight: 600; letter-spacing: -.22px; }
 .login-story { position: relative; z-index: 1; max-width: 520px; margin: -12px auto 0; }
 .login-story h1 { margin: 15px 0 17px; font-family: "SF Pro Display", system-ui, sans-serif; font-size: clamp(40px, 5vw, 61px); font-weight: 600; line-height: 1.05; letter-spacing: -1.4px; }
@@ -454,7 +451,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .brand-lockup { min-width: 0; gap: 6px; flex: 1; }
   .apt-mark { width: 44px; height: 32px; padding: 4px; }
   .apt-mark img { max-height: 22px; }
-  .amc-mark { width: 29px; height: 32px; }
   .brand-copy { margin-left: 2px; }
   .brand-copy strong { font-size: 12px; }
   .brand-copy span { font-size: 8px; }
@@ -528,7 +524,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .login-left { min-height: 235px; padding: 20px 20px 16px; }
   .login-left::before { right: -230px; bottom: -320px; width: 420px; height: 420px; }
   .login-brand .apt-mark { width: 48px; height: 34px; }
-  .login-brand .amc-mark { width: 33px; height: 34px; }
   .login-brand > span { font-size: 12px; }
   .login-story { margin: 28px 0 13px; }
   .login-story h1 { margin: 9px 0; font-size: 32px; letter-spacing: -.72px; }
@@ -639,7 +634,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-brand { gap: 12px; flex-wrap: wrap; }
 .login-brand .login-apt-mark { flex: 0 0 clamp(136px, 13vw, 166px); width: clamp(136px, 13vw, 166px); height: 60px; padding: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 4px; background: #171719; }
 .login-apt-mark img { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
-.login-brand .amc-mark { flex: 0 0 54px; width: 54px; height: 54px; padding: 4px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; }
 .login-brand > span { flex: 1 1 240px; max-width: 440px; margin-left: 2px; color: #e4e4e6; font-size: 14px; font-weight: 600; line-height: 1.35; letter-spacing: .005em; text-wrap: balance; }
 .login-story { max-width: 580px; margin: 0 auto; }
 .login-story h1 { margin: 19px 0 20px; font-size: clamp(43px, 5vw, 68px); font-weight: 560; line-height: 1.02; letter-spacing: -2.7px; }
@@ -684,7 +678,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-config-note strong { font-size: 11px; }
 .login-config-note span { font-size: 10px; }
 .login-config-note code { font-size: 10px; }
-.apt-mark-image { width: 92px; height: 40px; padding: 1px; border: 1px solid rgba(255,255,255,.13); border-radius: 4px; background: #171719; }
+.apt-mark-image { width: 92px; height: 40px; padding: 1px; border: 1px solid rgba(29,29,31,.13); border-radius: 4px; background: #fff; }
 .apt-mark-image img { width: 100%; max-height: none; height: 100%; object-fit: contain; }
 .topbar .apt-mark-dark { border-radius: 4px; }
 .password-recovery-screen { padding: 24px; }
@@ -716,7 +710,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .login-left::before, .login-left::after { top: 105%; right: -60%; width: 340px; }
   .login-brand { gap: 9px; }
   .login-brand .login-apt-mark { flex-basis: clamp(112px, 38vw, 150px); width: clamp(112px, 38vw, 150px); height: 52px; }
-  .login-brand .amc-mark { flex-basis: 46px; width: 46px; height: 46px; }
   .login-brand > span { flex-basis: 100%; max-width: 440px; margin: 1px 0 0; font-size: 12px; }
   .login-story { margin: 25px 0 13px; }
   .login-story h1 { margin: 8px 0 9px; font-size: clamp(29px, 8vw, 37px); letter-spacing: -1px; }
@@ -731,12 +724,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .login-left { padding-right: 16px; padding-left: 16px; }
   .login-brand { gap: 8px; }
   .login-brand .login-apt-mark { flex-basis: clamp(112px, 38vw, 138px); width: clamp(112px, 38vw, 138px); }
-  .login-brand .amc-mark { flex-basis: 42px; width: 42px; height: 42px; }
   .login-footnote { letter-spacing: .03em; }
   .login-story h1 { font-size: 29px; }
   .login-right { padding-right: 16px; padding-left: 16px; }
   .login-footnote { gap: 5px; }
-  .topbar .brand-lockup .amc-mark { display: none; }
   .topbar .brand-copy { min-width: 80px; margin-left: 2px; }
   .topbar .brand-copy strong { white-space: nowrap; }
 }

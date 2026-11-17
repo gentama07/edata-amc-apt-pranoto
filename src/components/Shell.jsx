@@ -37,8 +37,7 @@ export function Shell({ app, active, setActive, children }) {
     <header className="topbar">
       <button className="mobile-menu-icon icon-button" aria-label={menuOpen ? 'Tutup navigasi' : 'Buka navigasi'} onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button>
       <div className="brand-lockup">
-        <div className={`apt-mark ${theme === 'dark' ? 'apt-mark-dark' : 'apt-mark-image'}`}><img width={theme === 'dark' ? '100' : '810'} height={theme === 'dark' ? '48' : '306'} src={`${import.meta.env.BASE_URL}assets/${theme === 'dark' ? 'logo-white-apt.svg' : 'logo-apt-main.png'}`} alt="Logo Bandar Udara A.P.T. Pranoto" /></div>
-        <div className="amc-mark"><img width="64" height="64" src={`${import.meta.env.BASE_URL}assets/logo-amc.png`} alt="Logo Apron Movement Control Indonesia" /></div>
+        <div className={`apt-mark ${theme === 'dark' ? 'apt-mark-dark' : 'apt-mark-image'}`}><img width="2082" height="792" src={`${import.meta.env.BASE_URL}assets/${theme === 'dark' ? 'logo-white-apt.svg' : 'logo-apt.svg'}`} alt="Logo Bandar Udara A.P.T. Pranoto" /></div>
         <div className="brand-copy"><strong>E-data AMC</strong><span>APT Pranoto · Samarinda</span></div>
       </div>
       <div className="topbar-right">
