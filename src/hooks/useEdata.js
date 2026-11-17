@@ -203,7 +203,12 @@ export function useEdata() {
     const form = new FormData(); form.append('file', file); form.append('letterId', letterId || '');
     const { data: { session: activeSession } } = await supabase.auth.getSession();
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drive-sync`, { method: 'POST', headers: { Authorization: `Bearer ${activeSession.access_token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }, body: form });
-    const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Sinkronisasi Google Drive gagal.');
+    const result = await response.json();
+    if (!response.ok) {
+      if (response.status === 401) throw new Error('Sesi login tidak sah atau sudah berakhir.');
+      if (response.status === 403) throw new Error(result.error || 'Akses unggah Google Drive ditolak.');
+      throw new Error(result.error || `Layanan Google Drive merespons HTTP ${response.status}.`);
+    }
     await loadRemote(); return result;
   };
 
