@@ -19,7 +19,8 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(airportDate());
   const [editing, setEditing] = useState(null);
   const portalMode = new URLSearchParams(location.search).get('portal') === 'ground-handling';
-  useEffect(() => { if (!app.profile) { setActive('summary'); setEditing(null); window.scrollTo(0, 0); } else if (app.profile.role === 'ground_handling') setActive(current => current === 'profile' ? current : 'letters'); }, [app.profile?.role]);
+  const profileRole = app.profile?.role;
+  useEffect(() => { if (!profileRole) { setActive('summary'); setEditing(null); window.scrollTo(0, 0); } else if (profileRole === 'ground_handling') setActive(current => current === 'profile' ? current : 'letters'); }, [profileRole]);
   if (app.passwordRecovery) return <PasswordRecovery finishPasswordRecovery={app.finishPasswordRecovery} />;
   if (!app.recoveryChecked && new URLSearchParams(location.search).get('recovery') === '1') return <main className="password-recovery-screen"><section className="panel password-recovery-card" role="status">Memeriksa tautan pemulihan…</section></main>;
   if (app.recoveryInvalid) return <PasswordRecovery invalid finishPasswordRecovery={app.finishPasswordRecovery} />;
@@ -31,7 +32,7 @@ export default function App() {
   const content = currentPage === 'input' && canWrite ? <MovementForm date={selectedDate} initial={editing} onCancel={() => { setActive('movements'); setEditing(null); }} onSave={saveMovement} setError={app.setError} />
     : currentPage === 'movements' ? <Movements rows={app.movements} selectedDate={selectedDate} canWrite={canWrite} onInput={() => openInput()} onEdit={row => openInput(row)} onDelete={async id => { try { await app.deleteMovement(id); } catch (error) { app.setError(error.message); } }} />
     : currentPage === 'reports' ? <Reports rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />
-    : currentPage === 'letters' ? <Letters letters={app.letters} messages={app.messages} profile={app.profile} canWrite={canWrite} canReply={['admin', 'personel', 'pimpinan'].includes(app.profile.role)} demo={app.demo} onCreate={app.createLetter} onReply={app.createReply} onMessage={app.sendMessage} onDelete={app.deleteLetter} onUpdate={app.updateLetter} syncDrive={app.syncDrive} setError={app.setError} />
+    : currentPage === 'letters' ? <Letters letters={app.letters} messages={app.messages} profile={app.profile} canWrite={canWrite} canReply={['admin', 'personel', 'pimpinan'].includes(app.profile.role)} demo={app.demo} onCreate={app.createLetter} onReply={app.createReply} onMessage={app.sendMessage} onDelete={app.deleteLetter} syncDrive={app.syncDrive} setError={app.setError} />
     : currentPage === 'users' && app.profile.role === 'admin' ? <Users app={app} />
     : currentPage === 'profile' ? <Profile app={app} />
     : <Dashboard rows={app.movements} selectedDate={selectedDate} setSelectedDate={setSelectedDate} />;
