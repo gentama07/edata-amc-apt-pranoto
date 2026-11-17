@@ -49,17 +49,19 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
     let frame = 0;
     let travelDirection = 1;
     let holdUntil = 0;
+    let position = viewport.scrollLeft;
     const tick = time => {
       const delta = previousTime ? Math.min(time - previousTime, 40) : 0;
       previousTime = time;
       const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-      if (motionAllowed && !viewport.contains(document.activeElement) && time - lastManualScrollRef.current > 1800 && document.visibilityState === 'visible' && time >= holdUntil && maxScroll > 1) {
-        viewport.scrollLeft = Math.max(0, Math.min(maxScroll, viewport.scrollLeft + travelDirection * delta * 0.045));
-        if (viewport.scrollLeft >= maxScroll - 1 || (viewport.scrollLeft <= 0 && travelDirection < 0)) {
+      if (motionAllowed && time - lastManualScrollRef.current > 1200 && document.visibilityState === 'visible' && time >= holdUntil && maxScroll > 1) {
+        position = Math.max(0, Math.min(maxScroll, position + travelDirection * delta * 0.065));
+        viewport.scrollLeft = position;
+        if (position >= maxScroll - 1 || (position <= 0 && travelDirection < 0)) {
           travelDirection *= -1;
           holdUntil = time + 700;
         }
-      }
+      } else position = viewport.scrollLeft;
       frame = window.requestAnimationFrame(tick);
     };
     const handleMotionPreference = event => { motionAllowed = !event.matches; previousTime = 0; if (event.matches) setAutoScroll(false); };
@@ -82,7 +84,7 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
         <button className="button-secondary filter-reset" onClick={reset}><FilterX size={15} />Reset filter</button>
       </div>
       <div className="table-summary"><span>Menampilkan <strong>{filtered.length}</strong> dari <strong>{rows.filter(row => !selectedDate || row.date === selectedDate).length}</strong> pergerakan</span><div className="table-summary-actions">{visibleRows.length > 0 && <button className="text-action auto-scroll-toggle" aria-label={autoScroll ? 'Jeda gulir otomatis' : 'Jalankan gulir otomatis'} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? <Pause size={14} /> : <Play size={14} />}{autoScroll ? 'Jeda gulir' : 'Gulir otomatis'}</button>}<button className="text-action" onClick={exportRows}><Download size={15} />Ekspor CSV</button></div></div>
-      <div ref={tableScrollRef} className={`table-scroll ${visibleRows.length > 5 ? 'table-scroll-loop' : ''}`} onPointerMove={() => { lastManualScrollRef.current = performance.now(); }} onWheel={() => { lastManualScrollRef.current = performance.now(); }}>
+      <div ref={tableScrollRef} className={`table-scroll ${visibleRows.length > 5 ? 'table-scroll-loop' : ''}`} onPointerDown={() => { lastManualScrollRef.current = performance.now(); }} onPointerMove={event => { if (event.buttons) lastManualScrollRef.current = performance.now(); }} onWheel={() => { lastManualScrollRef.current = performance.now(); }}>
         <table className="movement-table"><thead><tr>
           {columns.map(([key, label]) => <th key={key}><button className="sort-button" onClick={() => changeSort(key)}>{label}<ArrowUpDown size={11} /></button></th>)}{canWrite && <th>Aksi</th>}
         </tr></thead>
