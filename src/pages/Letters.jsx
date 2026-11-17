@@ -24,7 +24,9 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const validatePdf = async file => {
     if (!file) return;
     if (!file.name.toLocaleLowerCase('id-ID').endsWith('.pdf') || file.size > MAX_PDF_BYTES) throw new Error('Lampiran wajib PDF dan maksimal 10 MB.');
-    const signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer());
+    let signature;
+    try { signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()); }
+    catch { throw new Error('Browser tidak dapat membaca PDF ini. Pilih ulang berkas dari penyimpanan lokal. Jika berkas ada di cloud, unduh ke perangkat terlebih dahulu.'); }
     if (signature !== '%PDF-') throw new Error('Isi berkas tidak terbaca sebagai PDF. Pilih berkas PDF yang benar.');
   };
 
@@ -100,7 +102,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         <label className="field">Nama pengirim <span className="required-mark">*</span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
         <label className="field">Perusahaan Ground Handling<input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
         <label className="field field-full">Perihal surat <span className="required-mark">*</span><input name="subject" value={form.subject} onChange={update} required placeholder="Tujuan atau ringkasan surat" /></label>
-        <label className="field field-full">Lampiran PDF {external && <span className="required-mark">* wajib</span>}<input type="file" accept="application/pdf,.pdf" onChange={event => setAttachment(event.target.files?.[0] || null)} required={external} /><small className="field-hint">{attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
+        <label className="field field-full">Lampiran PDF {external && <span className="required-mark">* wajib</span>}<input type="file" accept="application/pdf,.pdf" onChange={event => { setAttachment(event.target.files?.[0] || null); event.target.value = ''; }} required={external} /><small className="field-hint">{attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
       </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>
     </section>}
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
@@ -123,7 +125,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         {thread.length === 0 && <p className="thread-empty">Belum ada balasan. Pesan baru akan muncul langsung di percakapan ini.</p>}
       </div>
       {canReply && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis pesan untuk pengirim surat…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form>
-        <form className="thread-file-form" onSubmit={sendReply}><label className="field">Balas dengan surat resmi (PDF)<input type="file" accept="application/pdf,.pdf" onChange={event => setReplyFile(event.target.files?.[0] || null)} /><small className="field-hint">{replyFile?.name || 'PDF maksimal 10 MB akan dikirim ke folder GROUND HANDLING.'}</small></label><button className="button-secondary" disabled={busy || !replyFile}><Upload size={15} />{busy ? 'Mengirim…' : 'Kirim surat balasan'}</button></form>
+        <form className="thread-file-form" onSubmit={sendReply}><label className="field">Balas dengan surat resmi (PDF)<input type="file" accept="application/pdf,.pdf" onChange={event => { setReplyFile(event.target.files?.[0] || null); event.target.value = ''; }} /><small className="field-hint">{replyFile?.name || 'PDF maksimal 10 MB akan dikirim ke folder GROUND HANDLING.'}</small></label><button className="button-secondary" disabled={busy || !replyFile}><Upload size={15} />{busy ? 'Mengirim…' : 'Kirim surat balasan'}</button></form>
       </div>}
       {external && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis balasan atau pertanyaan…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form></div>}
       {canWrite && <p className="drive-delete-note"><Check size={14} /> Hapus surat hanya menghapus catatan dan percakapan di website; arsip Google Drive tetap tersedia.</p>}
