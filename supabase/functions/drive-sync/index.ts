@@ -64,16 +64,28 @@ Deno.serve(async (request) => {
 
     if (!letterId) return json({ error: 'Data surat harus disimpan sebelum berkas dikirim.' }, 400, origin)
     const { data: letter, error: letterError } = await userClient.from('incoming_letters')
-      .select('id,direction,requester_id').eq('id', letterId).single()
+      .select('id,direction,requester_id,reply_to_id').eq('id', letterId).single()
     if (letterError || !letter) return json({ error: 'Surat tidak ditemukan atau Anda tidak memiliki akses.' }, 404, origin)
-    const destination = profile.role === 'ground_handling'
-      ? 'GROUND HANDLING'
-      : profile.role === 'personel'
-        ? 'PETUGAS AMC'
-        : 'ADMIN/PIMPINAN'
+    if (profile.role === 'ground_handling' && (letter.direction !== 'inbound' || letter.requester_id !== user.id)) {
+      return json({ error: 'Akun Ground Handling hanya dapat mengunggah PDF pada surat miliknya.' }, 403, origin)
+    }
+    if (profile.role === 'pimpinan' && (letter.direction !== 'outbound' || !letter.reply_to_id)) {
+      return json({ error: 'Pimpinan hanya dapat mengunggah PDF balasan surat.' }, 403, origin)
+    }
+    const destinationByRole: Record<string, string> = {
+      ground_handling: 'GROUND HANDLING',
+      personel: 'PETUGAS AMC',
+      admin: 'ADMIN/PIMPINAN',
+      pimpinan: 'ADMIN/PIMPINAN',
+    }
+    const destination = destinationByRole[profile.role]
+    if (!destination) return json({ error: 'Peran akun tidak memiliki folder arsip.' }, 403, origin)
     const { data: requester, error: requesterError } = await adminClient.from('profiles')
       .select('email').eq('id', letter.requester_id).eq('active', true).maybeSingle()
     if (requesterError) throw requesterError
+    if (letter.direction === 'outbound' && !requester?.email) {
+      return json({ error: 'Email akun Ground Handling penerima tidak ditemukan. Periksa profil akun sebelum mengirim balasan.' }, 422, origin)
+    }
     const viewerEmail = profile.role === 'ground_handling' ? user.email : requester?.email
 
     const drive = await callAppsScript({
