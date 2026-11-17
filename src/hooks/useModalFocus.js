@@ -69,3 +69,4 @@ export function useModalFocus(dialogRef, { enabled = true, onEscape, initialFocu
     };
   }, [dialogRef, enabled]);
 }
+
