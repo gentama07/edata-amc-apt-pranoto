@@ -5,11 +5,46 @@ import { PageHeading } from '../components/Shell';
 
 const statusOptions = ['Baru', 'Dalam proses', 'Menunggu balasan', 'Dibalas', 'Selesai', 'Diarsipkan'];
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
+const pdfSnapshots = new WeakSet();
+
+async function preparePdf(file) {
+  if (!file) throw new Error('Pilih berkas PDF terlebih dahulu.');
+  if (!file.name.toLocaleLowerCase('id-ID').endsWith('.pdf')) throw new Error('Berkas harus berformat PDF.');
+  if (!file.size || file.size > MAX_PDF_BYTES) throw new Error('Ukuran PDF harus antara 1 byte dan 10 MB.');
+  if (pdfSnapshots.has(file)) return file;
+
+  let bytes;
+  try { bytes = await file.arrayBuffer(); }
+  catch {
+    throw new Error('PDF tidak dapat dibaca dari lokasi asal. Unduh atau simpan PDF ke perangkat, lalu pilih ulang berkasnya.');
+  }
+  if (new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') throw new Error('Isi berkas tidak terbaca sebagai PDF. Pilih berkas PDF yang benar.');
+
+  // Copy the selected file into memory before releasing the browser file-picker reference.
+  const snapshot = new File([bytes], file.name, { type: 'application/pdf', lastModified: file.lastModified });
+  pdfSnapshots.add(snapshot);
+  return snapshot;
+}
+
+function letterErrorMessage(error, fallback) {
+  const message = String(error?.message || '');
+  if (/requested file could not be read|permission problems? .*file/i.test(message)) {
+    return 'PDF tidak dapat dibaca dari lokasi asal. Unduh atau simpan PDF ke perangkat, lalu pilih ulang berkasnya.';
+  }
+  if (/failed to fetch|networkerror|load failed/i.test(message)) {
+    return 'Koneksi ke layanan surat terputus. Periksa koneksi internet, lalu coba kirim lagi.';
+  }
+  if (/row-level security|permission denied|not authorized|unauthorized|invalid jwt|jwt expired/i.test(message)) {
+    return 'Akun ini tidak memiliki izin untuk mengirim surat. Masuk kembali atau hubungi Admin AMC.';
+  }
+  return message || fallback;
+}
 
 export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, onUpdate, syncDrive, setError }) {
   const external = profile.role === 'ground_handling';
   const [adding, setAdding] = useState(false); const [activeId, setActiveId] = useState('');
   const [busy, setBusy] = useState(false); const [attachment, setAttachment] = useState(null);
+  const [readingPdf, setReadingPdf] = useState(false);
   const [chatDraft, setChatDraft] = useState(''); const [replyFile, setReplyFile] = useState(null);
   const [pendingLetterId, setPendingLetterId] = useState(''); const [pendingReplyIds, setPendingReplyIds] = useState({});
   const [retryId, setRetryId] = useState(''); const retryInput = useRef(null);
@@ -21,40 +56,43 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const threadMessages = selected ? messages.filter(message => message.letter_id === selected.id) : [];
   const thread = [...replies.map(row => ({ ...row, kind: 'letter', at: row.createdAt || row.date })), ...threadMessages.map(row => ({ ...row, kind: 'message', at: row.created_at }))].sort((a, b) => String(a.at).localeCompare(String(b.at)));
 
-  const validatePdf = async file => {
+  const choosePdf = async (event, saveFile) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
     if (!file) return;
-    if (!file.name.toLocaleLowerCase('id-ID').endsWith('.pdf') || file.size > MAX_PDF_BYTES) throw new Error('Lampiran wajib PDF dan maksimal 10 MB.');
-    let signature;
-    try { signature = new TextDecoder().decode(await file.slice(0, 5).arrayBuffer()); }
-    catch { throw new Error('Browser tidak dapat membaca PDF ini. Pilih ulang berkas dari penyimpanan lokal. Jika berkas ada di cloud, unduh ke perangkat terlebih dahulu.'); }
-    if (signature !== '%PDF-') throw new Error('Isi berkas tidak terbaca sebagai PDF. Pilih berkas PDF yang benar.');
+    setReadingPdf(true);
+    setError('');
+    try { saveFile(await preparePdf(file)); }
+    catch (error) { saveFile(null); setError(letterErrorMessage(error, 'PDF gagal dibaca. Pilih ulang berkas dari perangkat.')); }
+    finally { input.value = ''; setReadingPdf(false); }
   };
 
   const uploadPdf = async (file, letterId) => {
-    await validatePdf(file);
-    if (!demo) await syncDrive(file, letterId);
+    const snapshot = await preparePdf(file);
+    if (!demo) await syncDrive(snapshot, letterId);
   };
 
   const submit = async event => {
     event.preventDefault(); setError('');
+    if (readingPdf) { setError('Tunggu sampai pemeriksaan PDF selesai.'); return; }
     if (!form.date) { setError('Tanggal surat wajib diisi.'); return; }
     if (!form.sender.trim() || !form.subject.trim() || (external && !attachment)) { setError(external ? 'Nama pengirim, perihal, dan berkas PDF wajib diisi.' : 'Pengirim dan perihal wajib diisi.'); return; }
     if (external && !profile.organization) { setError('Perusahaan akun belum diatur. Hubungi Admin AMC.'); return; }
     setBusy(true);
     try {
-      if (attachment) await validatePdf(attachment);
+      const pdf = attachment ? await preparePdf(attachment) : null;
       const saved = pendingLetterId ? { id: pendingLetterId } : await onCreate({
         ...form,
         reference: form.reference.trim() || `GH-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Date.now().toString().slice(-5)}`,
         sender: form.sender.trim(), senderOrganization: external ? profile.organization : form.senderOrganization.trim() || form.sender.trim(),
         subject: form.subject.trim(), direction: 'inbound', status: 'Baru',
-        fileName: attachment?.name || '', requesterId: external ? profile.id : undefined,
+        fileName: pdf?.name || '', requesterId: external ? profile.id : undefined,
       });
-      if (attachment && !demo) setPendingLetterId(saved.id);
-      if (attachment && !demo) await uploadPdf(attachment, saved.id);
+      if (pdf && !demo) setPendingLetterId(saved.id);
+      if (pdf && !demo) await uploadPdf(pdf, saved.id);
       setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : '', senderOrganization: external ? profile.organization || '' : '', subject: '', status: 'Baru' });
       setPendingLetterId(''); setAttachment(null); setAdding(false); setActiveId(saved.id);
-    } catch (error) { setError(error.message || 'Surat gagal dikirim.'); }
+    } catch (error) { setError(letterErrorMessage(error, 'Surat gagal dikirim. Data surat tersimpan; pilih Kirim surat lagi untuk mencoba unggah ulang.')); }
     finally { setBusy(false); }
   };
 
@@ -67,15 +105,15 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   };
 
   const sendReply = async event => {
-    event.preventDefault(); if (!selected || !replyFile) return;
+    event.preventDefault(); if (!selected || !replyFile || readingPdf) return;
     setBusy(true);
     try {
-      await validatePdf(replyFile);
-      const saved = pendingReplyIds[selected.id] ? { id: pendingReplyIds[selected.id] } : await onReply(selected, { fileName: replyFile.name, subject: `Balasan: ${selected.subject}` });
+      const pdf = await preparePdf(replyFile);
+      const saved = pendingReplyIds[selected.id] ? { id: pendingReplyIds[selected.id] } : await onReply(selected, { fileName: pdf.name, subject: `Balasan: ${selected.subject}` });
       if (!demo) setPendingReplyIds(current => ({ ...current, [selected.id]: saved.id }));
-      if (!demo) await syncDrive(replyFile, saved.id);
+      if (!demo) await syncDrive(pdf, saved.id);
       setPendingReplyIds(current => { const next = { ...current }; delete next[selected.id]; return next; }); setReplyFile(null);
-    } catch (error) { setError(error.message || 'Surat balasan gagal dikirim.'); }
+    } catch (error) { setError(letterErrorMessage(error, 'Surat balasan gagal dikirim. Coba unggah PDF kembali.')); }
     finally { setBusy(false); }
   };
 
@@ -87,8 +125,8 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const retryUpload = async event => {
     const file = event.target.files?.[0]; if (!file || !retryId) return;
     setBusy(true);
-    try { await uploadPdf(file, retryId); }
-    catch (error) { setError(error.message || 'PDF gagal diunggah.'); }
+    try { await uploadPdf(await preparePdf(file), retryId); }
+    catch (error) { setError(letterErrorMessage(error, 'PDF gagal diunggah. Pilih ulang berkas lalu coba lagi.')); }
     finally { setBusy(false); setRetryId(''); event.target.value = ''; }
   };
 
@@ -102,8 +140,8 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         <label className="field">Nama pengirim <span className="required-mark">*</span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
         <label className="field">Perusahaan Ground Handling<input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
         <label className="field field-full">Perihal surat <span className="required-mark">*</span><input name="subject" value={form.subject} onChange={update} required placeholder="Tujuan atau ringkasan surat" /></label>
-        <label className="field field-full">Lampiran PDF {external && <span className="required-mark">* wajib</span>}<input type="file" accept="application/pdf,.pdf" onChange={event => { setAttachment(event.target.files?.[0] || null); event.target.value = ''; }} required={external} /><small className="field-hint">{attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
-      </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>
+        <label className="field field-full">Lampiran PDF {external && <span className="required-mark">* wajib</span>}<input type="file" accept="application/pdf,.pdf" onChange={event => { void choosePdf(event, setAttachment); }} required={external} /><small className="field-hint">{readingPdf ? 'Memeriksa dan menyiapkan PDF…' : attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
+      </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy || readingPdf}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>
     </section>}
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
       {roots.length ? <div className="letter-list">{roots.map(letter => <article className={`letter-row correspondence-row ${activeId === letter.id ? 'letter-selected' : ''}`} key={letter.id}>
@@ -125,7 +163,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         {thread.length === 0 && <p className="thread-empty">Belum ada balasan. Pesan baru akan muncul langsung di percakapan ini.</p>}
       </div>
       {canReply && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis pesan untuk pengirim surat…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form>
-        <form className="thread-file-form" onSubmit={sendReply}><label className="field">Balas dengan surat resmi (PDF)<input type="file" accept="application/pdf,.pdf" onChange={event => { setReplyFile(event.target.files?.[0] || null); event.target.value = ''; }} /><small className="field-hint">{replyFile?.name || 'PDF maksimal 10 MB akan dikirim ke folder GROUND HANDLING.'}</small></label><button className="button-secondary" disabled={busy || !replyFile}><Upload size={15} />{busy ? 'Mengirim…' : 'Kirim surat balasan'}</button></form>
+        <form className="thread-file-form" onSubmit={sendReply}><label className="field">Balas dengan surat resmi (PDF)<input type="file" accept="application/pdf,.pdf" onChange={event => { void choosePdf(event, setReplyFile); }} /><small className="field-hint">{readingPdf ? 'Memeriksa dan menyiapkan PDF…' : replyFile?.name || 'PDF maksimal 10 MB akan dikirim ke folder GROUND HANDLING.'}</small></label><button className="button-secondary" disabled={busy || readingPdf || !replyFile}><Upload size={15} />{busy ? 'Mengirim…' : 'Kirim surat balasan'}</button></form>
       </div>}
       {external && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis balasan atau pertanyaan…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form></div>}
       {canWrite && <p className="drive-delete-note"><Check size={14} /> Hapus surat hanya menghapus catatan dan percakapan di website; arsip Google Drive tetap tersedia.</p>}
