@@ -3,9 +3,15 @@ import { ArrowDownLeft, ArrowUpRight, Check, FileText, MessageCircle, Plus, Send
 import { airportDate, formatDateLong } from '../lib/time';
 import { PageHeading } from '../components/Shell';
 
-const statusOptions = ['Baru', 'Dalam proses', 'Menunggu balasan', 'Dibalas', 'Selesai', 'Diarsipkan'];
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const pdfSnapshots = new WeakSet();
+
+function correspondenceStatus(letter, allLetters, allMessages) {
+  if (letter.direction === 'outbound') return 'Terkirim';
+  if (allLetters.some(item => item.replyToId === letter.id)) return 'Dibalas';
+  if (allMessages.some(message => message.letter_id === letter.id)) return 'Dalam proses';
+  return 'Baru';
+}
 
 async function preparePdf(file) {
   if (!file) throw new Error('Pilih berkas PDF terlebih dahulu.');
@@ -57,7 +63,7 @@ function driveErrorMessage(error) {
   return `Surat sudah tercatat, tetapi PDF belum terkirim ke Google Drive. ${message} Tekan Kirim ke AMC lagi untuk mencoba ulang.`;
 }
 
-export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, onUpdate, syncDrive, setError }) {
+export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, syncDrive, setError }) {
   const external = profile.role === 'ground_handling';
   const [adding, setAdding] = useState(false); const [activeId, setActiveId] = useState('');
   const [busy, setBusy] = useState(false); const [attachment, setAttachment] = useState(null);
@@ -65,7 +71,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const [chatDraft, setChatDraft] = useState(''); const [replyFile, setReplyFile] = useState(null);
   const [pendingLetterId, setPendingLetterId] = useState(''); const [pendingReplyIds, setPendingReplyIds] = useState({});
   const [retryId, setRetryId] = useState(''); const retryInput = useRef(null);
-  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: profile.organization || '', subject: '', status: 'Baru' });
+  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: profile.organization || '', subject: '' });
   const update = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }));
   const roots = useMemo(() => letters.filter(letter => !letter.replyToId), [letters]);
   const selected = roots.find(letter => letter.id === activeId);
@@ -104,7 +110,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         ...form,
         reference: form.reference.trim() || `GH-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Date.now().toString().slice(-5)}`,
         sender: form.sender.trim(), senderOrganization: external ? profile.organization : form.senderOrganization.trim() || form.sender.trim(),
-        subject: form.subject.trim(), direction: 'inbound', status: 'Baru',
+        subject: form.subject.trim(), direction: 'inbound',
         fileName: pdf?.name || '', requesterId: external ? profile.id : undefined,
       });
       if (pdf && !demo) {
@@ -112,7 +118,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         phase = 'drive';
         await uploadPdf(pdf, saved.id);
       }
-      setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : '', senderOrganization: external ? profile.organization || '' : '', subject: '', status: 'Baru' });
+      setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : '', senderOrganization: external ? profile.organization || '' : '', subject: '' });
       setPendingLetterId(''); setAttachment(null); setAdding(false); setActiveId(saved.id);
     } catch (error) {
       setError(phase === 'drive'
@@ -170,17 +176,24 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
       </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy || readingPdf}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>
     </section>}
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
-      {roots.length ? <div className="letter-list">{roots.map(letter => <article className={`letter-row correspondence-row ${activeId === letter.id ? 'letter-selected' : ''}`} key={letter.id}>
-        <div className="letter-file-icon">{letter.direction === 'outbound' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</div>
-        <button className="letter-main letter-open" onClick={() => setActiveId(activeId === letter.id ? '' : letter.id)} aria-expanded={activeId === letter.id}>
-          <span className="letter-meta"><span>{letter.reference}</span><span aria-hidden="true">·</span><span>{letter.date}</span><span aria-hidden="true">·</span><span>{letter.senderOrganization || letter.sender}</span></span>
-          <strong className="letter-subject">{letter.subject}</strong><span className="letter-sender">{letter.sender}</span>
-          <span className="letter-fileline">{letter.fileName ? <span className="file-name"><FileText size={13} />{letter.fileName}</span> : <span className="no-file">Belum ada PDF</span>}{letter.driveFolder && <span className="drive-connected">Drive · {letter.driveFolder}</span>}</span>
-        </button>
-        {canWrite ? <label className="letter-status-control">Status<select aria-label={`Status ${letter.reference}`} value={letter.status} onChange={event => onUpdate(letter.id, { status: event.target.value }).catch(error => setError(error.message))}>{statusOptions.map(status => <option key={status}>{status}</option>)}</select></label> : <span className={`letter-status status-${letter.status === 'Selesai' || letter.status === 'Diarsipkan' ? 'archived' : letter.status === 'Baru' ? 'new' : 'followup'}`}>{letter.status}</span>}
-        {canWrite && <button className="icon-button delete-letter" aria-label={`Hapus ${letter.reference}`} onClick={() => removeLetter(letter)}><Trash2 size={16} /></button>}
-        {!letter.driveFileId && letter.fileName && <button className="button-secondary retry-letter-upload" onClick={() => { setRetryId(letter.id); retryInput.current?.click(); }} disabled={busy}><Upload size={14} />Lengkapi PDF</button>}
-      </article>)}</div> : <div className="letters-empty"><div className="letters-empty-icon"><FileText size={22} aria-hidden="true" /></div><div className="letters-empty-copy"><strong>{external ? 'Belum ada surat yang dikirim' : 'Belum ada surat masuk'}</strong><span>{external ? 'Surat yang Anda kirim dan balasan AMC tampil di sini.' : 'Surat dari Ground Handling akan tampil di sini.'}</span></div></div>}
+      {roots.length ? <div className="letter-list">{roots.map(letter => {
+        const status = correspondenceStatus(letter, letters, messages);
+        const tone = status === 'Dibalas' ? 'archived' : status === 'Dalam proses' ? 'followup' : 'new';
+        return <article className={`letter-row correspondence-row ${activeId === letter.id ? 'letter-selected' : ''}`} key={letter.id}>
+          <div className="letter-file-icon" aria-hidden="true">{letter.direction === 'outbound' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</div>
+          <button className="letter-main letter-open" onClick={() => setActiveId(activeId === letter.id ? '' : letter.id)} aria-expanded={activeId === letter.id}>
+            <span className="letter-meta"><span>{letter.reference}</span><span aria-hidden="true">·</span><span>{letter.date}</span><span aria-hidden="true">·</span><span>{letter.senderOrganization || letter.sender}</span></span>
+            <strong className="letter-subject">{letter.subject}</strong><span className="letter-sender">{letter.sender}</span>
+            <span className="letter-fileline">{letter.fileName ? <span className="file-name"><FileText size={13} />{letter.fileName}</span> : <span className="no-file">Belum ada PDF</span>}{letter.driveFolder && <span className="drive-connected">Drive · {letter.driveFolder}</span>}</span>
+          </button>
+          <div className="letter-status-block" aria-label={`Status otomatis: ${status}`} title="Status dihitung dari surat balasan dan aktivitas percakapan.">
+            <span className="letter-status-label">Status otomatis</span>
+            <span className={`letter-status status-${tone}`}>{status}</span>
+          </div>
+          {canWrite && <button className="icon-button delete-letter" aria-label={`Hapus ${letter.reference}`} onClick={() => removeLetter(letter)}><Trash2 size={16} /></button>}
+          {!letter.driveFileId && letter.fileName && <button className="button-secondary retry-letter-upload" onClick={() => { setRetryId(letter.id); retryInput.current?.click(); }} disabled={busy}><Upload size={14} />Lengkapi PDF</button>}
+        </article>;
+      })}</div> : <div className="letters-empty"><div className="letters-empty-icon"><FileText size={22} aria-hidden="true" /></div><div className="letters-empty-copy"><strong>{external ? 'Belum ada surat yang dikirim' : 'Belum ada surat masuk'}</strong><span>{external ? 'Surat yang Anda kirim dan balasan AMC tampil di sini.' : 'Surat dari Ground Handling akan tampil di sini.'}</span></div></div>}
     </section>
     {selected && <section className="panel correspondence-thread"><div className="panel-heading"><div><span className="panel-kicker">RIWAYAT SURAT</span><h2>{selected.subject}</h2><p>{selected.senderOrganization || selected.sender} · {selected.reference}</p></div><button className="close-form" onClick={() => setActiveId('')} aria-label="Tutup detail"><X size={17} /></button></div>
       <div className="thread-body">
