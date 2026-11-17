@@ -126,7 +126,6 @@ export function useEdata() {
         sender: row.sender,
         sender_organization: row.senderOrganization || row.sender,
         subject: row.subject,
-        status: row.status || 'Baru',
         file_name: row.fileName || null,
         direction: row.direction || 'inbound',
         requester_id: row.requesterId || session.user.id,
@@ -143,20 +142,16 @@ export function useEdata() {
   };
   const createReply = async (parent, row) => {
     if (!session) {
-      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, status: 'Dibalas', sender: profile.name, senderOrganization: 'A.P.T. Pranoto · AMC' };
+      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, sender: profile.name, senderOrganization: 'A.P.T. Pranoto · AMC' };
       const next = [saved, ...letters]; setLetters(next); persistDemo(readDemo().movements, next); return saved;
     }
     const { data, error: insertError } = await supabase.from('incoming_letters').insert({
       reference: row.reference || `BAL-${Date.now()}`, received_date: new Date().toISOString().slice(0, 10),
       sender: profile.name, sender_organization: 'A.P.T. Pranoto · AMC', subject: row.subject || `Balasan: ${parent.subject}`,
-      status: 'Dibalas', direction: 'outbound', requester_id: parent.requesterId || parent.requester_id,
+      direction: 'outbound', requester_id: parent.requesterId || parent.requester_id,
       reply_to_id: parent.id, file_name: row.fileName || null, created_by: session.user.id,
     }).select().single();
     if (insertError) throw insertError;
-    if (['admin', 'personel'].includes(profile?.role)) {
-      const { error: statusError } = await supabase.from('incoming_letters').update({ status: 'Dibalas' }).eq('id', parent.id);
-      if (statusError) throw statusError;
-    }
     await loadRemote();
     return { ...row, id: data.id };
   };
@@ -185,10 +180,6 @@ export function useEdata() {
   const deleteMovement = async (id) => {
     if (session) { const { error: deleteError } = await supabase.from('movements').delete().eq('id', id); if (deleteError) throw deleteError; await loadRemote(); return; }
     const data = readDemo(); const next = data.movements.filter(row => row.id !== id); setMovements(next); persistDemo(next, data.letters);
-  };
-  const updateLetter = async (id, updates) => {
-    if (session) { const { error: updateError } = await supabase.from('incoming_letters').update(updates).eq('id', id); if (updateError) throw updateError; await loadRemote(); return; }
-    const data = readDemo(); const next = data.letters.map(row => row.id === id ? { ...row, ...updates } : row); setLetters(next); persistDemo(data.movements, next);
   };
   const deleteLetter = async (id) => {
     if (!['admin', 'personel'].includes(profile?.role)) throw new Error('Hanya Admin atau Personel AMC yang dapat menghapus surat.');
@@ -303,7 +294,7 @@ export function useEdata() {
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
 
 
