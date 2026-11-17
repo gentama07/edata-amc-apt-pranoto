@@ -18,7 +18,7 @@ export function Shell({ app, active, setActive, children }) {
   const [now, setNow] = useState(new Date());
   const [theme, setTheme] = useState(() => localStorage.getItem('amc-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showOpening, setShowOpening] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [showOpening, setShowOpening] = useState(() => app.openingRequested && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const finishOpening = useCallback(() => setShowOpening(false), []);
   const [airportVideo, setAirportVideo] = useState('');
   useEffect(() => {
@@ -80,7 +80,7 @@ export function Shell({ app, active, setActive, children }) {
 
 function Opening({ onDone }) {
   useEffect(() => { const timeout = window.setTimeout(onDone, 45000); return () => window.clearTimeout(timeout); }, [onDone]);
-  return <div className="opening-video" aria-label="Animasi pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={`${import.meta.env.BASE_URL}assets/animasi-logo.mp4`} /><button type="button" className="opening-skip" onClick={onDone}>Lewati pembuka</button></div>;
+  return <div className="opening-video" aria-label="Animasi pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={`${import.meta.env.BASE_URL}assets/animasi-logo.mp4`} /></div>;
 }
 
 export function PageHeading({ title, description, action }) {

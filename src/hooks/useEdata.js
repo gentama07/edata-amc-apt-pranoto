@@ -22,6 +22,7 @@ const toDb = (row) => ({ operating_date: row.date, operator: row.operator, aircr
 export function useEdata() {
   const [profile, setProfile] = useState(null);
   const [session, setSession] = useState(null);
+  const [openingRequested, setOpeningRequested] = useState(false);
   const [movements, setMovements] = useState([]);
   const [letters, setLetters] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -112,12 +113,14 @@ export function useEdata() {
   const signIn = async (email, password) => {
     setError('');
     if (!isSupabaseConfigured) throw new Error('Mode lokal tidak menerima akun produksi. Pilih salah satu peran demo.');
+    setOpeningRequested(true);
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
-    if (authError) throw authError;
+    if (authError) { setOpeningRequested(false); throw authError; }
   };
   const signInDemo = (role) => {
     if (isSupabaseConfigured) throw new Error('Akun demo hanya tersedia saat Supabase belum dikonfigurasi.');
     const account = demoAccounts.find(item => item.role === role);
+    setOpeningRequested(true);
     setProfile({ id: `demo-${role}`, name: account.label, role, email: account.email, organization: account.organization || '', nip: '', avatarPath: '', avatarUrl: '', active: true });
     loadDemo();
   };
@@ -184,7 +187,7 @@ export function useEdata() {
     const { error: insertError } = await supabase.from('correspondence_messages').insert({ letter_id: letterId, body: body.trim(), sender_id: session.user.id });
     if (insertError) throw insertError;
   };
-  const signOut = async () => { if (session) await supabase.auth.signOut(); setSession(null); setProfile(null); setError(''); };
+  const signOut = async () => { if (session) await supabase.auth.signOut(); setSession(null); setProfile(null); setOpeningRequested(false); setError(''); };
 
   const saveMovement = async (row) => {
     if (session) {
@@ -337,7 +340,7 @@ export function useEdata() {
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, confirmLetterComplete, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, openingRequested, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, confirmLetterComplete, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
 
 
