@@ -63,7 +63,6 @@ export default function Login({ app, portalMode = false }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
   const [forgot, setForgot] = useState(false);
-
   const submit = async event => {
     event.preventDefault();
     setBusy(true);
