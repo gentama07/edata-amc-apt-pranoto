@@ -4,6 +4,7 @@ import { airportOptions } from '../config/airportOptions';
 import { useModalFocus } from '../hooks/useModalFocus';
 import { getDirection } from '../lib/analytics';
 import { downloadCsv } from '../lib/csv';
+import { advanceHorizontalLoop } from '../lib/horizontalLoop';
 import { PageHeading } from '../components/Shell';
 
 const columns = [
@@ -47,21 +48,16 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
     let motionAllowed = true;
     let previousTime = 0;
     let frame = 0;
-    let travelDirection = 1;
-    let holdUntil = 0;
-    let position = viewport.scrollLeft;
+    let loop = { position: viewport.scrollLeft, holdRemaining: 0 };
     const tick = time => {
       const delta = previousTime ? Math.min(time - previousTime, 40) : 0;
       previousTime = time;
       const maxScroll = viewport.scrollWidth - viewport.clientWidth;
-      if (motionAllowed && time - lastManualScrollRef.current > 1200 && document.visibilityState === 'visible' && time >= holdUntil && maxScroll > 1) {
-        position = Math.max(0, Math.min(maxScroll, position + travelDirection * delta * 0.065));
-        viewport.scrollLeft = position;
-        if (position >= maxScroll - 1 || (position <= 0 && travelDirection < 0)) {
-          travelDirection *= -1;
-          holdUntil = time + 700;
-        }
-      } else position = viewport.scrollLeft;
+      if (motionAllowed && time - lastManualScrollRef.current > 1200 && document.visibilityState === 'visible' && maxScroll > 1) {
+        const next = advanceHorizontalLoop(loop, maxScroll, delta);
+        if (next.position !== loop.position) viewport.scrollLeft = next.position;
+        loop = next;
+      } else if (loop.holdRemaining === 0) loop = { ...loop, position: viewport.scrollLeft };
       frame = window.requestAnimationFrame(tick);
     };
     const handleMotionPreference = event => { motionAllowed = !event.matches; previousTime = 0; if (event.matches) setAutoScroll(false); };
@@ -91,7 +87,7 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
         <tbody>{filtered.length ? visibleRows.map((row, index) => <MovementRow key={row.id} row={row} index={index} canWrite={canWrite} onEdit={onEdit} onDelete={setConfirm} />) : <tr><td className="table-empty" colSpan={columns.length + (canWrite ? 1 : 0)}><div className="empty-table-icon"><ArrowDownToLine size={18} /></div><strong>Tidak ada data yang cocok</strong><span>Coba ubah filter atau pilih tanggal operasional lain.</span></td></tr>}</tbody>
         </table>
       </div>
-      <div className="table-foot"><span>{hasLoop ? 'Tabel bergeser ke samping dan kembali berulang. Interaksi manual menjedanya sementara.' : 'Data mengikuti koneksi aktif.'}</span><span>Arah: ARR · DEP · Transit</span></div>
+      <div className="table-foot"><span>{hasLoop ? 'Tabel bergeser ke kanan, berhenti 5 detik, lalu kembali ke awal.' : 'Data mengikuti koneksi aktif.'}</span><span>Arah: ARR · DEP · Transit</span></div>
     </section>
     {confirm && <div className="modal-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && setConfirm(null)}><section ref={dialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title" tabIndex="-1"><div className="confirm-icon"><Trash2 size={19} aria-hidden="true" /></div><h2 id="delete-title">Hapus pergerakan?</h2><p>Data {confirm.registration} · {confirm.flightArr || confirm.flightDep || 'penerbangan ini'} akan dihapus dari log.</p><div className="modal-actions"><button type="button" className="button-secondary" onClick={() => setConfirm(null)}>Batal</button><button type="button" className="button-danger" onClick={confirmDelete}>Hapus data</button></div></section></div>}
   </>;
