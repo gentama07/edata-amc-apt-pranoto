@@ -28,7 +28,9 @@ function findDestination_(root, name) {
   if (!ALLOWED_DESTINATIONS.includes(name)) throw new Error('Folder tujuan tidak diizinkan.');
   const matches = root.getFoldersByName(name);
   if (!matches.hasNext()) throw new Error('Subfolder arsip tidak ditemukan: ' + name);
-  return matches.next();
+  const folder = matches.next();
+  if (matches.hasNext()) throw new Error('Ada lebih dari satu subfolder bernama ' + name + '. Pastikan hanya ada satu folder tujuan di dalam folder arsip.');
+  return folder;
 }
 
 function info_(file) {
@@ -55,14 +57,23 @@ function doPost(event) {
 
     const bytes = Utilities.base64Decode(body.data);
     if (!bytes.length || bytes.length > MAX_FILE_BYTES) throw new Error('Ukuran berkas harus antara 1 byte dan 10 MB.');
-    const destination = findDestination_(DriveApp.getFolderById(getProperty_(ROOT_FOLDER_PROPERTY)), body.destination);
-    const safeName = String(body.name).replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 180) || 'surat.pdf';
-    const mimeType = body.mime === 'application/pdf' ? 'application/pdf' : 'application/octet-stream';
-    const blob = Utilities.newBlob(bytes, mimeType, safeName);
-    const file = destination.createFile(blob);
+    if (String(body.mime || '').toLowerCase() !== 'application/pdf' || !/\.pdf$/i.test(String(body.name))) {
+      throw new Error('Berkas surat harus berupa PDF.');
+    }
     const viewerEmail = String(body.viewerEmail || '').trim();
     if (viewerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(viewerEmail)) throw new Error('Email pemilik surat tidak valid.');
-    if (viewerEmail) file.addViewer(viewerEmail);
+    const destination = findDestination_(DriveApp.getFolderById(getProperty_(ROOT_FOLDER_PROPERTY)), body.destination);
+    const safeName = String(body.name).replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 180) || 'surat.pdf';
+    const blob = Utilities.newBlob(bytes, 'application/pdf', safeName);
+    const file = destination.createFile(blob);
+    if (viewerEmail) {
+      try {
+        file.addViewer(viewerEmail);
+      } catch (shareError) {
+        try { file.setTrashed(true); } catch (cleanupError) { /* Keep the sharing error as the primary failure. */ }
+        throw new Error('Google Drive gagal memberi akses baca kepada pengirim. Berkas dibatalkan agar tidak tertinggal tanpa catatan. Periksa izin berbagi folder.');
+      }
+    }
     return out_({ ok: true, file: info_(file) });
   } catch (error) {
     return out_({ error: String(error && error.message ? error.message : error) });
