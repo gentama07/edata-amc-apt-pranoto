@@ -626,8 +626,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-left::before { z-index: -2; top: 50%; right: -13%; bottom: auto; width: min(62vw, 720px); aspect-ratio: 1; height: auto; transform: translateY(-50%); border-color: rgba(255,255,255,.075); box-shadow: 0 0 0 clamp(38px, 5vw, 90px) rgba(255,255,255,.018), 0 0 0 clamp(76px, 10vw, 180px) rgba(255,255,255,.012); }
 .login-left::after { content: ""; position: absolute; z-index: -1; top: 50%; right: -13%; width: min(62vw, 720px); aspect-ratio: 1; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(196,143,66,.36) 76%, transparent 82% 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); transform: translateY(-50%); animation: login-ring-turn 72s linear infinite; }
 .login-brand { gap: 12px; flex-wrap: wrap; }
-.login-brand .login-apt-mark { flex: 0 0 clamp(128px, 11vw, 148px); width: clamp(128px, 11vw, 148px); height: 52px; padding: 8px 10px; overflow: hidden; border: 1px solid rgba(255,255,255,.35); border-radius: 4px; background: #fff; }
-.login-apt-mark img { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
+.login-brand .login-apt-mark { flex: 0 0 clamp(136px, 10vw, 156px); width: clamp(136px, 10vw, 156px); height: auto; aspect-ratio: 810 / 276; padding: 0; overflow: hidden; border: 0; border-radius: 2px; background: #19191b; }
+.login-apt-mark img { display: block; width: 100%; height: 100%; max-height: none; border-radius: inherit; object-fit: contain; }
 .login-brand > span { flex: 1 1 240px; max-width: 440px; margin-left: 2px; color: #e4e4e6; font-size: 14px; font-weight: 600; line-height: 1.35; letter-spacing: .005em; text-wrap: balance; }
 .login-story { max-width: 580px; margin: 0 auto; }
 .login-story h1 { margin: 19px 0 20px; font-size: clamp(43px, 5vw, 68px); font-weight: 560; line-height: 1.02; letter-spacing: -2.7px; }
@@ -789,22 +789,29 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .letters-panel > .panel-heading { min-height: 78px; padding: 17px 20px; }
 .letter-list { padding: 0 20px; }
 .correspondence-row {
-  min-height: 104px;
-  gap: 16px;
-  padding: 17px 0;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) minmax(126px, 158px) 36px;
+  grid-template-areas: "icon main status delete" "icon retry status delete";
+  align-items: center;
+  min-height: 112px;
+  gap: 5px 14px;
+  padding: 18px 10px;
+  border-radius: 8px;
   transition: background-color .16s ease;
 }
 .correspondence-row:hover { background: color-mix(in srgb, var(--hover) 55%, transparent); }
-.letter-file-icon { width: 44px; height: 48px; border-radius: 8px; }
-.letter-open { gap: 4px; }
+.correspondence-row .letter-file-icon { grid-area: icon; align-self: start; margin-top: 2px; }
+.correspondence-row .letter-open { grid-area: main; width: 100%; gap: 4px; }
 .letter-meta { flex-wrap: wrap; align-items: center; gap: 5px 9px; font-size: 10px; line-height: 1.4; }
 .letter-subject { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
 .letter-sender { font-size: 12px; }
 .letter-fileline { flex-wrap: wrap; gap: 7px 12px; margin-top: 3px; }
 .file-name, .drive-connected, .no-file { font-size: 10px; overflow-wrap: anywhere; }
-.letter-status-control { min-width: 138px; gap: 5px; font-size: 10px; }
-.letter-status-control select { width: 100%; max-width: none; height: 38px; padding: 0 10px; font-size: 12px; }
-.letter-status { padding: 7px 10px; font-size: 11px; }
+.letter-status-block { grid-area: status; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.letter-status-label { color: var(--muted); font-size: 10px; line-height: 1.2; }
+.letter-status { display: inline-flex; align-items: center; min-height: 29px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.correspondence-row .delete-letter { grid-area: delete; justify-self: center; }
+.correspondence-row .retry-letter-upload { grid-area: retry; justify-self: start; margin: 0; }
 .letter-actions, .retry-letter-upload { flex: 0 0 auto; }
 .letters-empty {
   min-height: 270px;
@@ -882,9 +889,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .own-email-form [role="status"] { max-width: 260px; line-height: 1.45; }
 
 @media (max-width: 850px) {
-  .correspondence-row { flex-wrap: wrap; }
-  .letter-open { flex-basis: calc(100% - 62px); }
-  .letter-status-control { margin-left: 60px; }
+  .correspondence-row { grid-template-columns: 40px minmax(0, 1fr) minmax(116px, 142px) 34px; gap: 5px 11px; }
 }
 @media (max-width: 767px) {
   .topbar .brand-lockup .apt-mark,
@@ -892,10 +897,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .topbar .brand-lockup .apt-mark-dark { width: 70px; height: 34px; flex-basis: 70px; }
   .letters-panel > .panel-heading, .users-panel .panel-heading { align-items: flex-start; padding: 14px; }
   .letter-list { padding: 0 14px; }
-  .correspondence-row { gap: 10px; padding: 15px 0; }
-  .letter-open { flex-basis: calc(100% - 54px); }
+  .correspondence-row { grid-template-columns: 36px minmax(0, 1fr) 34px; grid-template-areas: "icon main delete" "icon status retry"; gap: 9px 10px; padding: 16px 0; }
+  .correspondence-row .letter-file-icon { width: 34px; height: 38px; }
+  .letter-status-block { align-items: flex-start; }
   .letter-meta { font-size: 10px; }
-  .letter-status-control { margin-left: 54px; }
+  .letter-status { min-height: 28px; }
   .retry-letter-upload { min-height: 40px; }
   .letters-empty { min-height: 230px; padding: 26px 16px; }
   .users-table { min-width: 980px; }
