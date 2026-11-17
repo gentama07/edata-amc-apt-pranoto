@@ -84,6 +84,7 @@ Deno.serve(async request => {
       return json({ ok: true, token, expiresAt }, 200, origin)
     }
 
+    if (action !== 'request' && action !== 'reset') return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
     const email = normalizeEmail(input.email)
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Masukkan alamat email yang valid.' }, 400, origin)
     const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
@@ -97,6 +98,7 @@ Deno.serve(async request => {
     if ((emailAttempts || 0) >= 8 || (ipAttempts || 0) >= 30) return json({ error: 'Terlalu banyak percobaan. Tunggu sebelum mencoba kembali.' }, 429, origin)
     const { error: attemptError } = await admin.from('account_recovery_attempts').insert({ email_hash: emailHash, ip_hash: ipHash, action })
     if (attemptError) throw attemptError
+    await admin.from('account_recovery_attempts').delete().lt('created_at', new Date(Date.now() - 48 * 60 * 60_000).toISOString())
 
     if (action === 'request') {
       const { data: profile } = await admin.from('profiles').select('id').eq('email', email).eq('active', true).maybeSingle()

@@ -11,10 +11,10 @@ function passwordResetError(message = '') {
   if (/email.*invalid|invalid.*email/i.test(message)) {
     return 'Alamat email tidak dapat diproses. Periksa kembali formatnya atau hubungi Admin untuk memastikan alamat akun Anda.';
   }
-  if (/rate|too many|security purposes/i.test(message)) {
-    return 'Permintaan terlalu sering. Tunggu beberapa menit sebelum meminta tautan pemulihan lagi.';
+  if (/rate|too many|security purposes|terlalu banyak percobaan/i.test(message)) {
+    return 'Permintaan terlalu sering. Tunggu beberapa menit sebelum mengajukan pemulihan lagi.';
   }
-  return 'Tautan pemulihan belum dapat dikirim. Coba lagi beberapa saat atau hubungi Admin AMC.';
+  return 'Permintaan pemulihan belum dapat diproses. Coba lagi beberapa saat atau hubungi Admin AMC.';
 }
 
 export default function Login({ app, portalMode = false }) {
