@@ -1002,6 +1002,22 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .profile-fields .field input { width: 100%; min-width: 0; min-height: 44px; padding: 0 12px; }
 .profile-fields .field input:disabled { opacity: 1; color: var(--muted); background: var(--canvas); cursor: not-allowed; }
 .profile-fields .field-hint { font-size: 10px; }
+
+.completion-confirmations {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hairline);
+  background: color-mix(in srgb, var(--canvas) 55%, transparent);
+}
+.completion-confirmations > div { display: grid; gap: 4px; min-width: 0; padding: 3px 12px 3px 0; }
+.completion-confirmations > div + div { border-left: 1px solid var(--hairline); padding-left: 14px; }
+.completion-confirmations > div span { color: var(--muted); font-size: 10px; }
+.completion-confirmations > div strong { font-size: 11px; font-weight: 600; }
+.completion-confirmations > button { margin-left: auto; }
+.status-complete { color: #146c43; background: #e8f5ed; }
+[data-theme="dark"] .status-complete { color: #a6e3be; background: #183426; }
 .profile-actions { display: flex; flex-wrap: wrap; gap: 10px; padding-top: 18px; border-top: 1px solid var(--hairline); }
 .profile-demo-note { margin: 12px 0 0; }
 .thread-chat-form, .thread-file-form, .thread-chat-form .field, .thread-file-form .field { min-width: 0; }
@@ -1020,6 +1036,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .profile-card { padding: 17px 14px; }
   .profile-photo-frame { width: 84px; flex-basis: 84px; }
   .profile-fields { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 0; }
+  .completion-confirmations { align-items: stretch; flex-direction: column; gap: 8px; padding: 13px; }
+  .completion-confirmations > div { padding: 5px 0; }
+  .completion-confirmations > div + div { border-left: 0; border-top: 1px solid var(--hairline); padding: 9px 0 5px; }
+  .completion-confirmations > button { width: 100%; margin: 5px 0 0; }
   .profile-actions { flex-direction: column; }
   .profile-actions button { width: 100%; min-height: 44px; }
   .thread-composer { grid-template-columns: minmax(0, 1fr); }

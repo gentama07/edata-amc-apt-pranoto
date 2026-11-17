@@ -9,6 +9,7 @@ export default function Profile({ app }) {
   const { profile, demo, updateOwnProfile, uploadProfilePhoto, changePassword, setError } = app;
   const [name, setName] = useState(profile.name || '');
   const [nip, setNip] = useState(profile.nip || '');
+  const [position, setPosition] = useState(profile.position || '');
   const [saving, setSaving] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
   const photoInput = useRef(null);
@@ -20,7 +21,7 @@ export default function Profile({ app }) {
     if (name.trim().length < 2) { setError('Nama minimal 2 karakter.'); return; }
     if (hasNip && nip.trim() && !/^\d{18}$/.test(nip.trim())) { setError('NIP harus terdiri dari 18 angka.'); return; }
     setSaving(true);
-    try { await updateOwnProfile({ name, nip: hasNip ? nip : '' }); }
+    try { await updateOwnProfile({ name, nip: hasNip ? nip : '', position }); }
     catch (error) { setError(error.message || 'Profil gagal disimpan.'); }
     finally { setSaving(false); }
   };
@@ -49,6 +50,7 @@ export default function Profile({ app }) {
         </div>
         <div className="profile-fields">
           <label className="field"><span className="field-label">Nama</span><input value={name} onChange={event => setName(event.target.value)} autoComplete="name" required minLength={2} maxLength={100} /></label>
+          <label className="field"><span className="field-label">Jabatan</span><input value={position} onChange={event => setPosition(event.target.value)} autoComplete="organization-title" maxLength={120} placeholder="Contoh: Kepala Seksi / AMC" /></label>
           <label className="field"><span className="field-label">Peran</span><input value={roleNames[profile.role] || profile.role} readOnly disabled aria-describedby="profile-role-note" /><small id="profile-role-note" className="field-hint">Peran ditetapkan oleh Admin.</small></label>
           {profile.role === 'ground_handling' && <label className="field"><span className="field-label">Perusahaan</span><input value={profile.organization || 'Belum ditetapkan'} readOnly disabled aria-describedby="profile-company-note" /><small id="profile-company-note" className="field-hint">Perusahaan ditetapkan oleh Admin.</small></label>}
           {hasNip && <label className="field"><span className="field-label">NIP</span><input value={nip} onChange={event => setNip(event.target.value.replace(/\D/g, '').slice(0, 18))} inputMode="numeric" autoComplete="off" maxLength={18} placeholder="18 angka" /></label>}

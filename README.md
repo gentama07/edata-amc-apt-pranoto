@@ -65,9 +65,11 @@ Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya
    supabase secrets set APPS_SCRIPT_URL="https://script.google.com/macros/s/ID_DEPLOYMENT/exec" APPS_SCRIPT_TOKEN="TOKEN_ACAK"
    ```
 
-   Gerbang JWT gateway untuk `drive-sync` dan `manage-users` dimatikan (`verify_jwt = false`); fungsi memvalidasi sesi dengan `auth.getUser()`, memeriksa profil/peran aktif, dan memakai service role hanya di sisi server. Folder tujuan ditentukan dari akun pengunggah: Ground Handling ke `GROUND HANDLING`, Personel AMC ke `PETUGAS AMC`, dan Admin/Pimpinan ke `ADMIN/PIMPINAN`.
+   Gerbang JWT gateway untuk `drive-sync` dan `manage-users` dimatikan (`verify_jwt = false`); fungsi memvalidasi sesi dengan `auth.getUser()`, memeriksa profil/peran aktif, dan memakai service role hanya di sisi server. Folder arsip ditentukan dari pemilik/pengirim surat: Ground Handling ke `GROUND HANDLING`, Personel AMC ke `PETUGAS AMC`, dan Admin/Pimpinan ke `ADMIN/PIMPINAN`.
 
 6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**. Setelah rotasi token, pastikan versi deployment terbaru dan Supabase secret berisi token yang sama.
+
+7. Jalankan migrasi yang belum diterapkan di SQL Editor Supabase secara berurutan: `006_profiles_chat_identity.sql`, lalu `007_letter_routing_completion_and_position.sql`. Ini menambahkan foto/NIP/profil dan jabatan, pengiriman berdasarkan peran penerima, serta konfirmasi selesai dari kedua pihak.
 
 Apps Script berjalan atas nama pemilik deployment. Gunakan akun Google khusus yang hanya memiliki akses ke folder arsip yang diperlukan. Endpoint Web App dapat dijangkau publik karena setelan Google, sehingga token harus panjang dan disimpan hanya di Apps Script serta Supabase secrets.
 

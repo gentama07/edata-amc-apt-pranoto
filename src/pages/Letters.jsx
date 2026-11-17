@@ -7,6 +7,7 @@ const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const pdfSnapshots = new WeakSet();
 
 function correspondenceStatus(letter, allLetters, allMessages, demo) {
+  if (letter.senderConfirmedAt && letter.recipientConfirmedAt) return 'Selesai';
   if (letter.direction === 'outbound') return demo || letter.driveFileId ? 'Terkirim' : 'Dalam proses';
   if (allLetters.some(item => item.replyToId === letter.id && (demo || item.driveFileId))) return 'Dibalas';
   if (allMessages.some(message => message.letter_id === letter.id)) return 'Dalam proses';
@@ -63,7 +64,7 @@ function driveErrorMessage(error) {
   return `Surat sudah tercatat, tetapi PDF belum terkirim ke Google Drive. ${message} Tekan Kirim ke AMC lagi untuk mencoba ulang.`;
 }
 
-export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, syncDrive, setError }) {
+export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, syncDrive, confirmLetterComplete, setError }) {
   const external = profile.role === 'ground_handling';
   const [adding, setAdding] = useState(false); const [activeId, setActiveId] = useState('');
   const [busy, setBusy] = useState(false); const [attachment, setAttachment] = useState(null);
@@ -71,7 +72,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const [chatDraft, setChatDraft] = useState(''); const [replyFile, setReplyFile] = useState(null);
   const [pendingLetterId, setPendingLetterId] = useState(''); const [pendingReplyIds, setPendingReplyIds] = useState({});
   const [retryId, setRetryId] = useState(''); const retryInput = useRef(null);
-  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: profile.organization || '', subject: '' });
+  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: profile.organization || '', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
   const update = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }));
   const roots = useMemo(() => letters.filter(letter => !letter.replyToId), [letters]);
   const selected = roots.find(letter => letter.id === activeId);
@@ -110,7 +111,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         ...form,
         reference: form.reference.trim() || `GH-${new Date().toISOString().slice(0, 10).replaceAll('-', '')}-${Date.now().toString().slice(-5)}`,
         sender: form.sender.trim(), senderOrganization: external ? profile.organization : form.senderOrganization.trim() || form.sender.trim(),
-        subject: form.subject.trim(), direction: 'inbound',
+        subject: form.subject.trim(), direction: external ? 'inbound' : 'outbound', recipientRole: external ? 'amc' : form.recipientRole,
         fileName: pdf?.name || '', requesterId: external ? profile.id : undefined,
       });
       if (pdf && !demo) {
@@ -118,7 +119,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         phase = 'drive';
         await uploadPdf(pdf, saved.id);
       }
-      setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : '', senderOrganization: external ? profile.organization || '' : '', subject: '' });
+      setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : profile.name || '', senderOrganization: external ? profile.organization || '' : profile.organization || '', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
       setPendingLetterId(''); setAttachment(null); setAdding(false); setActiveId(saved.id);
     } catch (error) {
       setError(phase === 'drive'
@@ -161,13 +162,31 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     catch (error) { setError(letterErrorMessage(error, 'PDF gagal diunggah. Pilih ulang berkas lalu coba lagi.')); }
     finally { setBusy(false); setRetryId(''); event.target.value = ''; }
   };
+  const completionSide = letter => {
+    const sender = letter.createdById === profile.id || (letter.direction === 'inbound' && letter.requesterId === profile.id);
+    if (sender) return 'sender';
+    const role = letter.recipientRole;
+    const recipient = role === 'pimpinan' ? profile.role === 'pimpinan'
+      : role === 'ground_handling' ? profile.role === 'ground_handling'
+        : role === 'amc' ? ['admin', 'personel'].includes(profile.role)
+          : letter.direction === 'inbound' ? ['admin', 'personel', 'pimpinan'].includes(profile.role)
+            : letter.requesterId === profile.id;
+    return recipient ? 'recipient' : '';
+  };
+  const confirmComplete = async letter => {
+    setBusy(true); setError('');
+    try { await confirmLetterComplete(letter); }
+    catch (error) { setError(error.message || 'Konfirmasi penyelesaian gagal disimpan.'); }
+    finally { setBusy(false); }
+  };
 
   return <>
-    <PageHeading eyebrow={external ? 'PORTAL GROUND HANDLING' : 'TATA USAHA & DOKUMEN'} title="Persuratan" description={external ? 'Kirim surat kepada AMC dan pantau perkembangan serta balasannya.' : 'Surat, lampiran, dan balasan antara AMC dan Ground Handling.'} action={(external || canWrite) && <button className="button-primary" onClick={() => setAdding(value => !value)}><Plus size={17} />{external ? 'Kirim surat' : 'Catat surat'}</button>} />
+    <PageHeading title="Persuratan" description={external ? 'Kirim surat ke Admin atau Personel AMC dan pantau tindak lanjutnya.' : 'Kirim surat sesuai peran penerima, lalu ikuti balasan dan penyelesaiannya.'} action={(external || canWrite) && <button className="button-primary" onClick={() => setAdding(value => !value)}><Plus size={17} />Kirim surat</button>} />
     {demo && <div className="inline-notice"><FileText size={17} /><span>Pratinjau lokal: surat dan balasan hanya tersimpan di browser ini; Drive dan Supabase belum terhubung.</span></div>}
-    {adding && <section className="panel letter-form-panel"><div className="panel-heading"><div><span className="panel-kicker">{external ? 'PENGIRIMAN KE AMC' : 'PENCATATAN SURAT'}</span><h2>{external ? 'Surat baru' : 'Catat surat masuk'}</h2></div><button className="close-form" onClick={() => setAdding(false)} aria-label="Tutup formulir"><X size={17} /></button></div>
+    {adding && <section className="panel letter-form-panel"><div className="panel-heading"><div><span className="panel-kicker">PENGIRIMAN SURAT</span><h2>Surat baru</h2></div><button className="close-form" onClick={() => setAdding(false)} aria-label="Tutup formulir"><X size={17} /></button></div>
       <form onSubmit={submit} noValidate><div className="form-grid form-grid-2">
         {!external && <label className="field"><span className="field-label">Nomor surat</span><input name="reference" value={form.reference} onChange={update} placeholder="Nomor surat dari pengirim" /></label>}
+        <label className="field"><span className="field-label">Kirim kepada <span className="required-mark" aria-hidden="true">*</span></span>{external ? <input value="Admin / Personel AMC" readOnly aria-describedby="recipient-role-note" /> : <select name="recipientRole" value={form.recipientRole} onChange={update} required><option value="ground_handling">Ground Handling</option><option value="pimpinan">Pimpinan</option></select>}<small id="recipient-role-note" className="field-hint">{external ? 'Akun Ground Handling hanya dapat mengirim surat ke Admin atau Personel AMC.' : 'Surat ke Pimpinan hanya dapat dikirim oleh Admin atau Personel AMC.'}</small></label>
         <label className="field"><span className="field-label">Tanggal {external ? 'pengiriman' : 'diterima'} <span className="required-mark" aria-hidden="true">*</span></span><input type="date" name="date" value={form.date} onChange={update} required /></label>
         <label className="field"><span className="field-label">Nama pengirim <span className="required-mark" aria-hidden="true">*</span></span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
         <label className="field"><span className="field-label">Perusahaan Ground Handling</span><input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
@@ -178,7 +197,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
       {roots.length ? <div className="letter-list">{roots.map(letter => {
         const status = correspondenceStatus(letter, letters, messages, demo);
-        const tone = status === 'Dibalas' ? 'archived' : status === 'Dalam proses' ? 'followup' : 'new';
+        const tone = status === 'Selesai' || status === 'Dibalas' ? 'archived' : status === 'Dalam proses' ? 'followup' : 'new';
         return <article className={`letter-row correspondence-row ${activeId === letter.id ? 'letter-selected' : ''}`} key={letter.id}>
           <div className="letter-file-icon" aria-hidden="true">{letter.direction === 'outbound' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</div>
           <button className="letter-main letter-open" onClick={() => setActiveId(activeId === letter.id ? '' : letter.id)} aria-expanded={activeId === letter.id}>
@@ -187,7 +206,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
             <span className="letter-fileline">{letter.fileName ? <span className="file-name"><FileText size={13} />{letter.fileName}</span> : <span className="no-file">Belum ada PDF</span>}{letter.driveFolder && <span className="drive-connected">Drive · {letter.driveFolder}</span>}</span>
           </button>
           <div className="letter-status-block" aria-label={`Status otomatis: ${status}`} title="Status dihitung dari surat balasan dan aktivitas percakapan.">
-            <span className="letter-status-label">Status otomatis</span>
+            <span className="letter-status-label">Status surat</span>
             <span className={`letter-status status-${tone}`}>{status}</span>
           </div>
           {canWrite && <button className="icon-button delete-letter" aria-label={`Hapus ${letter.reference}`} onClick={() => removeLetter(letter)}><Trash2 size={16} /></button>}
@@ -195,10 +214,11 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         </article>;
       })}</div> : <div className="letters-empty"><div className="letters-empty-icon"><FileText size={22} aria-hidden="true" /></div><div className="letters-empty-copy"><strong>{external ? 'Belum ada surat yang dikirim' : 'Belum ada surat masuk'}</strong><span>{external ? 'Surat yang Anda kirim dan balasan AMC tampil di sini.' : 'Surat dari Ground Handling akan tampil di sini.'}</span></div></div>}
     </section>
-    {selected && <section className="panel correspondence-thread"><div className="panel-heading"><div><span className="panel-kicker">RIWAYAT SURAT</span><h2>{selected.subject}</h2><p>{selected.senderOrganization || selected.sender} · {selected.reference}</p></div><button className="close-form" onClick={() => setActiveId('')} aria-label="Tutup detail"><X size={17} /></button></div>
+    {selected && <section className="panel correspondence-thread"><div className="panel-heading"><div><h2>{selected.subject}</h2><p>{selected.senderOrganization || selected.sender} · {selected.reference}</p></div><button className="close-form" onClick={() => setActiveId('')} aria-label="Tutup detail"><X size={17} /></button></div>
+      <div className="completion-confirmations" aria-live="polite"><div><span>Pengirim</span><strong>{selected.senderConfirmedAt ? 'Sudah mengonfirmasi' : 'Menunggu konfirmasi'}</strong></div><div><span>Penerima</span><strong>{selected.recipientConfirmedAt ? 'Sudah mengonfirmasi' : 'Menunggu konfirmasi'}</strong></div>{completionSide(selected) && <button className="button-secondary" onClick={() => confirmComplete(selected)} disabled={busy || Boolean(selected[completionSide(selected) === 'sender' ? 'senderConfirmedAt' : 'recipientConfirmedAt'])}>{selected[completionSide(selected) === 'sender' ? 'senderConfirmedAt' : 'recipientConfirmedAt'] ? 'Konfirmasi Anda tersimpan' : 'Konfirmasi surat selesai'}</button>}</div>
       <div className="thread-body">
         <article className="thread-entry thread-original"><div className="thread-entry-heading"><strong>{selected.sender}</strong><time>{selected.date}</time></div><p>{selected.subject}</p>{selected.driveWebViewLink && <a href={selected.driveWebViewLink} target="_blank" rel="noreferrer">Buka PDF asli · Google Drive</a>}</article>
-        {thread.map(entry => entry.kind === 'message' ? <article className={`thread-entry ${entry.sender_id === profile.id ? 'thread-own' : ''}`} key={`m-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.sender_name || entry.sender || 'Petugas AMC'}</strong><time>{new Date(entry.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div><p>{entry.body}</p></article> : <article className="thread-entry thread-reply" key={`r-${entry.id}`}><div className="thread-entry-heading"><strong>Surat balasan · {entry.sender || 'Petugas AMC'}</strong><time>{entry.date}</time></div><p>{entry.fileName || entry.subject}</p>{entry.driveWebViewLink && <a href={entry.driveWebViewLink} target="_blank" rel="noreferrer">Buka PDF balasan · Google Drive</a>}</article>)}
+      {thread.map(entry => entry.kind === 'message' ? <article className={`thread-entry ${entry.sender_id === profile.id ? 'thread-own' : ''}`} key={`m-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.sender_name || entry.sender || 'Petugas AMC'}</strong><time>{new Date(entry.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div><p>{entry.body}</p></article> : <article className="thread-entry thread-reply" key={`r-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.senderOrganization || entry.sender || 'AMC'} · surat balasan</strong><time>{entry.date}</time></div><p>{entry.fileName || entry.subject}</p>{entry.driveWebViewLink && <a href={entry.driveWebViewLink} target="_blank" rel="noreferrer">Buka PDF balasan · Google Drive</a>}</article>)}
         {thread.length === 0 && <p className="thread-empty">Belum ada balasan. Pesan baru akan muncul langsung di percakapan ini.</p>}
       </div>
       {canReply && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis pesan untuk pengirim surat…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form>

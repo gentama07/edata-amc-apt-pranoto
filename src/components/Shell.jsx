@@ -36,7 +36,7 @@ export function Shell({ app, active, setActive, children }) {
     <header className="topbar">
       <button className="mobile-menu-icon icon-button" aria-label={menuOpen ? 'Tutup navigasi' : 'Buka navigasi'} onClick={() => setMenuOpen(v => !v)}>{menuOpen ? <X size={19} /> : <Menu size={19} />}</button>
       <div className="brand-lockup">
-        <div className={`apt-mark ${theme === 'dark' ? 'apt-mark-dark' : 'apt-mark-image'}`}><img width="2082" height="792" src={`${import.meta.env.BASE_URL}assets/${theme === 'dark' ? 'logo-white-apt.svg' : 'logo-apt.svg'}`} alt="Logo Bandar Udara A.P.T. Pranoto" /></div>
+        <div className="apt-mark apt-mark-image"><img width="810" height="308" src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="Logo Bandar Udara A.P.T. Pranoto" /></div>
         <div className="brand-copy"><strong>E-data AMC</strong><span>APT Pranoto · Samarinda</span></div>
       </div>
       <ServiceStatus demo={demo} compact />

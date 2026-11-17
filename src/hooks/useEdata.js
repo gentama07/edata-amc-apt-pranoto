@@ -38,7 +38,7 @@ export function useEdata() {
   const loadRemote = useCallback(async () => {
     if (!session) return;
     const [profileResult, movementsResult, lettersResult, messageResult] = await Promise.all([
-      supabase.from('profiles').select('id,display_name,email,role,active,organization,nip,avatar_url').eq('id', session.user.id).single(),
+      supabase.from('profiles').select('id,display_name,email,role,active,organization,nip,position,avatar_url').eq('id', session.user.id).single(),
       supabase.from('movements').select('*').order('operating_date', { ascending: false }).order('created_at', { ascending: false }).limit(2000),
       supabase.from('incoming_letters').select('*').order('received_date', { ascending: false }).limit(500),
       supabase.from('correspondence_messages').select('*').order('created_at', { ascending: true }).limit(2000),
@@ -50,12 +50,12 @@ export function useEdata() {
       const { data: avatarData } = await supabase.storage.from('profile-avatars').createSignedUrl(profileResult.data.avatar_url, 3600);
       avatarUrl = avatarData?.signedUrl || '';
     }
-    setProfile({ id: profileResult.data.id, name: profileResult.data.display_name || profileResult.data.email, role: profileResult.data.role, email: profileResult.data.email || session.user.email, organization: profileResult.data.organization || '', nip: profileResult.data.nip || '', avatarPath: profileResult.data.avatar_url || '', avatarUrl });
+    setProfile({ id: profileResult.data.id, name: profileResult.data.display_name || profileResult.data.email, role: profileResult.data.role, email: profileResult.data.email || session.user.email, organization: profileResult.data.organization || '', nip: profileResult.data.nip || '', position: profileResult.data.position || '', avatarPath: profileResult.data.avatar_url || '', avatarUrl });
     if (movementsResult.error) throw movementsResult.error;
     if (lettersResult.error) throw lettersResult.error;
     if (messageResult.error) throw messageResult.error;
     setMovements((movementsResult.data || []).map(fromDb));
-    setLetters((lettersResult.data || []).map(row => ({ id: row.id, date: row.received_date, createdAt: row.created_at, reference: row.reference, sender: row.sender, senderOrganization: row.sender_organization || row.sender, subject: row.subject, status: row.status, fileName: row.file_name, driveFileId: row.drive_file_id, driveWebViewLink: row.drive_web_view_link, driveFolder: row.drive_folder, direction: row.direction || 'inbound', requesterId: row.requester_id, replyToId: row.reply_to_id })));
+    setLetters((lettersResult.data || []).map(row => ({ id: row.id, date: row.received_date, createdAt: row.created_at, reference: row.reference, sender: row.sender, senderOrganization: row.sender_organization || row.sender, subject: row.subject, status: row.status, fileName: row.file_name, driveFileId: row.drive_file_id, driveWebViewLink: row.drive_web_view_link, driveFolder: row.drive_folder, direction: row.direction || 'inbound', requesterId: row.requester_id, createdById: row.created_by, replyToId: row.reply_to_id, recipientRole: row.recipient_role || '', senderConfirmedAt: row.sender_confirmed_at || null, recipientConfirmedAt: row.recipient_confirmed_at || null })));
     setMessages((messageResult.data || []).map(row => ({ ...row, sender_name: row.sender_name || 'Petugas AMC' })));
   }, [session]);
 
@@ -128,8 +128,9 @@ export function useEdata() {
         subject: row.subject,
         file_name: row.fileName || null,
         direction: row.direction || 'inbound',
-        requester_id: row.requesterId || session.user.id,
+        requester_id: row.requesterId || (row.direction === 'inbound' ? session.user.id : null),
         reply_to_id: row.replyToId || null,
+        recipient_role: row.recipientRole || null,
         created_by: session.user.id,
       };
       const { data, error: insertError } = await supabase.from('incoming_letters').insert(payload).select().single();
@@ -137,18 +138,19 @@ export function useEdata() {
       await loadRemote();
       return { ...row, id: data.id };
     }
-    const data = readDemo(); const saved = { ...row, id: row.id || `letter-${crypto.randomUUID()}` };
+    const data = readDemo(); const saved = { ...row, createdById: profile.id, id: row.id || `letter-${crypto.randomUUID()}` };
     const next = [saved, ...data.letters]; setLetters(next); persistDemo(data.movements, next); return saved;
   };
   const createReply = async (parent, row) => {
     if (!session) {
-      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, sender: profile.name, senderOrganization: 'A.P.T. Pranoto · AMC' };
+      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, sender: profile.name, senderOrganization: 'A.P.T. Pranoto · AMC', createdById: profile.id };
       const next = [saved, ...letters]; setLetters(next); persistDemo(readDemo().movements, next); return saved;
     }
     const { data, error: insertError } = await supabase.from('incoming_letters').insert({
       reference: row.reference || `BAL-${Date.now()}`, received_date: new Date().toISOString().slice(0, 10),
       sender: profile.name, sender_organization: 'A.P.T. Pranoto · AMC', subject: row.subject || `Balasan: ${parent.subject}`,
-      direction: 'outbound', requester_id: parent.requesterId || parent.requester_id,
+      direction: 'outbound', requester_id: parent.requesterId || parent.requester_id || parent.createdById,
+      recipient_role: parent.recipientRole === 'pimpinan' ? 'amc' : 'ground_handling',
       reply_to_id: parent.id, file_name: row.fileName || null, created_by: session.user.id,
     }).select().single();
     if (insertError) throw insertError;
@@ -196,11 +198,11 @@ export function useEdata() {
     await manageUser({ action: 'update', userId, ...updates });
     await loadRemote();
   };
-  const updateOwnProfile = async ({ name, nip }) => {
-    const next = { name: name.trim(), nip: nip.trim() };
+  const updateOwnProfile = async ({ name, nip, position }) => {
+    const next = { name: name.trim(), nip: nip.trim(), position: position.trim() };
     if (!session) { setProfile(current => ({ ...current, ...next })); return; }
     const { error: updateError } = await supabase.from('profiles')
-      .update({ display_name: next.name, nip: next.nip || null })
+      .update({ display_name: next.name, nip: next.nip || null, position: next.position || null })
       .eq('id', session.user.id);
     if (updateError) throw updateError;
     await loadRemote();
@@ -241,7 +243,8 @@ export function useEdata() {
   };
   const syncDrive = async (file, letterId) => {
     if (!session) throw new Error('Sinkronisasi Drive hanya tersedia pada mode Supabase.');
-    const form = new FormData(); form.append('file', file); form.append('letterId', letterId || '');
+    if (!file?.size || !letterId) throw new Error(!letterId ? 'Simpan surat sebelum mengunggah PDF.' : 'Berkas PDF kosong. Pilih ulang berkas dari perangkat.');
+    const form = new FormData(); form.append('file', file, file.name); form.append('letterId', letterId);
     const { data: { session: activeSession } } = await supabase.auth.getSession();
     const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/drive-sync`, { method: 'POST', headers: { Authorization: `Bearer ${activeSession.access_token}`, apikey: import.meta.env.VITE_SUPABASE_ANON_KEY }, body: form });
     const result = await response.json();
@@ -251,6 +254,18 @@ export function useEdata() {
       throw new Error(result.error || `Layanan Google Drive merespons HTTP ${response.status}.`);
     }
     await loadRemote(); return result;
+  };
+  const confirmLetterComplete = async letter => {
+    if (!session) {
+      const senderSide = letter.createdById === profile.id || (letter.direction === 'inbound' && letter.requesterId === profile.id);
+      const key = senderSide ? 'senderConfirmedAt' : 'recipientConfirmedAt';
+      const updated = { ...letter, [key]: new Date().toISOString() };
+      const next = letters.map(item => item.id === letter.id ? updated : item);
+      setLetters(next); persistDemo(readDemo().movements, next); return updated;
+    }
+    const { error: confirmError } = await supabase.rpc('confirm_correspondence_complete', { p_letter_id: letter.id });
+    if (confirmError) throw confirmError;
+    await loadRemote();
   };
 
   const requestPasswordReset = async (email) => {
@@ -294,7 +309,7 @@ export function useEdata() {
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, confirmLetterComplete, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
 
 
