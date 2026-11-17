@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import { supabase } from '../lib/supabase';
@@ -18,6 +18,8 @@ export function Shell({ app, active, setActive, children }) {
   const [now, setNow] = useState(new Date());
   const [theme, setTheme] = useState(() => localStorage.getItem('amc-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showOpening, setShowOpening] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const finishOpening = useCallback(() => setShowOpening(false), []);
   const [airportVideo, setAirportVideo] = useState('');
   useEffect(() => {
     if (!app.session || !supabase) return undefined;
@@ -41,7 +43,7 @@ export function Shell({ app, active, setActive, children }) {
   const items = profile.role === 'ground_handling'
     ? [{ id: 'letters', label: 'Persuratan', Icon: FileText }]
     : [...navItems.filter(item => !item.write || canWrite), ...(profile.role === 'admin' ? [{ id: 'users', label: 'Pengguna', Icon: UserRoundCog }] : [])];
-  const navigate = id => { setActive(id); setMenuOpen(false); };
+  const navigate = id => { if (id !== 'summary') setShowOpening(false); setActive(id); setMenuOpen(false); };
 
   return <div className="app-frame min-h-screen">
     <a className="skip-link" href="#main-content">Lewati ke konten utama</a>
@@ -70,10 +72,15 @@ export function Shell({ app, active, setActive, children }) {
         </button></div>
       </aside>
       {menuOpen && <button className="nav-scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)} />}
-      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{children}</main>
+      <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? <Opening onDone={finishOpening} /> : children}</main>
     </div>
     <nav className="bottom-nav" aria-label="Navigasi bawah">{items.map(({ id, label, Icon }) => <button key={id} onClick={() => navigate(id)} className={active === id ? 'bottom-active' : ''} aria-current={active === id ? 'page' : undefined}><Icon size={19} /><span>{label === 'Log pergerakan' ? 'Log' : label === 'Input data' ? 'Input' : label === 'Pengguna' ? 'Pengguna' : label}</span></button>)}</nav>
   </div>;
+}
+
+function Opening({ onDone }) {
+  useEffect(() => { const timeout = window.setTimeout(onDone, 45000); return () => window.clearTimeout(timeout); }, [onDone]);
+  return <div className="opening-video" aria-label="Animasi pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={`${import.meta.env.BASE_URL}assets/animasi-logo.mp4`} /><button type="button" className="opening-skip" onClick={onDone}>Lewati pembuka</button></div>;
 }
 
 export function PageHeading({ title, description, action }) {
