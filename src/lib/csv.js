@@ -3,7 +3,7 @@ const columns = [
   ['flightArr', 'No. Penerbangan ARR'], ['flightDep', 'No. Penerbangan DEP'], ['origin', 'Origin'], ['destination', 'Destination'],
   ['sta', 'STA'], ['ata', 'ATA'], ['blockOn', 'Block ON'], ['std', 'STD'], ['blockOff', 'Block OFF'], ['atd', 'ATD'],
   ['handler', 'Ground Handling'], ['stand', 'Parking Stand'], ['riu', 'RIU'], ['paxArr', 'Penumpang ARR'], ['paxDep', 'Penumpang DEP'],
-  ['baggageKg', 'Bagasi (kg)'], ['cargoKg', 'Kargo (kg)'], ['remark', 'Remark'],
+  ['baggageArrKg', 'Bagasi ARR (kg)'], ['baggageDepKg', 'Bagasi DEP (kg)'], ['cargoArrKg', 'Kargo ARR (kg)'], ['cargoDepKg', 'Kargo DEP (kg)'], ['remark', 'Remark'],
 ];
 
 export function safeCsvCell(value) {

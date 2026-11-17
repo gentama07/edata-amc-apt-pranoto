@@ -13,8 +13,8 @@ export function dailyKpis(rows) {
     sum.dep += Number(Boolean(row.flightDep));
     sum.paxArr += Number(row.paxArr || 0);
     sum.paxDep += Number(row.paxDep || 0);
-    sum.baggage += Number(row.baggageKg || 0);
-    sum.cargo += Number(row.cargoKg || 0);
+    sum.baggage += Number(row.baggageArrKg ?? row.baggageKg ?? 0) + Number(row.baggageDepKg || 0);
+    sum.cargo += Number(row.cargoArrKg ?? row.cargoKg ?? 0) + Number(row.cargoDepKg || 0);
     return sum;
   }, { arr: 0, dep: 0, paxArr: 0, paxDep: 0, baggage: 0, cargo: 0 });
 }

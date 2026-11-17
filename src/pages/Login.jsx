@@ -69,7 +69,7 @@ export default function Login({ app, portalMode = false }) {
 
         {isSupabaseConfigured && <form className="login-form" onSubmit={submit}>
           <label className="field">Email
-            <input type="email" name="email" value={email} onChange={event => setEmail(event.target.value)} required autoComplete="username" spellCheck="false" placeholder="nama@instansi.go.id" />
+            <input type="email" name="email" value={email} onChange={event => setEmail(event.target.value)} required autoComplete="username" spellCheck="false" placeholder="nama@role.apt.id" />
           </label>
           {!forgot && <label className="field">Kata sandi
             <input type="password" name="password" value={password} onChange={event => setPassword(event.target.value)} required autoComplete="current-password" placeholder="Masukkan kata sandi" />

@@ -5,12 +5,19 @@ import { isSupabaseConfigured, supabase } from '../lib/supabase';
 
 const STORE = 'e-data-amc-demo-v1';
 const MESSAGE_STORE = 'e-data-amc-demo-messages-v1';
+const normalizeDemoMovement = row => ({
+  ...row,
+  baggageArrKg: row.baggageArrKg ?? row.baggageKg ?? 0,
+  baggageDepKg: row.baggageDepKg ?? 0,
+  cargoArrKg: row.cargoArrKg ?? row.cargoKg ?? 0,
+  cargoDepKg: row.cargoDepKg ?? 0,
+});
 const readDemo = () => {
-  try { const value = JSON.parse(localStorage.getItem(STORE) || 'null'); return value || { movements: initialMovements, letters: initialLetters }; }
+  try { const value = JSON.parse(localStorage.getItem(STORE) || 'null'); return value ? { ...value, movements: (value.movements || []).map(normalizeDemoMovement) } : { movements: initialMovements, letters: initialLetters }; }
   catch { return { movements: initialMovements, letters: initialLetters }; }
 };
-const fromDb = (row) => ({ id: row.id, date: row.operating_date, operator: row.operator, aircraftType: row.aircraft_type, registration: row.registration, flightArr: row.flight_arr, flightDep: row.flight_dep, origin: row.origin, destination: row.destination, sta: row.sta?.slice(0, 5) || '', ata: row.ata?.slice(0, 5) || '', blockOn: row.block_on?.slice(0, 5) || '', std: row.std?.slice(0, 5) || '', blockOff: row.block_off?.slice(0, 5) || '', atd: row.atd?.slice(0, 5) || '', handler: row.ground_handler, stand: row.parking_stand ? `Stand ${row.parking_stand}` : '', riu: row.riu, paxArr: row.pax_arr, paxDep: row.pax_dep, baggageKg: row.baggage_kg, cargoKg: row.cargo_kg, remark: row.remark });
-const toDb = (row) => ({ operating_date: row.date, operator: row.operator, aircraft_type: row.aircraftType, registration: row.registration, flight_arr: row.flightArr || null, flight_dep: row.flightDep || null, origin: row.origin || null, destination: row.destination || null, sta: row.sta || null, ata: row.ata || null, block_on: row.blockOn || null, std: row.std || null, block_off: row.blockOff || null, atd: row.atd || null, ground_handler: row.handler || null, parking_stand: Number.parseInt(String(row.stand || '').replace(/\D/g, ''), 10) || null, riu: row.riu || null, pax_arr: Number(row.paxArr || 0), pax_dep: Number(row.paxDep || 0), baggage_kg: Number(row.baggageKg || 0), cargo_kg: Number(row.cargoKg || 0), remark: row.remark || '' });
+const fromDb = (row) => ({ id: row.id, date: row.operating_date, operator: row.operator, aircraftType: row.aircraft_type, registration: row.registration, flightArr: row.flight_arr, flightDep: row.flight_dep, origin: row.origin, destination: row.destination, sta: row.sta?.slice(0, 5) || '', ata: row.ata?.slice(0, 5) || '', blockOn: row.block_on?.slice(0, 5) || '', std: row.std?.slice(0, 5) || '', blockOff: row.block_off?.slice(0, 5) || '', atd: row.atd?.slice(0, 5) || '', handler: row.ground_handler, stand: row.parking_stand ? `Stand ${row.parking_stand}` : '', riu: row.riu, paxArr: row.pax_arr, paxDep: row.pax_dep, baggageArrKg: row.bagasi_arr ?? row.baggage_kg ?? 0, baggageDepKg: row.bagasi_dep ?? 0, cargoArrKg: row.kargo_arr ?? row.cargo_kg ?? 0, cargoDepKg: row.kargo_dep ?? 0, remark: row.remark });
+const toDb = (row) => ({ operating_date: row.date, operator: row.operator, aircraft_type: row.aircraftType, registration: row.registration, flight_arr: row.flightArr || null, flight_dep: row.flightDep || null, origin: row.origin || null, destination: row.destination || null, sta: row.sta || null, ata: row.ata || null, block_on: row.blockOn || null, std: row.std || null, block_off: row.blockOff || null, atd: row.atd || null, ground_handler: row.handler || null, parking_stand: Number.parseInt(String(row.stand || '').replace(/\D/g, ''), 10) || null, riu: row.riu || null, pax_arr: Number(row.paxArr || 0), pax_dep: Number(row.paxDep || 0), bagasi_arr: Number(row.baggageArrKg || 0), bagasi_dep: Number(row.baggageDepKg || 0), kargo_arr: Number(row.cargoArrKg || 0), kargo_dep: Number(row.cargoDepKg || 0), baggage_kg: Number(row.baggageArrKg || 0) + Number(row.baggageDepKg || 0), cargo_kg: Number(row.cargoArrKg || 0) + Number(row.cargoDepKg || 0), remark: row.remark || '' });
 
 export function useEdata() {
   const [profile, setProfile] = useState(null);

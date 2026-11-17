@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRoundCog, X } from 'lucide-react';
+import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, PlaneTakeoff, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import ServiceStatus from './ServiceStatus';
 
@@ -44,9 +44,7 @@ export function Shell({ app, active, setActive, children }) {
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
         <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label="Ganti tema" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-        <button className="profile-avatar-button" title="Buka profil" aria-label={`Buka profil ${profile.name}`} onClick={() => setActive('profile')}>
-          {profile.avatarUrl ? <img className="topbar-avatar" src={profile.avatarUrl} alt="" /> : <span className="topbar-avatar topbar-avatar-initial">{profile.name?.slice(0, 1).toUpperCase()}</span>}
-        </button>
+        <button className="header-profile-button" title="Buka profil" aria-label="Buka profil" onClick={() => setActive('profile')}>Profil</button>
         <button className="logout-button" aria-label="Keluar" onClick={signOut}><LogOut size={16} /><span>Keluar</span></button>
       </div>
     </header>
@@ -54,9 +52,9 @@ export function Shell({ app, active, setActive, children }) {
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`} aria-label="Navigasi utama">
         <div className="sidebar-heading">OPERASIONAL</div>
         {items.map(({ id, label, Icon }) => <button key={id} className={`nav-link ${active === id ? 'nav-active' : ''}`} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined}><Icon size={18} strokeWidth={1.8} /><span>{label}</span>{id === 'summary' && <span className="nav-live" title="Data harian" />}</button>)}
-        <div className="sidebar-bottom"><div className="airport-card"><span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
+        <div className="sidebar-bottom"><div className="airport-card"><PlaneTakeoff aria-hidden="true"/><span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
           {profile.avatarUrl ? <img className="avatar" src={profile.avatarUrl} alt="" /> : <span className="avatar">{profile.name?.slice(0, 1).toUpperCase()}</span>}
-          <span className="signed-copy"><strong>{profile.name}</strong><span>{profile.email}</span></span>
+          <span className="signed-copy"><strong>{profile.name}</strong><span>{profile.email}</span>{profile.nip && <small>NIP {profile.nip}</small>}</span>
         </button></div>
       </aside>
       {menuOpen && <button className="nav-scrim" aria-label="Tutup navigasi" onClick={() => setMenuOpen(false)} />}
