@@ -103,6 +103,19 @@ export function useEdata() {
   };
   const createLetter = async (row) => {
     if (session) {
+      if (profile?.role === 'ground_handling') {
+        const { data: letterId, error: submitError } = await supabase.rpc('submit_ground_handling_letter', {
+          p_reference: row.reference || `AMC-${Date.now()}`,
+          p_received_date: row.date || new Date().toISOString().slice(0, 10),
+          p_sender: row.sender,
+          p_sender_organization: row.senderOrganization || '',
+          p_subject: row.subject,
+          p_file_name: row.fileName || null,
+        });
+        if (submitError) throw submitError;
+        await loadRemote();
+        return { ...row, id: letterId };
+      }
       const payload = {
         reference: row.reference || `AMC-${Date.now()}`,
         received_date: row.date || new Date().toISOString().slice(0, 10),
@@ -238,4 +251,5 @@ export function useEdata() {
 
   return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
+
 
