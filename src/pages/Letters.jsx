@@ -34,10 +34,27 @@ function letterErrorMessage(error, fallback) {
   if (/failed to fetch|networkerror|load failed/i.test(message)) {
     return 'Koneksi ke layanan surat terputus. Periksa koneksi internet, lalu coba kirim lagi.';
   }
-  if (/row-level security|permission denied|not authorized|unauthorized|invalid jwt|jwt expired/i.test(message)) {
-    return 'Akun ini tidak memiliki izin untuk mengirim surat. Masuk kembali atau hubungi Admin AMC.';
+  if (/invalid jwt|jwt expired|session.*expired|sesi.*berakhir/i.test(message)) {
+    return 'Sesi login sudah berakhir. Masuk kembali, lalu kirim surat lagi.';
+  }
+  if (/row-level security|permission denied|not authorized|unauthorized/i.test(message)) {
+    return 'Supabase menolak pencatatan surat. Pastikan akun Ground Handling aktif dan perusahaan akun sudah ditetapkan Admin AMC.';
   }
   return message || fallback;
+}
+
+function driveErrorMessage(error) {
+  const message = String(error?.message || 'Layanan Google Drive tidak memberi keterangan.');
+  if (/failed to fetch|networkerror|load failed/i.test(message)) {
+    return 'Koneksi ke layanan unggah terputus. Periksa internet, lalu tekan Kirim ke AMC lagi untuk melanjutkan.';
+  }
+  if (/401|invalid jwt|jwt expired|sesi login/i.test(message)) {
+    return 'Sesi unggah berakhir. Masuk kembali, lalu tekan Kirim ke AMC lagi untuk mengunggah PDF.';
+  }
+  if (/403|permission denied|not authorized|unauthorized|akses.*ditolak/i.test(message)) {
+    return 'Google Drive menolak akses unggah. Surat sudah tercatat, tetapi PDF belum tersimpan. Hubungi Admin AMC untuk memeriksa akses folder Drive.';
+  }
+  return `Surat sudah tercatat, tetapi PDF belum terkirim ke Google Drive. ${message} Tekan Kirim ke AMC lagi untuk mencoba ulang.`;
 }
 
 export default function Letters({ letters, messages, profile, canWrite, canReply, demo, onCreate, onReply, onMessage, onDelete, onUpdate, syncDrive, setError }) {
@@ -79,6 +96,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     if (!form.sender.trim() || !form.subject.trim() || (external && !attachment)) { setError(external ? 'Nama pengirim, perihal, dan berkas PDF wajib diisi.' : 'Pengirim dan perihal wajib diisi.'); return; }
     if (external && !profile.organization) { setError('Perusahaan akun belum diatur. Hubungi Admin AMC.'); return; }
     setBusy(true);
+    let phase = 'database';
     try {
       const pdf = attachment ? await preparePdf(attachment) : null;
       const saved = pendingLetterId ? { id: pendingLetterId } : await onCreate({
@@ -88,11 +106,18 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         subject: form.subject.trim(), direction: 'inbound', status: 'Baru',
         fileName: pdf?.name || '', requesterId: external ? profile.id : undefined,
       });
-      if (pdf && !demo) setPendingLetterId(saved.id);
-      if (pdf && !demo) await uploadPdf(pdf, saved.id);
+      if (pdf && !demo) {
+        setPendingLetterId(saved.id);
+        phase = 'drive';
+        await uploadPdf(pdf, saved.id);
+      }
       setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : '', senderOrganization: external ? profile.organization || '' : '', subject: '', status: 'Baru' });
       setPendingLetterId(''); setAttachment(null); setAdding(false); setActiveId(saved.id);
-    } catch (error) { setError(letterErrorMessage(error, 'Surat gagal dikirim. Data surat tersimpan; pilih Kirim surat lagi untuk mencoba unggah ulang.')); }
+    } catch (error) {
+      setError(phase === 'drive'
+        ? driveErrorMessage(error)
+        : letterErrorMessage(error, 'Surat gagal dicatat. Periksa isian, lalu coba lagi.'));
+    }
     finally { setBusy(false); }
   };
 
@@ -135,12 +160,12 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     {demo && <div className="inline-notice"><FileText size={17} /><span>Pratinjau lokal: surat dan balasan hanya tersimpan di browser ini; Drive dan Supabase belum terhubung.</span></div>}
     {adding && <section className="panel letter-form-panel"><div className="panel-heading"><div><span className="panel-kicker">{external ? 'PENGIRIMAN KE AMC' : 'PENCATATAN SURAT'}</span><h2>{external ? 'Surat baru' : 'Catat surat masuk'}</h2></div><button className="close-form" onClick={() => setAdding(false)} aria-label="Tutup formulir"><X size={17} /></button></div>
       <form onSubmit={submit} noValidate><div className="form-grid form-grid-2">
-        {!external && <label className="field">Nomor surat<input name="reference" value={form.reference} onChange={update} placeholder="Nomor surat dari pengirim" /></label>}
-        <label className="field">Tanggal {external ? 'pengiriman' : 'diterima'} <span className="required-mark">*</span><input type="date" name="date" value={form.date} onChange={update} required /></label>
-        <label className="field">Nama pengirim <span className="required-mark">*</span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
-        <label className="field">Perusahaan Ground Handling<input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
-        <label className="field field-full">Perihal surat <span className="required-mark">*</span><input name="subject" value={form.subject} onChange={update} required placeholder="Tujuan atau ringkasan surat" /></label>
-        <label className="field field-full">Lampiran PDF {external && <span className="required-mark">* wajib</span>}<input type="file" accept="application/pdf,.pdf" onChange={event => { void choosePdf(event, setAttachment); }} required={external} /><small className="field-hint">{readingPdf ? 'Memeriksa dan menyiapkan PDF…' : attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
+        {!external && <label className="field"><span className="field-label">Nomor surat</span><input name="reference" value={form.reference} onChange={update} placeholder="Nomor surat dari pengirim" /></label>}
+        <label className="field"><span className="field-label">Tanggal {external ? 'pengiriman' : 'diterima'} <span className="required-mark" aria-hidden="true">*</span></span><input type="date" name="date" value={form.date} onChange={update} required /></label>
+        <label className="field"><span className="field-label">Nama pengirim <span className="required-mark" aria-hidden="true">*</span></span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
+        <label className="field"><span className="field-label">Perusahaan Ground Handling</span><input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
+        <label className="field field-full"><span className="field-label">Perihal surat <span className="required-mark" aria-hidden="true">*</span></span><input name="subject" value={form.subject} onChange={update} required placeholder="Tujuan atau ringkasan surat" /></label>
+        <label className="field field-full"><span className="field-label">Lampiran PDF {external && <span className="required-mark">* wajib</span>}</span><input type="file" accept="application/pdf,.pdf" onChange={event => { void choosePdf(event, setAttachment); }} required={external} /><small className="field-hint">{readingPdf ? 'Memeriksa dan menyiapkan PDF…' : attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
       </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy || readingPdf}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>
     </section>}
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
@@ -171,5 +196,4 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     <input ref={retryInput} className="retry-file-input" type="file" accept="application/pdf,.pdf" onChange={retryUpload} aria-label="Pilih PDF untuk melengkapi unggahan" tabIndex={-1} />
   </>;
 }
-
 
