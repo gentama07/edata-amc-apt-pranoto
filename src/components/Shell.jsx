@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
+import { supabase } from '../lib/supabase';
 import ServiceStatus from './ServiceStatus';
 
 const navItems = [
@@ -17,6 +18,18 @@ export function Shell({ app, active, setActive, children }) {
   const [now, setNow] = useState(new Date());
   const [theme, setTheme] = useState(() => localStorage.getItem('amc-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   const [menuOpen, setMenuOpen] = useState(false);
+  const [airportVideo, setAirportVideo] = useState('');
+  useEffect(() => {
+    if (!app.session || !supabase) return undefined;
+    let cancelled = false;
+    const refresh = async () => {
+      const { data, error } = await supabase.storage.from('airport-video').createSignedUrl('airport-card.mp4', 3600);
+      if (!cancelled && !error) setAirportVideo(data.signedUrl);
+    };
+    refresh();
+    const timer = setInterval(refresh, 45 * 60 * 1000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [app.session]);
   useEffect(() => { const timer = setInterval(() => setNow(new Date()), 1000); return () => clearInterval(timer); }, []);
   useEffect(() => { document.documentElement.dataset.theme = theme; localStorage.setItem('amc-theme', theme); document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#18181a' : '#f5f5f7'); }, [theme]);
   useEffect(() => {
@@ -51,7 +64,7 @@ export function Shell({ app, active, setActive, children }) {
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`} aria-label="Navigasi utama">
         <div className="sidebar-heading">OPERASIONAL</div>
         {items.map(({ id, label, Icon }) => <button key={id} className={`nav-link ${active === id ? 'nav-active' : ''}`} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined}><Icon size={18} strokeWidth={1.8} /><span>{label}</span>{id === 'summary' && <span className="nav-live" title="Data harian" />}</button>)}
-        <div className="sidebar-bottom"><div className="airport-card"><video className="airport-card-video" aria-hidden="true" autoPlay muted loop playsInline preload="metadata"><source src={`${import.meta.env.BASE_URL}assets/airport-card.mp4`} type="video/mp4" /></video><span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
+        <div className="sidebar-bottom"><div className="airport-card">{airportVideo && <video className="airport-card-video" aria-hidden="true" autoPlay muted loop playsInline preload="metadata" src={airportVideo} />}<span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
           {profile.avatarUrl ? <img className="avatar" src={profile.avatarUrl} alt="" /> : <span className="avatar">{profile.name?.slice(0, 1).toUpperCase()}</span>}
           <span className="signed-copy"><strong>{profile.name}</strong><span>{profile.email}</span>{profile.nip && <small>NIP {profile.nip}</small>}</span>
         </button></div>
