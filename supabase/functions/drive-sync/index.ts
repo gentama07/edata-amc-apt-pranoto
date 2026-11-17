@@ -20,10 +20,11 @@ const env = (name: string) => {
 }
 
 async function callAppsScript(payload: Record<string, unknown>) {
+  const encodedPayload = new URLSearchParams({ payload: JSON.stringify({ ...payload, token: env('APPS_SCRIPT_TOKEN') }) })
   const response = await fetch(env('APPS_SCRIPT_URL'), {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ ...payload, token: env('APPS_SCRIPT_TOKEN') }),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=utf-8' },
+    body: encodedPayload.toString(),
     redirect: 'follow',
   })
   const body = await response.text()
@@ -64,7 +65,7 @@ Deno.serve(async (request) => {
 
     if (!letterId) return json({ error: 'Data surat harus disimpan sebelum berkas dikirim.' }, 400, origin)
     const { data: letter, error: letterError } = await userClient.from('incoming_letters')
-      .select('id,direction,requester_id,reply_to_id').eq('id', letterId).single()
+      .select('id,direction,requester_id,reply_to_id,created_by,recipient_role').eq('id', letterId).single()
     if (letterError || !letter) return json({ error: 'Surat tidak ditemukan atau Anda tidak memiliki akses.' }, 404, origin)
     if (profile.role === 'ground_handling' && (letter.direction !== 'inbound' || letter.requester_id !== user.id)) {
       return json({ error: 'Akun Ground Handling hanya dapat mengunggah PDF pada surat miliknya.' }, 403, origin)
@@ -72,21 +73,36 @@ Deno.serve(async (request) => {
     if (profile.role === 'pimpinan' && (letter.direction !== 'outbound' || !letter.reply_to_id)) {
       return json({ error: 'Pimpinan hanya dapat mengunggah PDF balasan surat.' }, 403, origin)
     }
+    const { data: senderProfile, error: senderProfileError } = await adminClient.from('profiles')
+      .select('role').eq('id', letter.created_by).maybeSingle()
+    if (senderProfileError) throw senderProfileError
     const destinationByRole: Record<string, string> = {
       ground_handling: 'GROUND HANDLING',
       personel: 'PETUGAS AMC',
       admin: 'ADMIN/PIMPINAN',
       pimpinan: 'ADMIN/PIMPINAN',
     }
-    const destination = destinationByRole[profile.role]
+    const destination = destinationByRole[senderProfile?.role || profile.role]
     if (!destination) return json({ error: 'Peran akun tidak memiliki folder arsip.' }, 403, origin)
-    const { data: requester, error: requesterError } = await adminClient.from('profiles')
-      .select('email').eq('id', letter.requester_id).eq('active', true).maybeSingle()
-    if (requesterError) throw requesterError
-    if (letter.direction === 'outbound' && !requester?.email) {
-      return json({ error: 'Email akun Ground Handling penerima tidak ditemukan. Periksa profil akun sebelum mengirim balasan.' }, 422, origin)
+    let viewerEmails: string[] = []
+    if (letter.reply_to_id && letter.requester_id) {
+      const { data: requester, error: requesterError } = await adminClient.from('profiles')
+        .select('email').eq('id', letter.requester_id).eq('active', true).maybeSingle()
+      if (requesterError) throw requesterError
+      if (requester?.email) viewerEmails = [requester.email]
+    } else {
+      const viewerRoles = letter.recipient_role === 'ground_handling'
+        ? ['ground_handling']
+        : letter.recipient_role === 'pimpinan'
+          ? ['pimpinan']
+          : ['admin', 'personel', 'pimpinan']
+      const { data: recipients, error: recipientError } = await adminClient.from('profiles')
+        .select('email').in('role', viewerRoles).eq('active', true)
+      if (recipientError) throw recipientError
+      viewerEmails = (recipients || []).map(row => row.email).filter(Boolean)
+      if (profile.role === 'ground_handling' && user.email && !viewerEmails.includes(user.email)) viewerEmails.push(user.email)
     }
-    const viewerEmail = profile.role === 'ground_handling' ? user.email : requester?.email
+    if (viewerEmails.length === 0) return json({ error: 'Tidak ada akun penerima aktif untuk surat ini. Hubungi Admin AMC.' }, 422, origin)
 
     const drive = await callAppsScript({
       action: 'upload',
@@ -94,7 +110,7 @@ Deno.serve(async (request) => {
       mime: file.type || 'application/octet-stream',
       data: encodeBase64(await file.arrayBuffer()),
       destination,
-      viewerEmail: viewerEmail || '',
+      viewerEmails,
     })
     const storedFile = drive.file
     if (!storedFile?.id) throw new Error('Google Apps Script tidak mengembalikan identitas berkas.')
