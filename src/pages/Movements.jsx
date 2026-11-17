@@ -39,22 +39,26 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
   }), [rows, query, operator, direction, selectedDate, sort]);
 
   const visibleRows = filtered;
-  const hasLoop = autoScroll && visibleRows.length > 5;
+  const hasLoop = autoScroll && visibleRows.length > 0;
   useEffect(() => {
     const viewport = tableScrollRef.current;
     if (!hasLoop || !viewport) return undefined;
     const motionPreference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let motionAllowed = !motionPreference.matches;
+    let motionAllowed = true;
     let previousTime = 0;
     let frame = 0;
-    const track = viewport.querySelector('[data-loop-track="primary"]');
-    const loopDistance = track?.offsetHeight || 0;
+    let travelDirection = 1;
+    let holdUntil = 0;
     const tick = time => {
       const delta = previousTime ? Math.min(time - previousTime, 40) : 0;
       previousTime = time;
-      if (motionAllowed && !viewport.matches(':hover') && !viewport.contains(document.activeElement) && time - lastManualScrollRef.current > 1800 && document.visibilityState === 'visible' && loopDistance > 0) {
-        viewport.scrollTop += delta * 0.012;
-        if (viewport.scrollTop >= loopDistance) viewport.scrollTop -= loopDistance;
+      const maxScroll = viewport.scrollWidth - viewport.clientWidth;
+      if (motionAllowed && !viewport.contains(document.activeElement) && time - lastManualScrollRef.current > 1800 && document.visibilityState === 'visible' && time >= holdUntil && maxScroll > 1) {
+        viewport.scrollLeft = Math.max(0, Math.min(maxScroll, viewport.scrollLeft + travelDirection * delta * 0.045));
+        if (viewport.scrollLeft >= maxScroll - 1 || (viewport.scrollLeft <= 0 && travelDirection < 0)) {
+          travelDirection *= -1;
+          holdUntil = time + 700;
+        }
       }
       frame = window.requestAnimationFrame(tick);
     };
@@ -77,18 +81,15 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
         <label className="filter-label">Arah<select name="direction-filter" aria-label="Filter arah penerbangan" value={direction} onChange={event => setDirection(event.target.value)}><option value="">Semua arah</option><option value="arr">Kedatangan (ARR)</option><option value="dep">Keberangkatan (DEP)</option><option value="turnaround">Transit / Turnaround</option></select></label>
         <button className="button-secondary filter-reset" onClick={reset}><FilterX size={15} />Reset filter</button>
       </div>
-      <div className="table-summary"><span>Menampilkan <strong>{filtered.length}</strong> dari <strong>{rows.filter(row => !selectedDate || row.date === selectedDate).length}</strong> pergerakan</span><div className="table-summary-actions">{visibleRows.length > 5 && <button className="text-action auto-scroll-toggle" aria-label={autoScroll ? 'Jeda gulir otomatis' : 'Jalankan gulir otomatis'} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? <Pause size={14} /> : <Play size={14} />}{autoScroll ? 'Jeda gulir' : 'Gulir otomatis'}</button>}<button className="text-action" onClick={exportRows}><Download size={15} />Ekspor CSV</button></div></div>
-      <div ref={tableScrollRef} className={`table-scroll ${hasLoop ? 'table-scroll-loop' : ''}`} onWheel={() => { lastManualScrollRef.current = performance.now(); }}>
+      <div className="table-summary"><span>Menampilkan <strong>{filtered.length}</strong> dari <strong>{rows.filter(row => !selectedDate || row.date === selectedDate).length}</strong> pergerakan</span><div className="table-summary-actions">{visibleRows.length > 0 && <button className="text-action auto-scroll-toggle" aria-label={autoScroll ? 'Jeda gulir otomatis' : 'Jalankan gulir otomatis'} onClick={() => setAutoScroll(value => !value)}>{autoScroll ? <Pause size={14} /> : <Play size={14} />}{autoScroll ? 'Jeda gulir' : 'Gulir otomatis'}</button>}<button className="text-action" onClick={exportRows}><Download size={15} />Ekspor CSV</button></div></div>
+      <div ref={tableScrollRef} className={`table-scroll ${visibleRows.length > 5 ? 'table-scroll-loop' : ''}`} onPointerMove={() => { lastManualScrollRef.current = performance.now(); }} onWheel={() => { lastManualScrollRef.current = performance.now(); }}>
         <table className="movement-table"><thead><tr>
           {columns.map(([key, label]) => <th key={key}><button className="sort-button" onClick={() => changeSort(key)}>{label}<ArrowUpDown size={11} /></button></th>)}{canWrite && <th>Aksi</th>}
         </tr></thead>
-        {filtered.length ? <>
-          <tbody data-loop-track="primary">{visibleRows.map((row, index) => <MovementRow key={row.id} row={row} index={index} canWrite={canWrite} onEdit={onEdit} onDelete={setConfirm} />)}</tbody>
-          {hasLoop && <tbody aria-hidden="true" data-loop-track="clone">{visibleRows.map((row, index) => <MovementRow key={`loop-${row.id}`} row={row} index={index} canWrite={false} />)}</tbody>}
-        </> : <tbody><tr><td className="table-empty" colSpan={columns.length + (canWrite ? 1 : 0)}><div className="empty-table-icon"><ArrowDownToLine size={18} /></div><strong>Tidak ada data yang cocok</strong><span>Coba ubah filter atau pilih tanggal operasional lain.</span></td></tr></tbody>}
+        <tbody>{filtered.length ? visibleRows.map((row, index) => <MovementRow key={row.id} row={row} index={index} canWrite={canWrite} onEdit={onEdit} onDelete={setConfirm} />) : <tr><td className="table-empty" colSpan={columns.length + (canWrite ? 1 : 0)}><div className="empty-table-icon"><ArrowDownToLine size={18} /></div><strong>Tidak ada data yang cocok</strong><span>Coba ubah filter atau pilih tanggal operasional lain.</span></td></tr>}</tbody>
         </table>
       </div>
-      <div className="table-foot"><span>{hasLoop ? 'Gulir berulang · arahkan kursor atau fokuskan tabel untuk jeda.' : 'Data mengikuti koneksi aktif.'}</span><span>Arah: ARR · DEP · Transit</span></div>
+      <div className="table-foot"><span>{hasLoop ? 'Tabel bergeser ke samping dan kembali berulang. Interaksi manual menjedanya sementara.' : 'Data mengikuti koneksi aktif.'}</span><span>Arah: ARR · DEP · Transit</span></div>
     </section>
     {confirm && <div className="modal-backdrop" role="presentation" onMouseDown={event => event.target === event.currentTarget && setConfirm(null)}><section ref={dialogRef} className="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="delete-title" tabIndex="-1"><div className="confirm-icon"><Trash2 size={19} aria-hidden="true" /></div><h2 id="delete-title">Hapus pergerakan?</h2><p>Data {confirm.registration} · {confirm.flightArr || confirm.flightDep || 'penerbangan ini'} akan dihapus dari log.</p><div className="modal-actions"><button type="button" className="button-secondary" onClick={() => setConfirm(null)}>Batal</button><button type="button" className="button-danger" onClick={confirmDelete}>Hapus data</button></div></section></div>}
   </>;
