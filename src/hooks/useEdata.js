@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { demoAccounts } from '../config/airportOptions';
 import { initialLetters, initialMovements } from '../lib/demoData';
 import { isSupabaseConfigured, supabase } from '../lib/supabase';
-import { createClient } from '@supabase/supabase-js';
 
 const STORE = 'e-data-amc-demo-v1';
 const MESSAGE_STORE = 'e-data-amc-demo-messages-v1';
@@ -269,15 +268,32 @@ export function useEdata() {
     if (resetError) throw resetError;
   };
   const changePassword = async (currentPassword, newPassword) => {
-    if (!session?.user?.email) throw new Error('Sesi akun tidak ditemukan. Masuk kembali lalu ulangi.');
-    const verifier = createClient(import.meta.env.VITE_SUPABASE_URL, import.meta.env.VITE_SUPABASE_ANON_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
-    });
-    const { error: verifyError } = await verifier.auth.signInWithPassword({ email: session.user.email, password: currentPassword });
-    await verifier.auth.signOut();
-    if (verifyError) throw new Error('Kata sandi lama tidak sesuai.');
+    if (!isSupabaseConfigured || !supabase) throw new Error('Ubah kata sandi hanya tersedia saat akun terhubung ke Supabase.');
+    const { data: currentAuth, error: sessionError } = await supabase.auth.getSession();
+    const email = currentAuth?.session?.user?.email || session?.user?.email;
+    if (sessionError || !email) throw new Error('Sesi login sudah berakhir. Masuk kembali, lalu ubah kata sandi.');
+
+    // Verify the old password on the same auth client that updates it. This also
+    // establishes a fresh Supabase session before updateUser, avoiding a stale
+    // React session being mistaken for an active auth session.
+    const { error: verifyError } = await supabase.auth.signInWithPassword({ email, password: currentPassword });
+    if (verifyError) {
+      if (/invalid login credentials|invalid password/i.test(verifyError.message || '')) {
+        throw new Error('Kata sandi lama tidak sesuai.');
+      }
+      throw verifyError;
+    }
+    const { data: verifiedAuth, error: verifiedSessionError } = await supabase.auth.getSession();
+    if (verifiedSessionError || !verifiedAuth?.session) {
+      throw new Error('Sesi login tidak dapat diperbarui. Masuk kembali, lalu ulangi.');
+    }
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
-    if (updateError) throw updateError;
+    if (updateError) {
+      if (/auth session missing/i.test(updateError.message || '')) {
+        throw new Error('Sesi login sudah berakhir. Masuk kembali, lalu ulangi perubahan kata sandi.');
+      }
+      throw updateError;
+    }
   };
   const finishPasswordRecovery = async (newPassword) => {
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
