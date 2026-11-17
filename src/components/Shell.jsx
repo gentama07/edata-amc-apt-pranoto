@@ -66,7 +66,7 @@ export function Shell({ app, active, setActive, children }) {
   </div>;
 }
 
-export function PageHeading({ eyebrow, title, description, action }) {
+export function PageHeading({ title, description, action }) {
   return <div className="page-heading"><div><h1>{title}</h1>{description && <p>{description}</p>}</div>{action && <div className="page-heading-action">{action}</div>}</div>;
 }
 
