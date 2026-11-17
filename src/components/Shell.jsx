@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, PlaneTakeoff, Sun, UserRoundCog, X } from 'lucide-react';
+import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import ServiceStatus from './ServiceStatus';
 
@@ -51,7 +51,7 @@ export function Shell({ app, active, setActive, children }) {
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`} aria-label="Navigasi utama">
         <div className="sidebar-heading">OPERASIONAL</div>
         {items.map(({ id, label, Icon }) => <button key={id} className={`nav-link ${active === id ? 'nav-active' : ''}`} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined}><Icon size={18} strokeWidth={1.8} /><span>{label}</span>{id === 'summary' && <span className="nav-live" title="Data harian" />}</button>)}
-        <div className="sidebar-bottom"><div className="airport-card"><PlaneTakeoff aria-hidden="true"/><span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
+        <div className="sidebar-bottom"><div className="airport-card"><video className="airport-card-video" aria-hidden="true" autoPlay muted loop playsInline preload="metadata"><source src={`${import.meta.env.BASE_URL}assets/airport-card.mp4`} type="video/mp4" /></video><span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
           {profile.avatarUrl ? <img className="avatar" src={profile.avatarUrl} alt="" /> : <span className="avatar">{profile.name?.slice(0, 1).toUpperCase()}</span>}
           <span className="signed-copy"><strong>{profile.name}</strong><span>{profile.email}</span>{profile.nip && <small>NIP {profile.nip}</small>}</span>
         </button></div>

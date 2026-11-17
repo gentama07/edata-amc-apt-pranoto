@@ -103,13 +103,14 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .nav-active, .nav-active:hover { color: var(--blue); background: rgba(0,102,204,.09); font-weight: 600; }
 .nav-live { width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: #3c9d60; }
 .sidebar-bottom { margin-top: auto; }
-.airport-card { position: relative; display: flex; flex-direction: column; gap: 4px; margin: 0 3px 16px; padding: 13px 12px 13px 42px; border: 1px solid var(--border); border-radius: 9px; background: linear-gradient(130deg,var(--card-soft),color-mix(in srgb,var(--blue) 7%,var(--card))); overflow: hidden; }
-.airport-card::after { content:""; position:absolute; inset:-60% auto -60% -55%; width:35%; transform:skewX(-18deg); background:linear-gradient(90deg,transparent,rgba(255,255,255,.26),transparent); animation:airport-sweep 8s ease-in-out infinite; }
-.airport-card > svg { position:absolute; left:12px; top:16px; color:var(--blue); animation:airport-plane 5s ease-in-out infinite; }
-.airport-card-label { color: var(--muted); font-size: 9px; font-weight: 600; letter-spacing: .07em; }
+.airport-card { position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 4px; margin: 0 3px 16px; padding: 16px; border: 1px solid var(--border); border-radius: 9px; color: #fff; background: #17202a; overflow: hidden; }
+.airport-card-video { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.airport-card::before { content: ""; position: absolute; z-index: -1; inset: 0; background: rgba(8, 16, 26, .75); }
+.airport-card-label { color: #e4eaf0; font-size: 9px; font-weight: 600; letter-spacing: .07em; }
 .airport-card strong { font-family: "SF Pro Display", system-ui, sans-serif; font-size: 17px; letter-spacing: -.32px; }
-.airport-card strong span { color: #a4a4aa; }
-.airport-card small { color: var(--muted); font-size: 10px; }
+.airport-card strong span { color: #e4eaf0; }
+.airport-card small { color: #e4eaf0; font-size: 10px; }
+@media (prefers-reduced-motion: reduce) { .airport-card-video { display: none; } }
 .signed-in { display: flex; align-items: center; gap: 9px; padding: 12px 3px 0; border-top: 1px solid var(--border); }
 .avatar, .user-avatar { display: grid; place-items: center; width: 29px; height: 29px; flex: 0 0 auto; border-radius: 50%; color: #fff; background: #384b68; font-size: 12px; font-weight: 600; }
 .signed-copy { min-width: 0; display: flex; flex-direction: column; }
