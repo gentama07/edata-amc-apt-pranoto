@@ -362,9 +362,25 @@ export function useEdata() {
   };
 
   const requestPasswordReset = async (email) => {
-    const redirectTo = `${location.origin}${location.pathname}?recovery=1`;
-    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo });
-    if (resetError) throw resetError;
+    if (!supabase) throw new Error('Pemulihan akun produksi belum terhubung.');
+    const { data, error: requestError } = await supabase.functions.invoke('account-recovery', {
+      body: { action: 'request', email: email.trim() },
+    });
+    if (requestError) {
+      const payload = await requestError.context?.json?.().catch(() => null);
+      throw new Error(payload?.error || requestError.message);
+    }
+    return data;
+  };
+  const finishAdminPasswordRecovery = async (email, token, password) => {
+    if (!supabase) throw new Error('Pemulihan akun produksi belum terhubung.');
+    const { error: resetError } = await supabase.functions.invoke('account-recovery', {
+      body: { action: 'reset', email: email.trim(), token, password },
+    });
+    if (resetError) {
+      const payload = await resetError.context?.json?.().catch(() => null);
+      throw new Error(payload?.error || resetError.message);
+    }
   };
   const changePassword = async (currentPassword, newPassword) => {
     if (!isSupabaseConfigured || !supabase) throw new Error('Ubah kata sandi hanya tersedia saat akun terhubung ke Supabase.');
@@ -402,7 +418,8 @@ export function useEdata() {
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, openingRequested, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, confirmLetterComplete, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, openingRequested, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, confirmLetterComplete, requestPasswordReset, finishAdminPasswordRecovery, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
+
 
 

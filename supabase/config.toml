@@ -11,3 +11,7 @@ verify_jwt = false
 [functions.manage-users]
 verify_jwt = false
 
+[functions.account-recovery]
+verify_jwt = false
+
+
