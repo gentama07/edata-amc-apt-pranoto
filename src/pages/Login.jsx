@@ -48,7 +48,7 @@ export default function Login({ app, portalMode = false }) {
     <a className="skip-link" href="#login-form">Lewati ke formulir masuk</a>
     <section className="login-left" aria-labelledby="login-story-title">
       <div className="login-brand">
-        <div className="apt-mark login-apt-mark"><img width="810" height="308" fetchPriority="high" src={`${import.meta.env.BASE_URL}assets/logo-apt-login.png`} alt="Bandar Udara A.P.T. Pranoto" /></div>
+        <div className="apt-mark login-apt-mark"><img width="810" height="308" fetchPriority="high" src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="Bandar Udara A.P.T. Pranoto" /></div>
         <span>E-data AMC Aji Pangeran Tumenggung Pranoto Samarinda</span>
       </div>
       <div className="login-story" data-enter>
