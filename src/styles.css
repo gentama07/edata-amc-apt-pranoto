@@ -905,4 +905,59 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .correspondence-row, .button-primary, .button-secondary, .button-danger { transition: none; }
 }
 
+/* Keep correspondence form controls inside a clear, consistent inset. */
+.letter-form-panel { overflow: hidden; }
+.letter-form-panel > form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
+  padding: 20px 22px 22px;
+}
+.letter-form-panel .form-grid {
+  width: 100%;
+  min-width: 0;
+  gap: 17px 20px;
+}
+.letter-form-panel .field { gap: 7px; font-size: 11px; line-height: 1.4; }
+.letter-form-panel .field-label { display: inline-flex; align-items: baseline; gap: 4px; min-height: 16px; }
+.letter-form-panel .field input,
+.letter-form-panel .field select,
+.letter-form-panel .field textarea {
+  min-height: 44px;
+  padding: 10px 12px;
+  font-size: 13px;
+}
+.letter-form-panel .field input[type="file"] {
+  min-height: 48px;
+  padding: 6px;
+  font-size: 12px;
+}
+.letter-form-panel .field input[type="file"]::file-selector-button {
+  min-height: 34px;
+  margin-right: 10px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--ink);
+  background: var(--card-soft);
+  font: inherit;
+  cursor: pointer;
+}
+.letter-form-panel .field input[type="file"]::file-selector-button:hover { border-color: var(--blue); }
+.letter-form-panel .field-hint { font-size: 11px; line-height: 1.5; overflow-wrap: anywhere; }
+.letter-form-panel .form-actions {
+  gap: 10px;
+  margin: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+}
+.letter-form-panel .form-actions button { min-height: 42px; }
+
+@media (max-width: 767px) {
+  .letter-form-panel > form { gap: 16px; padding: 16px 14px 18px; }
+  .letter-form-panel .form-grid { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .letter-form-panel .form-actions { flex-direction: column-reverse; }
+  .letter-form-panel .form-actions > button { width: 100%; min-height: 44px; }
+}
 
