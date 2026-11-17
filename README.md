@@ -54,7 +54,7 @@ Browser → Supabase Edge Function drive-sync → Google Apps Script Web App →
 
 Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya tidak dikirim ke browser dan tidak boleh dimasukkan ke repo.
 
-1. Siapkan folder root `DATA AMC/SURAT` dengan subfolder `ADMIN/PIMPINAN` dan `GROUND HANDLING`.
+1. Siapkan folder root `DATA AMC/SURAT` dengan tiga subfolder langsung bernama persis `ADMIN/PIMPINAN`, `GROUND HANDLING`, dan `PETUGAS AMC`.
 2. Buka [Google Apps Script](https://script.google.com), lalu salin `supabase/apps-script/Code.gs` ke proyek Web App.
 3. Simpan `APPS_SCRIPT_TOKEN` dan `DRIVE_ROOT_FOLDER_ID` di **Project Settings → Script properties**. Token yang sama disimpan sebagai Supabase secret `APPS_SCRIPT_TOKEN`. Jangan commit nilai asli ke GitHub.
 4. Pilih **Deploy → New deployment → Web app**, set **Execute as: Me** dan **Who has access: Anyone**. Berikan izin Drive pada akun Google yang dipakai. Salin URL yang berakhiran `/exec`.
@@ -65,7 +65,7 @@ Token Apps Script dan URL deployment disimpan sebagai Supabase secrets. Keduanya
    supabase secrets set APPS_SCRIPT_URL="https://script.google.com/macros/s/ID_DEPLOYMENT/exec" APPS_SCRIPT_TOKEN="TOKEN_ACAK"
    ```
 
-   Gerbang JWT gateway untuk `drive-sync` dan `manage-users` dimatikan (`verify_jwt = false`); fungsi memvalidasi sesi dengan `auth.getUser()`, memeriksa profil/peran aktif, dan memakai service role hanya di sisi server. Fungsi `drive-sync` menaruh surat masuk di `ADMIN/PIMPINAN` dan balasan di `GROUND HANDLING`.
+   Gerbang JWT gateway untuk `drive-sync` dan `manage-users` dimatikan (`verify_jwt = false`); fungsi memvalidasi sesi dengan `auth.getUser()`, memeriksa profil/peran aktif, dan memakai service role hanya di sisi server. Folder tujuan ditentukan dari akun pengunggah: Ground Handling ke `GROUND HANDLING`, Personel AMC ke `PETUGAS AMC`, dan Admin/Pimpinan ke `ADMIN/PIMPINAN`.
 
 6. Setelah mengubah kode Apps Script, deploy versi baru melalui **Deploy → Manage deployments → Edit → New version**. Setelah rotasi token, pastikan versi deployment terbaru dan Supabase secret berisi token yang sama.
 
@@ -108,4 +108,5 @@ supabase/          Migrasi SQL, Edge Function, dan source Apps Script
 .github/workflows/ Build dan deploy GitHub Pages
 public/assets/     Logo APT Pranoto dan AMC
 ```
+
 
