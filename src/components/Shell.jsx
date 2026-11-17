@@ -97,8 +97,11 @@ export function Shell({ app, active, setActive, children }) {
 }
 
 function Opening({ src, onDone }) {
-  useEffect(() => { const timeout = window.setTimeout(onDone, 45000); return () => window.clearTimeout(timeout); }, [onDone]);
-  return <div className="opening-video" aria-label="Video pembuka"><video autoPlay muted playsInline onEnded={onDone} onError={onDone} onStalled={onDone} src={src} /></div>;
+  const [ready, setReady] = useState(false);
+  return <div className="opening-video" aria-label="Video pembuka">
+    {!ready && <img className="opening-video-mark" src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="" />}
+    <video className={ready ? 'opening-video-media opening-video-ready' : 'opening-video-media'} autoPlay muted playsInline preload="auto" onLoadedData={() => setReady(true)} onPlaying={() => setReady(true)} onWaiting={() => setReady(false)} onEnded={onDone} onError={onDone} src={src} />
+  </div>;
 }
 
 export function PageHeading({ title, description, action }) {
