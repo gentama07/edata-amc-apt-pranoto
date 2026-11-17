@@ -638,11 +638,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-left { isolation: isolate; padding: 34px clamp(28px, 4vw, 72px) 26px; background: #19191b; }
 .login-left::before { z-index: -2; top: 50%; right: -13%; bottom: auto; width: min(62vw, 720px); aspect-ratio: 1; height: auto; transform: translateY(-50%); border-color: rgba(255,255,255,.075); box-shadow: 0 0 0 clamp(38px, 5vw, 90px) rgba(255,255,255,.018), 0 0 0 clamp(76px, 10vw, 180px) rgba(255,255,255,.012); }
 .login-left::after { content: ""; position: absolute; z-index: -1; top: 50%; right: -13%; width: min(62vw, 720px); aspect-ratio: 1; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(196,143,66,.36) 76%, transparent 82% 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); transform: translateY(-50%); animation: login-ring-turn 72s linear infinite; }
-.login-brand { gap: 12px; }
-.login-brand .login-apt-mark { width: clamp(126px, 15vw, 176px); height: 56px; padding: 0; overflow: hidden; border: 1px solid rgba(255,255,255,.08); border-radius: 4px; background: #171719; }
+.login-brand { gap: 12px; flex-wrap: wrap; }
+.login-brand .login-apt-mark { flex: 0 0 clamp(136px, 13vw, 166px); width: clamp(136px, 13vw, 166px); height: 60px; padding: 2px; overflow: hidden; border: 1px solid rgba(255,255,255,.12); border-radius: 4px; background: #171719; }
 .login-apt-mark img { display: block; width: 100%; height: 100%; max-height: none; object-fit: contain; }
-.login-brand .amc-mark { width: 42px; height: 46px; padding: 3px; border: 1px solid rgba(255,255,255,.12); border-radius: 4px; }
-.login-brand > span { margin-left: 2px; color: #e4e4e6; font-size: 13px; letter-spacing: .01em; }
+.login-brand .amc-mark { flex: 0 0 54px; width: 54px; height: 54px; padding: 4px; border: 1px solid rgba(255,255,255,.16); border-radius: 4px; }
+.login-brand > span { flex: 1 1 240px; max-width: 440px; margin-left: 2px; color: #e4e4e6; font-size: 14px; font-weight: 600; line-height: 1.35; letter-spacing: .005em; text-wrap: balance; }
 .login-story { max-width: 580px; margin: 0 auto; }
 .login-story .eyebrow { color: #d3aa68; letter-spacing: .15em; }
 .login-story h1 { margin: 19px 0 20px; font-size: clamp(43px, 5vw, 68px); font-weight: 560; line-height: 1.02; letter-spacing: -2.7px; }
@@ -724,9 +724,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .login-screen { grid-template-columns: 1fr; }
   .login-left { min-height: 245px; padding: 17px 20px 14px; }
   .login-left::before, .login-left::after { top: 105%; right: -60%; width: 340px; }
-  .login-brand .login-apt-mark { width: clamp(116px, 39vw, 154px); height: 45px; }
-  .login-brand .amc-mark { width: 36px; height: 39px; }
-  .login-brand > span { font-size: 11px; }
+  .login-brand { gap: 9px; }
+  .login-brand .login-apt-mark { flex-basis: clamp(112px, 38vw, 150px); width: clamp(112px, 38vw, 150px); height: 52px; }
+  .login-brand .amc-mark { flex-basis: 46px; width: 46px; height: 46px; }
+  .login-brand > span { flex-basis: 100%; max-width: 440px; margin: 1px 0 0; font-size: 12px; }
   .login-story { margin: 25px 0 13px; }
   .login-story h1 { margin: 8px 0 9px; font-size: clamp(29px, 8vw, 37px); letter-spacing: -1px; }
   .login-story p { max-width: 440px; font-size: 12px; }
@@ -740,7 +741,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (max-width: 380px) {
   .login-left { padding-right: 16px; padding-left: 16px; }
   .login-brand { gap: 8px; }
-  .login-brand > span { display: none; }
+  .login-brand .login-apt-mark { flex-basis: clamp(112px, 38vw, 138px); width: clamp(112px, 38vw, 138px); }
+  .login-brand .amc-mark { flex-basis: 42px; width: 42px; height: 42px; }
   .login-footnote { letter-spacing: .03em; }
   .login-story h1 { font-size: 29px; }
   .login-right { padding-right: 16px; padding-left: 16px; }
