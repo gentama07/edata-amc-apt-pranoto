@@ -6,9 +6,9 @@ import { PageHeading } from '../components/Shell';
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const pdfSnapshots = new WeakSet();
 
-function correspondenceStatus(letter, allLetters, allMessages) {
-  if (letter.direction === 'outbound') return 'Terkirim';
-  if (allLetters.some(item => item.replyToId === letter.id)) return 'Dibalas';
+function correspondenceStatus(letter, allLetters, allMessages, demo) {
+  if (letter.direction === 'outbound') return demo || letter.driveFileId ? 'Terkirim' : 'Dalam proses';
+  if (allLetters.some(item => item.replyToId === letter.id && (demo || item.driveFileId))) return 'Dibalas';
   if (allMessages.some(message => message.letter_id === letter.id)) return 'Dalam proses';
   return 'Baru';
 }
@@ -177,7 +177,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     </section>}
     <section className="panel letters-panel"><div className="panel-heading"><div><span className="panel-kicker">ARSIP & PELACAKAN</span><h2>{roots.length} surat tercatat</h2></div><span className="panel-note">{formatDateLong(airportDate())}</span></div>
       {roots.length ? <div className="letter-list">{roots.map(letter => {
-        const status = correspondenceStatus(letter, letters, messages);
+        const status = correspondenceStatus(letter, letters, messages, demo);
         const tone = status === 'Dibalas' ? 'archived' : status === 'Dalam proses' ? 'followup' : 'new';
         return <article className={`letter-row correspondence-row ${activeId === letter.id ? 'letter-selected' : ''}`} key={letter.id}>
           <div className="letter-file-icon" aria-hidden="true">{letter.direction === 'outbound' ? <ArrowUpRight size={20} /> : <ArrowDownLeft size={20} />}</div>
