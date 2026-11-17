@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowRight, LockKeyhole, Pause, Play, ShieldCheck } from 'lucide-react';
+import { ArrowRight, LockKeyhole, ShieldCheck } from 'lucide-react';
 import { demoAccounts } from '../config/airportOptions';
 import { isSupabaseConfigured } from '../lib/supabase';
 
@@ -63,8 +63,6 @@ export default function Login({ app, portalMode = false }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState(null);
   const [forgot, setForgot] = useState(false);
-  const [reduceMotion] = useState(() => window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  const [motionPaused, setMotionPaused] = useState(false);
 
   const submit = async event => {
     event.preventDefault();
@@ -87,7 +85,7 @@ export default function Login({ app, portalMode = false }) {
     }
   };
 
-  return <main className={`login-screen${motionPaused ? ' motion-paused' : ''}`}>
+  return <main className="login-screen">
     <a className="skip-link" href="#login-form">Lewati ke formulir masuk</a>
     <section className="login-left" aria-labelledby="login-story-title">
       <div className="login-brand">
@@ -96,17 +94,15 @@ export default function Login({ app, portalMode = false }) {
         <span>E-data AMC Aji Pangeran Tumenggung Pranoto Samarinda</span>
       </div>
       <div className="login-story" data-enter>
-        <div className="eyebrow">AAP · WALS · SAMARINDA</div>
         <h1 id="login-story-title">Operasional apron<br /><em>APT Pranoto · Samarinda.</em></h1>
         <p>Pencatatan pergerakan dan pemantauan aktivitas harian Apron Movement Control Bandar Udara A.P.T. Pranoto.</p>
       </div>
-        <div className="login-footnote"><ServiceStatus demo={app.demo} />{!reduceMotion && <button className="motion-toggle" type="button" title={motionPaused ? 'Lanjutkan animasi latar' : 'Jeda animasi latar'} aria-label={motionPaused ? 'Lanjutkan animasi latar' : 'Jeda animasi latar'} aria-pressed={motionPaused} onClick={() => setMotionPaused(value => !value)}>{motionPaused ? <Play size={13} aria-hidden="true" /> : <Pause size={13} aria-hidden="true" />}{motionPaused ? 'Lanjutkan gerak' : 'Jeda gerak'}</button>}<span>WITA · ASIA/MAKASSAR</span></div>
+        <div className="login-footnote"><ServiceStatus demo={app.demo} /></div>
     </section>
 
     <section className="login-right" aria-label="Akses akun">
       <div className="login-card" id="login-form" tabIndex="-1">
         <div className="login-card-icon"><LockKeyhole size={19} aria-hidden="true" /></div>
-        <span className="panel-kicker">{portalMode ? 'AKSES GROUND HANDLING' : 'AKSES PERSONEL'}</span>
         <h2>{forgot ? 'Pulihkan akses akun' : 'Masuk ke E-data AMC'}</h2>
         <p className="login-subtitle">{forgot ? 'Kami akan mengirim tautan untuk membuat kata sandi baru.' : 'Gunakan akun operasional yang diberikan Admin.'}</p>
         {app.demo && <div className="login-demo-banner"><ShieldCheck size={16} aria-hidden="true" /><div><strong>Mode Pratinjau Lokal aktif</strong><span>Supabase belum dikonfigurasi. Data pratinjau hanya tersimpan di browser ini.</span></div></div>}
@@ -132,7 +128,6 @@ export default function Login({ app, portalMode = false }) {
         {app.demo && <div className="demo-role-section"><div className="demo-role-caption">MASUK SEBAGAI PERAN DEMO</div><div className="demo-role-list">{demoAccounts.map(account => <button key={account.role} onClick={() => app.signInDemo(account.role)} className="demo-role-button"><span className={`demo-role-avatar role-${account.role}`}>{account.label.slice(0, 1)}</span><span><strong>{account.label}</strong><small>{account.email}</small></span><ArrowRight size={16} aria-hidden="true" /></button>)}</div><small className="demo-password-note">Akun demo terisolasi · data contoh · tanpa kata sandi</small></div>}
         {!isSupabaseConfigured && <div className="login-config-note"><strong>Login produksi belum tersedia</strong><span>Mode ini hanya untuk pratinjau. Hubungi Admin AMC untuk mengaktifkan akses dan penyimpanan produksi.</span></div>}
         {portalMode && <a className="ground-handler-link" href={import.meta.env.BASE_URL}>Kembali ke masuk AMC</a>}
-        <div className="login-legal">Akun dibuat dan dikelola Admin. Registrasi publik tidak tersedia.</div>
       </div>
     </section>
   </main>;
