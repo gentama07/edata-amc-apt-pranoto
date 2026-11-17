@@ -84,7 +84,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
   const [chatDraft, setChatDraft] = useState(''); const [replyFile, setReplyFile] = useState(null);
   const [pendingLetterId, setPendingLetterId] = useState(''); const [pendingReplyIds, setPendingReplyIds] = useState({});
   const [retryId, setRetryId] = useState(''); const retryInput = useRef(null);
-  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: profile.organization || '', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
+  const [form, setForm] = useState({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: external ? profile.organization || '' : 'AMC A.P.T. Pranoto', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
   const update = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }));
   const roots = useMemo(() => letters.filter(letter => !letter.replyToId), [letters]);
   const selected = roots.find(letter => letter.id === activeId);
@@ -131,7 +131,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         phase = 'drive';
         await uploadPdf(pdf, saved.id);
       }
-      setForm({ reference: '', date: airportDate(), sender: external ? profile.name || '' : profile.name || '', senderOrganization: external ? profile.organization || '' : profile.organization || '', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
+      setForm({ reference: '', date: airportDate(), sender: profile.name || '', senderOrganization: external ? profile.organization || '' : 'AMC A.P.T. Pranoto', subject: '', recipientRole: external ? 'amc' : 'ground_handling' });
       setPendingLetterId(''); setAttachment(null); setAdding(false); setActiveId(saved.id);
     } catch (error) {
       setError(phase === 'drive'
@@ -201,7 +201,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         <label className="field"><span className="field-label">Kirim kepada <span className="required-mark" aria-hidden="true">*</span></span>{external ? <input value="Admin / Personel AMC" readOnly aria-describedby="recipient-role-note" /> : <select name="recipientRole" value={form.recipientRole} onChange={update} required><option value="ground_handling">Ground Handling</option><option value="pimpinan">Pimpinan</option></select>}<small id="recipient-role-note" className="field-hint">{external ? 'Akun Ground Handling hanya dapat mengirim surat ke Admin atau Personel AMC.' : 'Surat ke Pimpinan hanya dapat dikirim oleh Admin atau Personel AMC.'}</small></label>
         <label className="field"><span className="field-label">Tanggal {external ? 'pengiriman' : 'diterima'} <span className="required-mark" aria-hidden="true">*</span></span><input type="date" name="date" value={form.date} onChange={update} required /></label>
         <label className="field"><span className="field-label">Nama pengirim <span className="required-mark" aria-hidden="true">*</span></span><input name="sender" value={form.sender} onChange={update} onFocus={event => { if (external && event.target.value === profile.name) event.target.select(); }} required placeholder="Nama orang yang mengirim" /></label>
-        <label className="field"><span className="field-label">Perusahaan Ground Handling</span><input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder="Pilih perusahaan pengirim" /></label>
+        <label className="field"><span className="field-label">{external ? 'Perusahaan Ground Handling' : 'Unit pengirim'}</span><input value={external ? profile.organization : form.senderOrganization} onChange={event => setForm(current => ({ ...current, senderOrganization: event.target.value }))} readOnly={external} required={external} placeholder={external ? 'Perusahaan pengirim' : 'Unit atau instansi pengirim'} /></label>
         <label className="field field-full"><span className="field-label">Perihal surat <span className="required-mark" aria-hidden="true">*</span></span><input name="subject" value={form.subject} onChange={update} required placeholder="Tujuan atau ringkasan surat" /></label>
         <label className="field field-full"><span className="field-label">Lampiran PDF {external && <span className="required-mark">* wajib</span>}</span><input type="file" accept="application/pdf,.pdf" onChange={event => { void choosePdf(event, setAttachment); }} required={external} /><small className="field-hint">{readingPdf ? 'Memeriksa dan menyiapkan PDF…' : attachment ? `${attachment.name} · ${(attachment.size / 1024 / 1024).toFixed(1)} MB` : 'PDF maksimal 10 MB. Surat akan diarsipkan pada folder yang sesuai.'}</small></label>
       </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setAdding(false)}>Batal</button><button className="button-primary" disabled={busy || readingPdf}><Send size={16} />{busy ? 'Mengirim…' : external ? 'Kirim ke AMC' : 'Simpan surat'}</button></div></form>

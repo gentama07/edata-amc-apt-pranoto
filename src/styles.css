@@ -793,23 +793,25 @@ button, a, input, select, textarea { touch-action: manipulation; }
   grid-template-columns: 44px minmax(0, 1fr) minmax(126px, 158px) 36px;
   grid-template-areas: "icon main status delete" "icon retry status delete";
   align-items: center;
-  min-height: 112px;
-  gap: 5px 14px;
-  padding: 18px 10px;
+  min-height: 128px;
+  gap: 8px 18px;
+  padding: 20px 12px;
   border-radius: 8px;
   transition: background-color .16s ease;
 }
 .correspondence-row:hover { background: color-mix(in srgb, var(--hover) 55%, transparent); }
-.correspondence-row .letter-file-icon { grid-area: icon; align-self: start; margin-top: 2px; }
-.correspondence-row .letter-open { grid-area: main; width: 100%; gap: 4px; }
-.letter-meta { flex-wrap: wrap; align-items: center; gap: 5px 9px; font-size: 10px; line-height: 1.4; }
-.letter-subject { font-size: 15px; line-height: 1.35; overflow-wrap: anywhere; }
-.letter-sender { font-size: 12px; }
-.letter-fileline { flex-wrap: wrap; gap: 7px 12px; margin-top: 3px; }
-.file-name, .drive-connected, .no-file { font-size: 10px; overflow-wrap: anywhere; }
+.correspondence-row .letter-file-icon { grid-area: icon; align-self: start; width: 42px; height: 42px; margin-top: 2px; }
+.correspondence-row .letter-open { grid-area: main; width: 100%; gap: 6px; }
+.letter-meta { flex-wrap: wrap; align-items: center; gap: 5px 10px; font-size: 12px; line-height: 1.45; }
+.letter-subject { font-size: 17px; line-height: 1.35; overflow-wrap: anywhere; }
+.letter-sender { font-size: 13px; }
+.letter-fileline { flex-wrap: wrap; gap: 8px 12px; margin-top: 4px; }
+.file-name, .drive-connected, .no-file { font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.file-name { max-width: 100%; }
+.drive-connected { padding: 3px 7px; border-radius: 5px; background: color-mix(in srgb, var(--green) 10%, var(--card)); }
 .letter-status-block { grid-area: status; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
-.letter-status-label { color: var(--muted); font-size: 10px; line-height: 1.2; }
-.letter-status { display: inline-flex; align-items: center; min-height: 29px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.letter-status-label { color: var(--muted); font-size: 11px; line-height: 1.2; }
+.letter-status { display: inline-flex; align-items: center; min-height: 30px; padding: 6px 10px; border-radius: 6px; font-size: 12px; font-weight: 600; white-space: nowrap; }
 .correspondence-row .delete-letter { grid-area: delete; justify-self: center; margin: 0; }
 .correspondence-row .retry-letter-upload { grid-area: retry; justify-self: start; margin: 0; }
 .correspondence-row .letter-status { margin-left: 0; }
@@ -901,7 +903,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .correspondence-row { grid-template-columns: 36px minmax(0, 1fr) 34px; grid-template-areas: "icon main delete" "icon status retry"; gap: 9px 10px; padding: 16px 0; }
   .correspondence-row .letter-file-icon { width: 34px; height: 38px; }
   .letter-status-block { align-items: flex-start; }
-  .letter-meta { font-size: 10px; }
+  .letter-meta { font-size: 11px; }
+  .letter-subject { font-size: 15px; }
   .letter-status { min-height: 28px; }
   .retry-letter-upload { min-height: 40px; }
   .letters-empty { min-height: 230px; padding: 26px 16px; }

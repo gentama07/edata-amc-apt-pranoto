@@ -151,13 +151,16 @@ export function useEdata() {
     const next = [saved, ...data.letters]; setLetters(next); persistDemo(data.movements, next); return saved;
   };
   const createReply = async (parent, row) => {
+    const senderOrganization = profile.role === 'pimpinan' ? 'Kepala Bandara · A.P.T. Pranoto'
+      : profile.role === 'admin' ? 'Admin AMC · A.P.T. Pranoto'
+        : 'Personel AMC · A.P.T. Pranoto';
     if (!session) {
-      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, sender: profile.name, senderOrganization: 'A.P.T. Pranoto · AMC', createdById: profile.id };
+      const saved = { ...row, id: `letter-${crypto.randomUUID()}`, date: new Date().toISOString().slice(0, 10), direction: 'outbound', replyToId: parent.id, sender: profile.name, senderOrganization, createdById: profile.id };
       const next = [saved, ...letters]; setLetters(next); persistDemo(readDemo().movements, next); return saved;
     }
     const { data, error: insertError } = await supabase.from('incoming_letters').insert({
       reference: row.reference || `BAL-${Date.now()}`, received_date: new Date().toISOString().slice(0, 10),
-      sender: profile.name, sender_organization: 'A.P.T. Pranoto · AMC', subject: row.subject || `Balasan: ${parent.subject}`,
+      sender: profile.name, sender_organization: senderOrganization, subject: row.subject || `Balasan: ${parent.subject}`,
       direction: 'outbound', requester_id: parent.requesterId || parent.requester_id || parent.createdById,
       recipient_role: parent.recipientRole === 'pimpinan' ? 'amc' : 'ground_handling',
       reply_to_id: parent.id, file_name: row.fileName || null, created_by: session.user.id,
