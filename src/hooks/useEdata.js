@@ -16,8 +16,70 @@ const readDemo = () => {
   try { const value = JSON.parse(localStorage.getItem(STORE) || 'null'); return value ? { ...value, movements: (value.movements || []).map(normalizeDemoMovement) } : { movements: initialMovements, letters: initialLetters }; }
   catch { return { movements: initialMovements, letters: initialLetters }; }
 };
-const fromDb = (row) => ({ id: row.id, date: row.operating_date, operator: row.operator, aircraftType: row.aircraft_type, registration: row.registration, flightArr: row.flight_arr, flightDep: row.flight_dep, origin: row.orig, destination: row.dest, sta: row.sta?.slice(0, 5) || '', ata: row.ata?.slice(0, 5) || '', blockOn: row.block_on?.slice(0, 5) || '', std: row.std?.slice(0, 5) || '', blockOff: row.block_off?.slice(0, 5) || '', atd: row.atd?.slice(0, 5) || '', handler: row.ground_handler, stand: row.parking_stand ? `Stand ${row.parking_stand}` : '', riu: row.riu, paxArr: row.pax_arr, paxDep: row.pax_dep, baggageArrKg: row.bagasi_arr ?? row.baggage_kg ?? 0, baggageDepKg: row.bagasi_dep ?? 0, cargoArrKg: row.kargo_arr ?? row.cargo_kg ?? 0, cargoDepKg: row.kargo_dep ?? 0, remark: row.remark });
-const toDb = (row) => ({ operating_date: row.date, operator: row.operator, aircraft_type: row.aircraftType, registration: row.registration, flight_arr: row.flightArr || null, flight_dep: row.flightDep || null, orig: row.origin || null, dest: row.destination || null, sta: row.sta || null, ata: row.ata || null, block_on: row.blockOn || null, std: row.std || null, block_off: row.blockOff || null, atd: row.atd || null, ground_handler: row.handler || null, parking_stand: Number.parseInt(String(row.stand || '').replace(/\D/g, ''), 10) || null, riu: row.riu || null, pax_arr: Number(row.paxArr || 0), pax_dep: Number(row.paxDep || 0), bagasi_arr: Number(row.baggageArrKg || 0), bagasi_dep: Number(row.baggageDepKg || 0), kargo_arr: Number(row.cargoArrKg || 0), kargo_dep: Number(row.cargoDepKg || 0), baggage_kg: Number(row.baggageArrKg || 0) + Number(row.baggageDepKg || 0), cargo_kg: Number(row.cargoArrKg || 0) + Number(row.cargoDepKg || 0), remark: row.remark || '' });
+const fromDb = row => ({
+  id: row.id,
+  date: row.operating_date || row.tanggal,
+  operator: row.operator,
+  aircraftType: row.aircraft_type || row.ac_type,
+  registration: row.registration || row.reg,
+  flightArr: row.flt_arr || row.flight_arr,
+  flightDep: row.flt_dep || row.flight_dep,
+  origin: row.orig,
+  destination: row.dest,
+  sta: (row.sta || row.sched_arr)?.slice(0, 5) || '',
+  ata: row.ata?.slice(0, 5) || '',
+  blockOn: row.block_on?.slice(0, 5) || '',
+  std: (row.std || row.sched_dep)?.slice(0, 5) || '',
+  blockOff: row.block_off?.slice(0, 5) || '',
+  atd: row.atd?.slice(0, 5) || '',
+  handler: row.ground_handler || row.gh,
+  stand: row.parking_stand ? `Stand ${row.parking_stand}` : '',
+  riu: row.riu || row.riu_arr || row.riu_dep,
+  paxArr: row.pax_arr,
+  paxDep: row.pax_dep,
+  baggageArrKg: row.bagasi_arr ?? row.baggage_kg ?? 0,
+  baggageDepKg: row.bagasi_dep ?? 0,
+  cargoArrKg: row.kargo_arr ?? row.cargo_kg ?? 0,
+  cargoDepKg: row.kargo_dep ?? 0,
+  remark: row.remark,
+});
+
+const toDb = row => ({
+  // Both date and registration pairs exist in production; the legacy columns
+  // remain NOT NULL and are also used by the original daily summary view.
+  tanggal: row.date,
+  operating_date: row.date,
+  operator: row.operator,
+  ac_type: row.aircraftType,
+  aircraft_type: row.aircraftType,
+  reg: row.registration,
+  registration: row.registration,
+  flt_arr: row.flightArr || null,
+  flt_dep: row.flightDep || null,
+  orig: row.origin || null,
+  dest: row.destination || null,
+  sched_arr: row.sta || null,
+  sta: row.sta || null,
+  ata: row.ata || null,
+  block_on: row.blockOn || null,
+  sched_dep: row.std || null,
+  std: row.std || null,
+  block_off: row.blockOff || null,
+  atd: row.atd || null,
+  gh: row.handler || null,
+  ground_handler: row.handler || null,
+  parking_stand: Number.parseInt(String(row.stand || '').replace(/\D/g, ''), 10) || null,
+  riu: row.riu || null,
+  pax_arr: Number(row.paxArr || 0),
+  pax_dep: Number(row.paxDep || 0),
+  bagasi_arr: Number(row.baggageArrKg || 0),
+  bagasi_dep: Number(row.baggageDepKg || 0),
+  kargo_arr: Number(row.cargoArrKg || 0),
+  kargo_dep: Number(row.cargoDepKg || 0),
+  baggage_kg: Number(row.baggageArrKg || 0) + Number(row.baggageDepKg || 0),
+  cargo_kg: Number(row.cargoArrKg || 0) + Number(row.cargoDepKg || 0),
+  remark: row.remark || '',
+});
 
 export function useEdata() {
   const [profile, setProfile] = useState(null);
