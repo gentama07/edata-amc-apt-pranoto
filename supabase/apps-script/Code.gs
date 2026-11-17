@@ -14,8 +14,11 @@ function out_(value) {
 }
 
 function jsonBody_(event) {
-  if (!event || !event.postData || !event.postData.contents) throw new Error('Isi permintaan kosong.');
-  return JSON.parse(event.postData.contents);
+  const encodedPayload = event && event.parameter && event.parameter.payload;
+  if (encodedPayload) return JSON.parse(encodedPayload);
+  const contents = event && event.postData && event.postData.contents;
+  if (contents) return JSON.parse(contents);
+  throw new Error('Google Apps Script menerima permintaan tanpa isi. Perbarui deployment Web App ke versi terbaru, lalu pastikan URL berakhiran /exec.');
 }
 
 function getProperty_(name) {
@@ -60,15 +63,17 @@ function doPost(event) {
     if (String(body.mime || '').toLowerCase() !== 'application/pdf' || !/\.pdf$/i.test(String(body.name))) {
       throw new Error('Berkas surat harus berupa PDF.');
     }
-    const viewerEmail = String(body.viewerEmail || '').trim();
-    if (viewerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(viewerEmail)) throw new Error('Email pemilik surat tidak valid.');
+    const viewerEmails = Array.isArray(body.viewerEmails)
+      ? body.viewerEmails.map(email => String(email || '').trim()).filter(Boolean)
+      : String(body.viewerEmail || '').trim().split(',').map(email => email.trim()).filter(Boolean);
+    if (viewerEmails.some(email => !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) throw new Error('Email penerima surat tidak valid.');
     const destination = findDestination_(DriveApp.getFolderById(getProperty_(ROOT_FOLDER_PROPERTY)), body.destination);
     const safeName = String(body.name).replace(/[\\/\u0000-\u001f]/g, '_').slice(0, 180) || 'surat.pdf';
     const blob = Utilities.newBlob(bytes, 'application/pdf', safeName);
     const file = destination.createFile(blob);
-    if (viewerEmail) {
+    if (viewerEmails.length) {
       try {
-        file.addViewer(viewerEmail);
+        viewerEmails.forEach(email => file.addViewer(email));
       } catch (shareError) {
         try { file.setTrashed(true); } catch (cleanupError) { /* Keep the sharing error as the primary failure. */ }
         throw new Error('Google Drive gagal memberi akses baca kepada pengirim. Berkas dibatalkan agar tidak tertinggal tanpa catatan. Periksa izin berbagi folder.');
