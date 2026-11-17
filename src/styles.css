@@ -810,8 +810,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .letter-status-block { grid-area: status; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
 .letter-status-label { color: var(--muted); font-size: 10px; line-height: 1.2; }
 .letter-status { display: inline-flex; align-items: center; min-height: 29px; padding: 6px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; white-space: nowrap; }
-.correspondence-row .delete-letter { grid-area: delete; justify-self: center; }
+.correspondence-row .delete-letter { grid-area: delete; justify-self: center; margin: 0; }
 .correspondence-row .retry-letter-upload { grid-area: retry; justify-self: start; margin: 0; }
+.correspondence-row .letter-status { margin-left: 0; }
 .letter-actions, .retry-letter-upload { flex: 0 0 auto; }
 .letters-empty {
   min-height: 270px;
