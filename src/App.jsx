@@ -4,6 +4,7 @@ import { useEdata } from './hooks/useEdata';
 const Dashboard = lazy(() => import('./pages/Dashboard'));
 import Letters from './pages/Letters';
 import Login from './pages/Login';
+import Landing from './pages/Landing';
 import Movements from './pages/Movements';
 const Reports = lazy(() => import('./pages/Reports'));
 import Users from './pages/Users';
@@ -19,12 +20,38 @@ export default function App() {
   const [selectedDate, setSelectedDate] = useState(airportDate());
   const [editing, setEditing] = useState(null);
   const portalMode = new URLSearchParams(location.search).get('portal') === 'ground-handling';
+  const [showLogin, setShowLogin] = useState(() => {
+    const params = new URLSearchParams(location.search);
+    return params.get('login') === '1' || params.get('portal') === 'ground-handling' || params.has('recovery');
+  });
   const profileRole = app.profile?.role;
+  useEffect(() => {
+    const syncLoginRoute = () => {
+      const params = new URLSearchParams(location.search);
+      setShowLogin(params.get('login') === '1' || params.get('portal') === 'ground-handling' || params.has('recovery'));
+    };
+    window.addEventListener('popstate', syncLoginRoute);
+    return () => window.removeEventListener('popstate', syncLoginRoute);
+  }, []);
+  const openLogin = () => {
+    const url = new URL(location.href);
+    url.searchParams.set('login', '1');
+    history.pushState({}, '', url);
+    setShowLogin(true);
+    window.scrollTo(0, 0);
+  };
+  const returnToLanding = () => {
+    const url = new URL(location.href);
+    url.searchParams.delete('login');
+    history.replaceState({}, '', url);
+    setShowLogin(false);
+    window.scrollTo(0, 0);
+  };
   useEffect(() => { if (!profileRole) { setActive('summary'); setEditing(null); window.scrollTo(0, 0); } else if (profileRole === 'ground_handling') setActive(current => current === 'profile' ? current : 'letters'); }, [profileRole]);
   if (app.passwordRecovery) return <PasswordRecovery finishPasswordRecovery={app.finishPasswordRecovery} />;
   if (!app.recoveryChecked && new URLSearchParams(location.search).get('recovery') === '1') return <main className="password-recovery-screen"><section className="panel password-recovery-card" role="status">Memeriksa tautan pemulihan…</section></main>;
   if (app.recoveryInvalid) return <PasswordRecovery invalid finishPasswordRecovery={app.finishPasswordRecovery} />;
-  if (!app.profile) return <Login app={app} portalMode={portalMode} />;
+  if (!app.profile) return showLogin ? <Login app={app} portalMode={portalMode} onBack={portalMode ? undefined : returnToLanding} /> : <Landing onLogin={openLogin} />;
   const canWrite = ['admin', 'personel'].includes(app.profile.role);
   const currentPage = app.profile.role === 'ground_handling' ? (active === 'profile' ? 'profile' : 'letters') : active;
   const openInput = row => { if (!canWrite || app.profile.role === 'ground_handling') return; setEditing(row || null); setActive('input'); };
