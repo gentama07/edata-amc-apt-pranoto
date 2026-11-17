@@ -116,7 +116,7 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
         {canWrite ? <label className="letter-status-control">Status<select aria-label={`Status ${letter.reference}`} value={letter.status} onChange={event => onUpdate(letter.id, { status: event.target.value }).catch(error => setError(error.message))}>{statusOptions.map(status => <option key={status}>{status}</option>)}</select></label> : <span className={`letter-status status-${letter.status === 'Selesai' || letter.status === 'Diarsipkan' ? 'archived' : letter.status === 'Baru' ? 'new' : 'followup'}`}>{letter.status}</span>}
         {canWrite && <button className="icon-button delete-letter" aria-label={`Hapus ${letter.reference}`} onClick={() => removeLetter(letter)}><Trash2 size={16} /></button>}
         {!letter.driveFileId && letter.fileName && <button className="button-secondary retry-letter-upload" onClick={() => { setRetryId(letter.id); retryInput.current?.click(); }} disabled={busy}><Upload size={14} />Lengkapi PDF</button>}
-      </article>)}</div> : <div className="letters-empty"><div><FileText size={22} /></div><div className="letters-empty-copy"><strong>{external ? 'Belum ada surat yang dikirim' : 'Belum ada surat masuk'}</strong><span>{external ? 'Surat yang Anda kirim dan balasan AMC tampil di sini.' : 'Surat dari Ground Handling akan tampil di sini.'}</span></div></div>}
+      </article>)}</div> : <div className="letters-empty"><div className="letters-empty-icon"><FileText size={22} aria-hidden="true" /></div><div className="letters-empty-copy"><strong>{external ? 'Belum ada surat yang dikirim' : 'Belum ada surat masuk'}</strong><span>{external ? 'Surat yang Anda kirim dan balasan AMC tampil di sini.' : 'Surat dari Ground Handling akan tampil di sini.'}</span></div></div>}
     </section>
     {selected && <section className="panel correspondence-thread"><div className="panel-heading"><div><span className="panel-kicker">RIWAYAT SURAT</span><h2>{selected.subject}</h2><p>{selected.senderOrganization || selected.sender} · {selected.reference}</p></div><button className="close-form" onClick={() => setActiveId('')} aria-label="Tutup detail"><X size={17} /></button></div>
       <div className="thread-body">
@@ -130,7 +130,8 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
       {external && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis balasan atau pertanyaan…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form></div>}
       {canWrite && <p className="drive-delete-note"><Check size={14} /> Hapus surat hanya menghapus catatan dan percakapan di website; arsip Google Drive tetap tersedia.</p>}
     </section>}
-    <input ref={retryInput} className="retry-file-input" type="file" accept="application/pdf,.pdf" onChange={retryUpload} aria-label="Pilih PDF untuk melengkapi unggahan" />
+    <input ref={retryInput} className="retry-file-input" type="file" accept="application/pdf,.pdf" onChange={retryUpload} aria-label="Pilih PDF untuk melengkapi unggahan" tabIndex={-1} />
   </>;
 }
+
 
