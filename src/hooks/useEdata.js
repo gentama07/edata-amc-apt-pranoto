@@ -39,20 +39,25 @@ export function useEdata() {
   const loadRemote = useCallback(async () => {
     if (!session) return;
     const [profileResult, movementsResult, lettersResult, messageResult] = await Promise.all([
-      supabase.from('profiles').select('id,display_name,email,role,active,organization').eq('id', session.user.id).single(),
+      supabase.from('profiles').select('id,display_name,email,role,active,organization,nip,avatar_url').eq('id', session.user.id).single(),
       supabase.from('movements').select('*').order('operating_date', { ascending: false }).order('created_at', { ascending: false }).limit(2000),
       supabase.from('incoming_letters').select('*').order('received_date', { ascending: false }).limit(500),
       supabase.from('correspondence_messages').select('*').order('created_at', { ascending: true }).limit(2000),
     ]);
     if (profileResult.error) throw profileResult.error;
     if (profileResult.data.active === false) { await supabase.auth.signOut(); throw new Error('Akun ini dinonaktifkan. Hubungi Admin AMC.'); }
-    setProfile({ id: profileResult.data.id, name: profileResult.data.display_name || profileResult.data.email, role: profileResult.data.role, email: profileResult.data.email || session.user.email, organization: profileResult.data.organization || '' });
+    let avatarUrl = '';
+    if (profileResult.data.avatar_url) {
+      const { data: avatarData } = await supabase.storage.from('profile-avatars').createSignedUrl(profileResult.data.avatar_url, 3600);
+      avatarUrl = avatarData?.signedUrl || '';
+    }
+    setProfile({ id: profileResult.data.id, name: profileResult.data.display_name || profileResult.data.email, role: profileResult.data.role, email: profileResult.data.email || session.user.email, organization: profileResult.data.organization || '', nip: profileResult.data.nip || '', avatarPath: profileResult.data.avatar_url || '', avatarUrl });
     if (movementsResult.error) throw movementsResult.error;
     if (lettersResult.error) throw lettersResult.error;
     if (messageResult.error) throw messageResult.error;
     setMovements((movementsResult.data || []).map(fromDb));
     setLetters((lettersResult.data || []).map(row => ({ id: row.id, date: row.received_date, createdAt: row.created_at, reference: row.reference, sender: row.sender, senderOrganization: row.sender_organization || row.sender, subject: row.subject, status: row.status, fileName: row.file_name, driveFileId: row.drive_file_id, driveWebViewLink: row.drive_web_view_link, driveFolder: row.drive_folder, direction: row.direction || 'inbound', requesterId: row.requester_id, replyToId: row.reply_to_id })));
-    setMessages(messageResult.data || []);
+    setMessages((messageResult.data || []).map(row => ({ ...row, sender_name: row.sender_name || 'Petugas AMC' })));
   }, [session]);
 
   useEffect(() => {
@@ -98,7 +103,7 @@ export function useEdata() {
   const signInDemo = (role) => {
     if (isSupabaseConfigured) throw new Error('Akun demo hanya tersedia saat Supabase belum dikonfigurasi.');
     const account = demoAccounts.find(item => item.role === role);
-    setProfile({ id: `demo-${role}`, name: account.label, role, email: account.email, organization: account.organization || '', active: true });
+    setProfile({ id: `demo-${role}`, name: account.label, role, email: account.email, organization: account.organization || '', nip: '', avatarPath: '', avatarUrl: '', active: true });
     loadDemo();
   };
   const createLetter = async (row) => {
@@ -158,7 +163,7 @@ export function useEdata() {
   };
   const sendMessage = async (letterId, body) => {
     if (!session) {
-      const next = [...messages, { id: `message-${crypto.randomUUID()}`, letter_id: letterId, body: body.trim(), sender_id: profile.id, created_at: new Date().toISOString() }];
+      const next = [...messages, { id: `message-${crypto.randomUUID()}`, letter_id: letterId, body: body.trim(), sender_id: profile.id, sender_name: profile.name, created_at: new Date().toISOString() }];
       setMessages(next); localStorage.setItem(MESSAGE_STORE, JSON.stringify(next)); return;
     }
     const { error: insertError } = await supabase.from('correspondence_messages').insert({ letter_id: letterId, body: body.trim(), sender_id: session.user.id });
@@ -199,6 +204,39 @@ export function useEdata() {
   const updateProfile = async (userId, updates) => {
     if (!session || profile?.role !== 'admin') throw new Error('Hanya Admin yang dapat mengelola profil.');
     await manageUser({ action: 'update', userId, ...updates });
+    await loadRemote();
+  };
+  const updateOwnProfile = async ({ name, nip }) => {
+    const next = { name: name.trim(), nip: nip.trim() };
+    if (!session) { setProfile(current => ({ ...current, ...next })); return; }
+    const { error: updateError } = await supabase.from('profiles')
+      .update({ display_name: next.name, nip: next.nip || null })
+      .eq('id', session.user.id);
+    if (updateError) throw updateError;
+    await loadRemote();
+  };
+  const uploadProfilePhoto = async file => {
+    if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Pilih foto JPG, PNG, atau WebP.');
+    if (file.size > 5 * 1024 * 1024) throw new Error('Ukuran foto maksimal 5 MB.');
+    if (!session) {
+      const avatarUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Foto tidak dapat dibaca.'));
+        reader.readAsDataURL(file);
+      });
+      setProfile(current => ({ ...current, avatarUrl }));
+      return;
+    }
+    const extension = file.type === 'image/jpeg' ? 'jpg' : file.type === 'image/png' ? 'png' : 'webp';
+    const path = `${session.user.id}/${crypto.randomUUID()}.${extension}`;
+    const { error: uploadError } = await supabase.storage.from('profile-avatars').upload(path, file, { contentType: file.type, cacheControl: '3600', upsert: false });
+    if (uploadError) throw uploadError;
+    const { error: updateError } = await supabase.from('profiles').update({ avatar_url: path }).eq('id', session.user.id);
+    if (updateError) {
+      await supabase.storage.from('profile-avatars').remove([path]);
+      throw updateError;
+    }
     await loadRemote();
   };
   const manageUser = async payload => {
@@ -249,7 +287,7 @@ export function useEdata() {
     history.replaceState({}, '', location.pathname);
   };
 
-  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
+  return { profile, session, demo, modeLabel, movements, letters, messages, busy, error, passwordRecovery, recoveryInvalid, recoveryChecked, signIn, signInDemo, signOut, saveMovement, deleteMovement, createLetter, createReply, sendMessage, deleteLetter, updateLetter, updateProfile, updateOwnProfile, uploadProfilePhoto, manageUser, syncDrive, requestPasswordReset, changePassword, finishPasswordRecovery, setError, isSupabaseConfigured };
 }
 
 

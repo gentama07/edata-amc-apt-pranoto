@@ -66,10 +66,15 @@ Deno.serve(async (request) => {
     const { data: letter, error: letterError } = await userClient.from('incoming_letters')
       .select('id,direction,requester_id').eq('id', letterId).single()
     if (letterError || !letter) return json({ error: 'Surat tidak ditemukan atau Anda tidak memiliki akses.' }, 404, origin)
-    const destination = letter.direction === 'outbound' ? 'GROUND HANDLING' : 'ADMIN/PIMPINAN'
+    const destination = profile.role === 'ground_handling'
+      ? 'GROUND HANDLING'
+      : profile.role === 'personel'
+        ? 'PETUGAS AMC'
+        : 'ADMIN/PIMPINAN'
     const { data: requester, error: requesterError } = await adminClient.from('profiles')
-      .select('email').eq('id', letter.requester_id).eq('active', true).single()
-    if (requesterError || !requester?.email) return json({ error: 'Email akun pemilik surat tidak ditemukan.' }, 422, origin)
+      .select('email').eq('id', letter.requester_id).eq('active', true).maybeSingle()
+    if (requesterError) throw requesterError
+    const viewerEmail = profile.role === 'ground_handling' ? user.email : requester?.email
 
     const drive = await callAppsScript({
       action: 'upload',
@@ -77,7 +82,7 @@ Deno.serve(async (request) => {
       mime: file.type || 'application/octet-stream',
       data: encodeBase64(await file.arrayBuffer()),
       destination,
-      viewerEmail: requester.email,
+      viewerEmail: viewerEmail || '',
     })
     const storedFile = drive.file
     if (!storedFile?.id) throw new Error('Google Apps Script tidak mengembalikan identitas berkas.')
@@ -98,4 +103,5 @@ Deno.serve(async (request) => {
     return json({ error: error instanceof Error ? error.message : 'Unggah ke Google Drive gagal.' }, 500, origin)
   }
 })
+
 

@@ -5,7 +5,7 @@
 // Never place production values in this file or commit them to GitHub.
 const TOKEN_PROPERTY = 'APPS_SCRIPT_TOKEN';
 const ROOT_FOLDER_PROPERTY = 'DRIVE_ROOT_FOLDER_ID';
-const ALLOWED_DESTINATIONS = ['ADMIN/PIMPINAN', 'GROUND HANDLING'];
+const ALLOWED_DESTINATIONS = ['ADMIN/PIMPINAN', 'GROUND HANDLING', 'PETUGAS AMC'];
 const MAX_FILE_BYTES = 10 * 1024 * 1024;
 
 function out_(value) {
@@ -61,11 +61,12 @@ function doPost(event) {
     const blob = Utilities.newBlob(bytes, mimeType, safeName);
     const file = destination.createFile(blob);
     const viewerEmail = String(body.viewerEmail || '').trim();
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(viewerEmail)) throw new Error('Email pemilik surat tidak valid.');
-    file.addViewer(viewerEmail);
+    if (viewerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(viewerEmail)) throw new Error('Email pemilik surat tidak valid.');
+    if (viewerEmail) file.addViewer(viewerEmail);
     return out_({ ok: true, file: info_(file) });
   } catch (error) {
     return out_({ error: String(error && error.message ? error.message : error) });
   }
 }
+
 
