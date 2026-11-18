@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
@@ -10,24 +10,46 @@ const roles = [
 
 export default function Landing({ onLogin }) {
   const landingRef = useRef(null);
+  const [activeSection, setActiveSection] = useState('');
 
   useEffect(() => {
     const landing = landingRef.current;
-    if (!landing || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    if (!landing) return undefined;
 
-    landing.classList.add('landing-motion-ready');
-    const revealObserver = new IntersectionObserver((entries, observer) => {
-      entries.forEach((entry) => {
-        if (!entry.isIntersecting) return;
-        entry.target.classList.add('is-visible');
-        observer.unobserve(entry.target);
-      });
-    }, { threshold: 0.16, rootMargin: '0px 0px -32px 0px' });
+    document.documentElement.classList.add('landing-scroll-smooth');
+    if (!('IntersectionObserver' in window)) return () => document.documentElement.classList.remove('landing-scroll-smooth');
 
-    landing.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let revealObserver;
+    if (!reduceMotion) {
+      landing.classList.add('landing-motion-ready');
+      revealObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      }, { threshold: 0.16, rootMargin: '0px 0px -32px 0px' });
+
+      landing.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
+    }
+
+    const sectionObserver = new IntersectionObserver((entries) => {
+      const visibleSection = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+      if (visibleSection) setActiveSection(visibleSection.target.id);
+    }, { threshold: [0.15, 0.35, 0.55], rootMargin: '-18% 0px -58% 0px' });
+    ['fitur', 'akses'].forEach((id) => {
+      const section = landing.querySelector(`#${id}`);
+      if (section) sectionObserver.observe(section);
+    });
+
     return () => {
-      revealObserver.disconnect();
+      revealObserver?.disconnect();
+      sectionObserver.disconnect();
       landing.classList.remove('landing-motion-ready');
+      document.documentElement.classList.remove('landing-scroll-smooth');
     };
   }, []);
 
@@ -39,8 +61,8 @@ export default function Landing({ onLogin }) {
         <span><strong>E-data AMC</strong><small>APT Pranoto · Samarinda</small></span>
       </a>
       <nav aria-label="Navigasi halaman">
-        <a href="#fitur">Ruang kerja</a>
-        <a href="#akses">Akses akun</a>
+        <a href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined}>Ruang kerja</a>
+        <a href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined}>Akses akun</a>
       </nav>
       <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
     </header>
