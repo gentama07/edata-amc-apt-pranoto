@@ -34,20 +34,31 @@ export default function Landing({ onLogin }) {
       landing.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
     }
 
-    const sectionObserver = new IntersectionObserver((entries) => {
-      const visibleSection = entries
-        .filter((entry) => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      setActiveSection(visibleSection?.target.id ?? '');
-    }, { threshold: [0.15, 0.35, 0.55], rootMargin: '-18% 0px -58% 0px' });
-    ['fitur', 'akses'].forEach((id) => {
-      const section = landing.querySelector(`#${id}`);
-      if (section) sectionObserver.observe(section);
-    });
+    let activeSectionFrame = 0;
+    const updateActiveSection = () => {
+      if (activeSectionFrame) return;
+      activeSectionFrame = window.requestAnimationFrame(() => {
+        const readingLine = window.innerHeight * 0.38;
+        const visibleSection = ['fitur', 'akses']
+          .map((id) => landing.querySelector(`#${id}`))
+          .find((section) => {
+            if (!section) return false;
+            const bounds = section.getBoundingClientRect();
+            return bounds.top <= readingLine && bounds.bottom > readingLine;
+          });
+        setActiveSection(visibleSection?.id ?? '');
+        activeSectionFrame = 0;
+      });
+    };
+    window.addEventListener('scroll', updateActiveSection, { passive: true });
+    window.addEventListener('resize', updateActiveSection);
+    updateActiveSection();
 
     return () => {
       revealObserver?.disconnect();
-      sectionObserver.disconnect();
+      window.removeEventListener('scroll', updateActiveSection);
+      window.removeEventListener('resize', updateActiveSection);
+      if (activeSectionFrame) window.cancelAnimationFrame(activeSectionFrame);
       landing.classList.remove('landing-motion-ready');
       document.documentElement.classList.remove('landing-scroll-smooth');
     };
