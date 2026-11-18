@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { Activity, ArrowDownRight, ArrowRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
@@ -8,7 +9,29 @@ const roles = [
 ];
 
 export default function Landing({ onLogin }) {
-  return <main className="public-landing" id="landing-content">
+  const landingRef = useRef(null);
+
+  useEffect(() => {
+    const landing = landingRef.current;
+    if (!landing || !('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    landing.classList.add('landing-motion-ready');
+    const revealObserver = new IntersectionObserver((entries, observer) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-visible');
+        observer.unobserve(entry.target);
+      });
+    }, { threshold: 0.16, rootMargin: '0px 0px -32px 0px' });
+
+    landing.querySelectorAll('[data-reveal]').forEach((element) => revealObserver.observe(element));
+    return () => {
+      revealObserver.disconnect();
+      landing.classList.remove('landing-motion-ready');
+    };
+  }, []);
+
+  return <main className="public-landing" id="landing-content" ref={landingRef}>
     <a className="skip-link" href="#landing-title">Lewati ke konten utama</a>
     <header className="landing-nav">
       <a className="landing-brand" href="#beranda" aria-label="E-data AMC, beranda">
@@ -34,7 +57,7 @@ export default function Landing({ onLogin }) {
           <div className="landing-hero-note"><ShieldCheck size={15} aria-hidden="true" /><span>Akses operasional diberikan sesuai peran akun.</span></div>
         </div>
 
-        <div className="landing-workspace" aria-label="Gambaran ruang kerja E-data AMC">
+        <div className="landing-workspace" data-enter aria-label="Gambaran ruang kerja E-data AMC">
           <div className="landing-workspace-head"><div><strong>Log pergerakan</strong><span>Ruang kerja operasional</span></div><span className="landing-live">WITA</span></div>
           <div className="landing-workspace-date"><span>DATA PENERBANGAN</span><span>WITA</span></div>
           <div className="landing-journey">
@@ -50,19 +73,19 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-capabilities" id="fitur" aria-labelledby="landing-capabilities-title">
       <div className="landing-section-inner">
-        <h2 id="landing-capabilities-title">Informasi penting, mudah ditindaklanjuti.</h2>
+        <h2 id="landing-capabilities-title" data-reveal>Informasi penting, mudah ditindaklanjuti.</h2>
         <div className="landing-capability-list">
-          <article>
+          <article data-reveal>
             <Activity size={21} strokeWidth={1.7} aria-hidden="true" />
             <h3>Log pergerakan</h3>
             <p>Catat operator, registrasi, rute, waktu rencana dan aktual, stand, penumpang, bagasi, kargo, serta remark lapangan.</p>
           </article>
-          <article>
+          <article data-reveal>
             <FileText size={21} strokeWidth={1.7} aria-hidden="true" />
             <h3>Persuratan</h3>
             <p>Kirim surat dan lampiran, ikuti balasan dalam percakapan, lalu konfirmasi penyelesaian bersama pihak terkait.</p>
           </article>
-          <article>
+          <article data-reveal>
             <LayoutDashboard size={21} strokeWidth={1.7} aria-hidden="true" />
             <h3>Ringkasan & laporan</h3>
             <p>Tinjau aktivitas berdasarkan tanggal operasional dan gunakan laporan untuk membaca atau mengekspor data.</p>
@@ -73,13 +96,13 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-access" id="akses" aria-labelledby="landing-access-title">
       <div className="landing-access-inner">
-        <div className="landing-access-intro">
+        <div className="landing-access-intro" data-reveal>
           <h2>Akses mengikuti tanggung jawab setiap akun.</h2>
           <p>Masuk menggunakan akun operasional yang dibuat oleh Admin. Menu dan tindakan yang tersedia menyesuaikan peran Anda.</p>
           <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
         </div>
         <div className="landing-role-list">
-          {roles.map(([title, description], index) => <article key={title}>
+          {roles.map(([title, description], index) => <article key={title} data-reveal>
             <span className="landing-role-number">0{index + 1}</span>
             <div><h3>{title}</h3><p>{description}</p></div>
           </article>)}
@@ -96,3 +119,4 @@ export default function Landing({ onLogin }) {
     </footer>
   </main>;
 }
+
