@@ -1193,8 +1193,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-access-inner { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(440px, 1.2fr); gap: clamp(44px, 8vw, 120px); width: min(100%, 1440px); margin: 0 auto; padding: 100px clamp(28px, 6vw, 88px) 110px; }
 .landing-access-intro p { max-width: 430px; margin: 18px 0 24px; color: #5e5f65; font-size: 16px; line-height: 1.55; }
 .landing-role-list { border-top: 1px solid #dedee3; }
-.landing-role-list article { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 13px; align-items: center; padding: 18px 0 19px; border-bottom: 1px solid #dedee3; }
-.landing-role-icon { display: block; width: 60px; height: 60px; object-fit: contain; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.landing-role-list article { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 13px; align-items: center; padding: 18px 0 19px; border-bottom: 1px solid #dedee3; }
+.landing-role-icon { display: block; width: 72px; height: 72px; object-fit: contain; padding: 0; border: 0; border-radius: 0; background: transparent; }
 .landing-role-list h3 { margin: 0 0 5px; font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
 .landing-role-list p { margin: 0; color: #5e5f65; font-size: 14px; line-height: 1.5; }
 .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 106px; padding: 20px clamp(28px, 6vw, 88px); border-top: 1px solid #dedee3; background: #f5f5f7; }
