@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowRight, ChevronLeft, ChevronRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowRight, ChevronLeft, ChevronRight, ClipboardList, ShieldCheck } from 'lucide-react';
 
 const roles = [
   ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.png'],
@@ -8,9 +8,20 @@ const roles = [
   ['Ground Handling', 'Mengirim surat kepada AMC, mengikuti status, dan memberi balasan.', 'ground-handling-icon.png'],
 ];
 
+const features = [
+  ['Ringkasan', 'Pantau penerbangan, penumpang, bagasi, kargo, arus pesawat, dan kondisi stand berdasarkan tanggal operasional.', 'feature-preview-ringkasan.png', 'Pratinjau ringkasan operasional E-data AMC'],
+  ['Log pergerakan', 'Cari dan tinjau pergerakan pesawat dengan waktu rencana, aktual, operator, rute, serta arah kedatangan dan keberangkatan.', 'feature-preview-log.png', 'Pratinjau tabel log pergerakan pesawat'],
+  ['Input data', 'Catat identitas penerbangan, waktu operasional, muatan, dan remark lapangan melalui alur input bertahap.', 'feature-preview-input.png', 'Pratinjau formulir input data pergerakan'],
+  ['Laporan', 'Baca rekap pergerakan, penumpang, bagasi, dan kargo berdasarkan periode operasional.', 'feature-preview-laporan.png', 'Pratinjau laporan pergerakan apron'],
+  ['Persuratan', 'Kirim surat dan lampiran, ikuti statusnya, lalu lanjutkan koordinasi melalui balasan.', 'feature-preview-surat.png', 'Pratinjau daftar surat operasional'],
+  ['Detail surat', 'Baca isi surat, lampiran, konfirmasi, dan percakapan tindak lanjut di satu tempat.', 'feature-preview-detail-surat.png', 'Pratinjau percakapan tindak lanjut surat'],
+];
+
 export default function Landing({ onLogin }) {
   const landingRef = useRef(null);
   const [activeSection, setActiveSection] = useState('');
+  const [navScrolled, setNavScrolled] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
   const [activeRole, setActiveRole] = useState(0);
   const [roleCarouselPaused, setRoleCarouselPaused] = useState(false);
 
@@ -48,6 +59,7 @@ export default function Landing({ onLogin }) {
     const updateActiveSection = () => {
       if (activeSectionFrame) return;
       activeSectionFrame = window.requestAnimationFrame(() => {
+        setNavScrolled(window.scrollY > 44);
         const readingLine = window.innerHeight * 0.38;
         const visibleSection = ['fitur', 'akses']
           .map((id) => landing.querySelector(`#${id}`))
@@ -76,7 +88,7 @@ export default function Landing({ onLogin }) {
 
   return <main className="public-landing" id="landing-content" ref={landingRef}>
     <a className="skip-link" href="#landing-title">Lewati ke konten utama</a>
-    <header className="landing-nav">
+    <header className={`landing-nav${navScrolled ? ' is-scrolled' : ''}`}>
       <a className="landing-brand" href="#beranda" aria-label="E-data AMC, beranda">
         <img src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="" />
         <span><strong>E-data AMC</strong><small>APT Pranoto · Samarinda</small></span>
@@ -132,32 +144,42 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-capabilities" id="fitur" aria-labelledby="landing-capabilities-title">
       <div className="landing-section-inner">
-        <div className="landing-section-top">
-          <h2 id="landing-capabilities-title" data-reveal>Informasi penting, mudah ditindaklanjuti.</h2>
-          <img
-            className="landing-feature-image"
-            src={`${import.meta.env.BASE_URL}assets/center-landing-page-photo.png`}
-            alt="Ilustrasi dashboard operasional penerbangan dan pemantauan apron"
-            loading="lazy"
-            data-reveal
-          />
-        </div>
-        <div className="landing-capability-list">
-          <article data-reveal>
-            <Activity size={21} strokeWidth={1.7} aria-hidden="true" />
-            <h3>Log pergerakan</h3>
-            <p>Catat operator, registrasi, rute, waktu rencana dan aktual, stand, penumpang, bagasi, kargo, serta remark lapangan.</p>
-          </article>
-          <article data-reveal>
-            <FileText size={21} strokeWidth={1.7} aria-hidden="true" />
-            <h3>Persuratan</h3>
-            <p>Kirim surat dan lampiran, ikuti balasan dalam percakapan, lalu konfirmasi penyelesaian bersama pihak terkait.</p>
-          </article>
-          <article data-reveal>
-            <LayoutDashboard size={21} strokeWidth={1.7} aria-hidden="true" />
-            <h3>Ringkasan & laporan</h3>
-            <p>Tinjau aktivitas berdasarkan tanggal operasional dan gunakan laporan untuk membaca atau mengekspor data.</p>
-          </article>
+        <h2 id="landing-capabilities-title" data-reveal>Fitur operasional, terlihat dalam satu ruang kerja.</h2>
+        <div className="landing-feature-preview" data-reveal>
+          <div className="landing-feature-visual" role="tabpanel" id="landing-feature-panel" aria-labelledby={`landing-feature-tab-${activeFeature}`}>
+            <img
+              key={features[activeFeature][2]}
+              className="landing-feature-image"
+              src={`${import.meta.env.BASE_URL}assets/${features[activeFeature][2]}`}
+              alt={features[activeFeature][3]}
+              loading="lazy"
+            />
+          </div>
+          <div
+            className="landing-feature-tabs"
+            role="tablist"
+            aria-label="Pratinjau fitur E-data AMC"
+            onKeyDown={(event) => {
+              const direction = event.key === 'ArrowRight' ? 1 : event.key === 'ArrowLeft' ? -1 : 0;
+              if (!direction) return;
+              event.preventDefault();
+              const next = (activeFeature + direction + features.length) % features.length;
+              setActiveFeature(next);
+              document.getElementById(`landing-feature-tab-${next}`)?.focus();
+            }}
+          >
+            {features.map(([title], index) => <button
+              key={title}
+              id={`landing-feature-tab-${index}`}
+              type="button"
+              role="tab"
+              aria-selected={activeFeature === index}
+              aria-controls="landing-feature-panel"
+              tabIndex={activeFeature === index ? 0 : -1}
+              onClick={() => setActiveFeature(index)}
+            >{title}</button>)}
+          </div>
+          <p className="landing-feature-caption"><strong>{features[activeFeature][0]}.</strong> {features[activeFeature][1]}</p>
         </div>
       </div>
     </section>
