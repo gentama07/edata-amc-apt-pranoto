@@ -18,11 +18,17 @@ export function Shell({ app, active, setActive, children }) {
   const [now, setNow] = useState(new Date());
   const [theme, setTheme] = useState(() => localStorage.getItem('amc-theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showOpening, setShowOpening] = useState(() => app.openingRequested && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const openingKey = `amc-opening-shown:${profile.id}`;
+  const [showOpening, setShowOpening] = useState(false);
   const finishOpening = useCallback(() => setShowOpening(false), []);
   const [airportVideo, setAirportVideo] = useState('');
   const [openingVideo, setOpeningVideo] = useState('');
   const [openingVideoReady, setOpeningVideoReady] = useState(false);
+  useEffect(() => {
+    if (!app.openingRequested || window.matchMedia('(prefers-reduced-motion: reduce)').matches || sessionStorage.getItem(openingKey)) return;
+    sessionStorage.setItem(openingKey, '1');
+    setShowOpening(true);
+  }, [app.openingRequested, openingKey]);
   useEffect(() => {
     if (!app.session || !supabase) return undefined;
     let cancelled = false;
@@ -60,6 +66,7 @@ export function Shell({ app, active, setActive, children }) {
     ? [{ id: 'letters', label: 'Persuratan', Icon: FileText }]
     : [...navItems.filter(item => !item.write || canWrite), ...(profile.role === 'admin' ? [{ id: 'users', label: 'Pengguna', Icon: UserRoundCog }] : [])];
   const navigate = id => { if (id !== 'summary') setShowOpening(false); setActive(id); setMenuOpen(false); };
+  const handleSignOut = () => { sessionStorage.removeItem(openingKey); signOut(); };
 
   return <div className="app-frame min-h-screen">
     <a className="skip-link" href="#main-content">Lewati ke konten utama</a>
@@ -75,7 +82,7 @@ export function Shell({ app, active, setActive, children }) {
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
         <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label="Ganti tema" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-        <button className="logout-button" aria-label="Keluar" onClick={signOut}><LogOut size={16} /><span>Keluar</span></button>
+        <button className="logout-button" aria-label="Keluar" onClick={handleSignOut}><LogOut size={16} /><span>Keluar</span></button>
       </div>
     </header>
     <div className="workspace">
@@ -96,15 +103,25 @@ export function Shell({ app, active, setActive, children }) {
 
 function Opening({ src, visible, onReady, onDone }) {
   const videoRef = useRef(null);
+  const readyRef = useRef(visible);
   useEffect(() => {
     if (visible) videoRef.current?.play().catch(onDone);
+  }, [visible, onDone]);
+  useEffect(() => {
+    if (!visible) return undefined;
+    const resumeAfterFocus = () => {
+      const video = videoRef.current;
+      if (document.visibilityState === 'visible' && video && video.paused && !video.ended) video.play().catch(onDone);
+    };
+    document.addEventListener('visibilitychange', resumeAfterFocus);
+    return () => document.removeEventListener('visibilitychange', resumeAfterFocus);
   }, [visible, onDone]);
   useEffect(() => {
     const timeout = window.setTimeout(onDone, 45000);
     return () => window.clearTimeout(timeout);
   }, [onDone]);
   return <div className={visible ? 'opening-video' : 'opening-video-preload'} aria-label={visible ? 'Video pembuka' : undefined} aria-hidden={!visible}>
-    <video ref={videoRef} className="opening-video-media" muted playsInline preload="auto" onCanPlay={event => { if (!visible) { event.currentTarget.pause(); onReady(); } }} onEnded={onDone} onError={onDone} onStalled={onDone} src={src} />
+    <video ref={videoRef} className="opening-video-media" autoPlay muted playsInline preload="auto" onCanPlay={event => { if (!readyRef.current) { readyRef.current = true; event.currentTarget.pause(); onReady(); } }} onEnded={onDone} onError={onDone} onStalled={onDone} src={src} />
   </div>;
 }
 
