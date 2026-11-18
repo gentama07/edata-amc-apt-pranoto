@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowRight, ChevronDown, ChevronUp, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
@@ -27,6 +27,8 @@ export default function Landing({ onLogin }) {
   const [activeRole, setActiveRole] = useState(0);
   const [roleCarouselPaused, setRoleCarouselPaused] = useState(false);
   const featureTransitionTimer = useRef(null);
+  const featureTabsRef = useRef(null);
+  const [featureIndicator, setFeatureIndicator] = useState({ left: 4, width: 0 });
 
   const selectFeature = (nextFeature) => {
     if (nextFeature === activeFeature) return;
@@ -42,6 +44,27 @@ export default function Landing({ onLogin }) {
   };
 
   useEffect(() => () => window.clearTimeout(featureTransitionTimer.current), []);
+
+  useLayoutEffect(() => {
+    const tabs = featureTabsRef.current;
+    if (!tabs) return undefined;
+
+    const positionIndicator = () => {
+      const selected = tabs.querySelector('[aria-selected="true"]');
+      if (!selected) return;
+      setFeatureIndicator({ left: selected.offsetLeft, width: selected.offsetWidth });
+      const left = selected.offsetLeft;
+      const right = left + selected.offsetWidth;
+      if (left < tabs.scrollLeft || right > tabs.scrollLeft + tabs.clientWidth) {
+        tabs.scrollTo({ left: Math.max(0, left - (tabs.clientWidth - selected.offsetWidth) / 2), behavior: 'smooth' });
+      }
+    };
+
+    positionIndicator();
+    const observer = new ResizeObserver(positionIndicator);
+    observer.observe(tabs);
+    return () => observer.disconnect();
+  }, [activeFeature]);
 
   useEffect(() => {
     let cancelled = false;
@@ -247,6 +270,7 @@ export default function Landing({ onLogin }) {
           </div>
           <div
             className="landing-feature-tabs"
+            ref={featureTabsRef}
             role="tablist"
             aria-label="Pratinjau fitur E-data AMC"
             onKeyDown={(event) => {
@@ -258,6 +282,11 @@ export default function Landing({ onLogin }) {
               document.getElementById(`landing-feature-tab-${next}`)?.focus();
             }}
           >
+            <span
+              className="landing-feature-indicator"
+              aria-hidden="true"
+              style={{ width: `${featureIndicator.width}px`, transform: `translateX(${featureIndicator.left}px)` }}
+            />
             {features.map(([title], index) => <button
               key={title}
               id={`landing-feature-tab-${index}`}
