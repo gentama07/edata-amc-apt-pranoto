@@ -1184,9 +1184,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-motion-ready [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
 .landing-motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 .landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 12px; }
-.landing-capability-list article:nth-child(2), .landing-role-list article:nth-child(2) { transition-delay: .08s; }
-.landing-capability-list article:nth-child(3), .landing-role-list article:nth-child(3) { transition-delay: .16s; }
-.landing-role-list article:nth-child(4) { transition-delay: .24s; }
+.landing-capability-list article:nth-child(2) { transition-delay: .08s; }
+.landing-capability-list article:nth-child(3) { transition-delay: .16s; }
 .landing-capability-list article { padding-top: 0; }
 .landing-capability-list article > svg { color: #2997ff; }
 .landing-capability-list h3 { margin: 20px 0 9px; font-size: 19px; font-weight: 600; letter-spacing: -.35px; }
@@ -1194,11 +1193,21 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-access { background: #f5f5f7; }
 .landing-access-inner { display: grid; grid-template-columns: minmax(260px, .8fr) minmax(440px, 1.2fr); gap: clamp(44px, 8vw, 120px); width: min(100%, 1440px); margin: 0 auto; padding: 100px clamp(28px, 6vw, 88px) 110px; }
 .landing-access-intro p { max-width: 430px; margin: 18px 0 24px; color: #5e5f65; font-size: 16px; line-height: 1.55; }
-.landing-role-list { border-top: 1px solid #dedee3; }
-.landing-role-list article { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 13px; align-items: center; padding: 18px 0 19px; border-bottom: 1px solid #dedee3; }
-.landing-role-icon { display: block; width: 72px; height: 72px; object-fit: contain; padding: 0; border: 0; border-radius: 0; background: transparent; }
-.landing-role-list h3 { margin: 0 0 5px; font-size: 16px; font-weight: 600; letter-spacing: -.2px; }
-.landing-role-list p { margin: 0; color: #5e5f65; font-size: 14px; line-height: 1.5; }
+.landing-role-carousel { position: relative; min-height: 380px; overflow: hidden; isolation: isolate; }
+.landing-role-card { position: absolute; top: 50%; left: 50%; width: min(100%, 620px); min-height: 226px; display: grid; grid-template-columns: 108px minmax(0, 1fr); align-items: center; gap: 26px; padding: 30px 34px; border: 1px solid #e3e4e8; border-radius: 18px; background: #fff; box-shadow: 0 22px 55px rgba(20, 32, 50, .12); transition: transform .72s cubic-bezier(.2,.75,.2,1), opacity .72s ease, box-shadow .72s ease; }
+.landing-role-card.is-current { z-index: 3; opacity: 1; transform: translate(-50%, -50%) scale(1); box-shadow: 0 26px 60px rgba(20, 32, 50, .15); }
+.landing-role-card.is-previous { z-index: 2; opacity: .42; transform: translate(-50%, calc(-50% - 154px)) scale(.92); }
+.landing-role-card.is-next { z-index: 1; opacity: .34; transform: translate(-50%, calc(-50% + 154px)) scale(.92); }
+.landing-role-icon { display: block; width: 96px; height: 96px; object-fit: contain; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.landing-role-copy > span { color: #73747a; font-size: 10px; font-weight: 600; letter-spacing: .12em; }
+.landing-role-copy h3 { margin: 9px 0 7px; font-size: 21px; font-weight: 600; letter-spacing: -.35px; }
+.landing-role-copy p { margin: 0; color: #5e5f65; font-size: 15px; line-height: 1.5; }
+.landing-role-controls { position: absolute; z-index: 4; right: 26px; bottom: 78px; display: flex; align-items: center; gap: 12px; }
+.landing-role-controls button { display: grid; place-items: center; width: 34px; height: 34px; padding: 0; border: 1px solid #dedee3; border-radius: 50%; color: #1d1d1f; background: rgba(255,255,255,.9); cursor: pointer; transition: background-color .18s ease, border-color .18s ease, color .18s ease; }
+.landing-role-controls button:hover { border-color: #0066cc; color: #0066cc; background: #fff; }
+.landing-role-dots { display: flex; align-items: center; gap: 6px; }
+.landing-role-dots span { width: 5px; height: 5px; border-radius: 50%; background: #c9cbd1; transition: width .24s ease, background-color .24s ease; }
+.landing-role-dots span.is-current { width: 16px; border-radius: 999px; background: #0066cc; }
 .landing-footer { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 106px; padding: 20px clamp(28px, 6vw, 88px); border-top: 1px solid #dedee3; background: #f5f5f7; }
 .landing-footer .landing-brand img { width: 82px; height: 32px; }
 .landing-footer .landing-brand strong { color: #1d1d1f; font-size: 12px; }
@@ -1228,6 +1237,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-hero-copy { max-width: 690px; }
   .landing-workspace { width: min(100%, 660px); }
   .landing-access-inner { grid-template-columns: minmax(0, .85fr) minmax(360px, 1.15fr); gap: 42px; }
+  .landing-role-carousel { min-height: 350px; }
 }
 @media (max-width: 640px) {
   .landing-nav { min-height: 64px; gap: 14px; padding: 8px 18px; }
@@ -1255,6 +1265,14 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-capability-list article { padding-top: 0; }
   .landing-capability-list h3 { margin-top: 13px; }
   .landing-access-inner { grid-template-columns: minmax(0, 1fr); gap: 38px; padding: 70px 22px 76px; }
+  .landing-role-carousel { min-height: 350px; }
+  .landing-role-card { grid-template-columns: 72px minmax(0, 1fr); gap: 18px; min-height: 210px; padding: 22px 18px; }
+  .landing-role-card.is-previous { transform: translate(-50%, calc(-50% - 140px)) scale(.9); }
+  .landing-role-card.is-next { transform: translate(-50%, calc(-50% + 140px)) scale(.9); }
+  .landing-role-icon { width: 68px; height: 68px; }
+  .landing-role-copy h3 { font-size: 18px; }
+  .landing-role-copy p { font-size: 13px; }
+  .landing-role-controls { right: 16px; bottom: 70px; }
   .landing-footer { align-items: flex-start; flex-direction: column; gap: 15px; padding: 24px 22px; }
   .landing-footer > span { line-height: 1.5; }
 }
@@ -1263,6 +1281,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-hero-video { display: none; }
   .landing-hero-copy[data-enter], .landing-workspace[data-enter], .landing-journey-line i { animation: none !important; }
   .landing-motion-ready [data-reveal] { opacity: 1; transform: none; transition: none; }
+  .landing-role-card { transition: none; }
 }
 
 .login-left-video { position: absolute; z-index: -3; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; opacity: .62; filter: brightness(.68) saturate(.82); pointer-events: none; }

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowRight, ChevronLeft, ChevronRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
   ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.png'],
@@ -11,6 +11,18 @@ const roles = [
 export default function Landing({ onLogin }) {
   const landingRef = useRef(null);
   const [activeSection, setActiveSection] = useState('');
+  const [activeRole, setActiveRole] = useState(0);
+  const [roleCarouselPaused, setRoleCarouselPaused] = useState(false);
+
+  useEffect(() => {
+    if (roleCarouselPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+
+    const timer = window.setInterval(() => {
+      if (!document.hidden) setActiveRole((current) => (current + 1) % roles.length);
+    }, 5200);
+
+    return () => window.clearInterval(timer);
+  }, [roleCarouselPaused]);
 
   useEffect(() => {
     const landing = landingRef.current;
@@ -157,11 +169,42 @@ export default function Landing({ onLogin }) {
           <p>Masuk menggunakan akun operasional yang dibuat oleh Admin. Menu dan tindakan yang tersedia menyesuaikan peran Anda.</p>
           <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
         </div>
-        <div className="landing-role-list">
-          {roles.map(([title, description, icon]) => <article key={title} data-reveal>
-            <img className="landing-role-icon" src={`${import.meta.env.BASE_URL}assets/${icon}`} alt="" loading="lazy" />
-            <div><h3>{title}</h3><p>{description}</p></div>
-          </article>)}
+        <div
+          className="landing-role-carousel"
+          aria-label="Jenis akun"
+          aria-roledescription="carousel"
+          onMouseEnter={() => setRoleCarouselPaused(true)}
+          onMouseLeave={() => setRoleCarouselPaused(false)}
+          onFocusCapture={() => setRoleCarouselPaused(true)}
+          onBlurCapture={(event) => {
+            if (!event.currentTarget.contains(event.relatedTarget)) setRoleCarouselPaused(false);
+          }}
+          data-reveal
+        >
+          {[-1, 0, 1].map((offset) => {
+            const index = (activeRole + offset + roles.length) % roles.length;
+            const [title, description, icon] = roles[index];
+            const position = offset === 0 ? 'current' : offset < 0 ? 'previous' : 'next';
+
+            return <article
+              key={title}
+              className={`landing-role-card is-${position}`}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${index + 1} dari ${roles.length}: ${title}`}
+              aria-hidden={position !== 'current'}
+            >
+              <img className="landing-role-icon" src={`${import.meta.env.BASE_URL}assets/${icon}`} alt="" loading="lazy" />
+              <div className="landing-role-copy"><span>0{index + 1} / 0{roles.length}</span><h3>{title}</h3><p>{description}</p></div>
+            </article>;
+          })}
+          <div className="landing-role-controls" aria-label="Navigasi jenis akun">
+            <button type="button" onClick={() => setActiveRole((current) => (current - 1 + roles.length) % roles.length)} aria-label="Peran sebelumnya"><ChevronLeft size={17} aria-hidden="true" /></button>
+            <div className="landing-role-dots" aria-hidden="true">
+              {roles.map(([title], index) => <span key={title} className={index === activeRole ? 'is-current' : ''} />)}
+            </div>
+            <button type="button" onClick={() => setActiveRole((current) => (current + 1) % roles.length)} aria-label="Peran berikutnya"><ChevronRight size={17} aria-hidden="true" /></button>
+          </div>
         </div>
       </div>
     </section>
