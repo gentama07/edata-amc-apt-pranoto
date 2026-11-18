@@ -1179,6 +1179,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-capabilities { color: #fff; background: #000000; }
 .landing-section-inner { width: min(100%, 1440px); margin: 0 auto; padding: 94px clamp(28px, 6vw, 88px) 104px; }
 .landing-capabilities h2, .landing-access h2 { max-width: 650px; margin: 0; font-family: "SF Pro Display", system-ui, sans-serif; font-size: clamp(32px, 3.4vw, 44px); font-weight: 600; line-height: 1.12; letter-spacing: -.9px; }
+.landing-section-top { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .82fr); gap: clamp(36px, 6vw, 88px); align-items: center; }
+.landing-feature-image { display: block; width: 100%; max-width: 540px; height: auto; justify-self: end; object-fit: contain; }
 .landing-motion-ready [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
 .landing-motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 .landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 58px; }
@@ -1247,6 +1249,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-workspace-foot { gap: 10px 14px; font-size: 10px; }
   .landing-section-inner { padding: 68px 22px 72px; }
   .landing-capabilities h2, .landing-access h2 { font-size: 33px; }
+  .landing-section-top { grid-template-columns: minmax(0, 1fr); gap: 26px; }
+  .landing-feature-image { width: min(100%, 460px); justify-self: center; }
   .landing-capability-list { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 38px; }
   .landing-capability-list article { padding-top: 17px; }
   .landing-capability-list h3 { margin-top: 13px; }

@@ -120,7 +120,16 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-capabilities" id="fitur" aria-labelledby="landing-capabilities-title">
       <div className="landing-section-inner">
-        <h2 id="landing-capabilities-title" data-reveal>Informasi penting, mudah ditindaklanjuti.</h2>
+        <div className="landing-section-top">
+          <h2 id="landing-capabilities-title" data-reveal>Informasi penting, mudah ditindaklanjuti.</h2>
+          <img
+            className="landing-feature-image"
+            src={`${import.meta.env.BASE_URL}assets/center-landing-page-photo.png`}
+            alt="Ilustrasi dashboard operasional penerbangan dan pemantauan apron"
+            loading="lazy"
+            data-reveal
+          />
+        </div>
         <div className="landing-capability-list">
           <article data-reveal>
             <Activity size={21} strokeWidth={1.7} aria-hidden="true" />
