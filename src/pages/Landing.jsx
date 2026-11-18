@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Activity, ArrowDownRight, ArrowRight, ChevronLeft, ChevronRight, ClipboardList, ShieldCheck } from 'lucide-react';
+import { Activity, ArrowDownRight, ArrowRight, ChevronLeft, ChevronRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
   ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.png'],
@@ -144,7 +144,35 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-capabilities" id="fitur" aria-labelledby="landing-capabilities-title">
       <div className="landing-section-inner">
-        <h2 id="landing-capabilities-title" data-reveal>Fitur operasional, terlihat dalam satu ruang kerja.</h2>
+        <div className="landing-section-top">
+          <h2 id="landing-capabilities-title" data-reveal>Informasi penting, mudah ditindaklanjuti.</h2>
+          <img
+            className="landing-feature-artwork"
+            src={`${import.meta.env.BASE_URL}assets/center-landing-page-photo.png`}
+            alt="Ilustrasi dashboard operasional penerbangan dan pemantauan apron"
+            loading="lazy"
+            data-reveal
+          />
+        </div>
+        <div className="landing-capability-list">
+          <article data-reveal>
+            <Activity size={21} strokeWidth={1.7} aria-hidden="true" />
+            <h3>Log pergerakan</h3>
+            <p>Catat operator, registrasi, rute, waktu rencana dan aktual, stand, penumpang, bagasi, kargo, serta remark lapangan.</p>
+          </article>
+          <article data-reveal>
+            <FileText size={21} strokeWidth={1.7} aria-hidden="true" />
+            <h3>Persuratan</h3>
+            <p>Kirim surat dan lampiran, ikuti balasan dalam percakapan, lalu konfirmasi penyelesaian bersama pihak terkait.</p>
+          </article>
+          <article data-reveal>
+            <LayoutDashboard size={21} strokeWidth={1.7} aria-hidden="true" />
+            <h3>Ringkasan &amp; laporan</h3>
+            <p>Tinjau aktivitas berdasarkan tanggal operasional dan gunakan laporan untuk membaca atau mengekspor data.</p>
+          </article>
+        </div>
+        <div className="landing-feature-showcase" data-reveal>
+          <h3 className="landing-feature-title">Pratinjau ruang kerja</h3>
         <div className="landing-feature-preview" data-reveal>
           <div className="landing-feature-visual" role="tabpanel" id="landing-feature-panel" aria-labelledby={`landing-feature-tab-${activeFeature}`}>
             <img
@@ -180,6 +208,7 @@ export default function Landing({ onLogin }) {
             >{title}</button>)}
           </div>
           <p className="landing-feature-caption"><strong>{features[activeFeature][0]}.</strong> {features[activeFeature][1]}</p>
+        </div>
         </div>
       </div>
     </section>
