@@ -61,7 +61,11 @@ export default function FlightTracking() {
       body: { airport: airportCode, direction: nextDirection, flightIata },
     });
     if (invokeError || data?.error) {
-      setError(data?.error || invokeError?.message || 'Data penerbangan belum dapat diambil.');
+      const response = invokeError?.context;
+      const responseBody = response && typeof response.clone === 'function'
+        ? await response.clone().json().catch(() => null)
+        : null;
+      setError(data?.error || responseBody?.error || invokeError?.message || 'Data penerbangan belum dapat diambil.');
       setLoading(false);
       return;
     }
