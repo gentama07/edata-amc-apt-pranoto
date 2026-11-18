@@ -1101,13 +1101,16 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-brand span { display: grid; gap: 2px; }
 .landing-brand strong { font-size: 14px; font-weight: 600; letter-spacing: -.2px; }
 .landing-brand small { color: #b7b7bd; font-size: 11px; }
-.landing-nav nav { display: flex; align-items: center; gap: 30px; }
+.landing-nav-menu { position: relative; }
+.landing-nav nav { display: grid; grid-template-columns: repeat(2, 110px); align-items: center; gap: 30px; }
 .landing-nav nav a, .landing-secondary-link { color: #d1d1d6; font-size: 13px; text-decoration: none; transition: color .18s ease; }
-.landing-nav nav a { position: relative; padding: 8px 0; font-weight: 500; transition: color .18s ease, font-weight .18s ease, transform .18s ease; }
+.landing-nav nav a { padding: 8px 0; font-weight: 500; text-align: center; transition: color .18s ease, font-weight .18s ease, transform .18s ease; }
 .landing-nav nav a:hover, .landing-secondary-link:hover { color: #fff; }
 .landing-nav nav a:hover { font-weight: 600; transform: scale(1.05); }
 .landing-nav nav a[aria-current="location"] { color: #fff; font-weight: 600; }
-.landing-nav nav a[aria-current="location"]::after { position: absolute; right: 0; bottom: 1px; left: 0; height: 2px; border-radius: 2px; background: #2997ff; content: ""; }
+.landing-nav-indicator { position: absolute; bottom: 0; left: 0; width: 110px; height: 2px; border-radius: 2px; background: #2997ff; opacity: 0; pointer-events: none; transform: translateX(0); transition: transform .38s cubic-bezier(.2,.7,.2,1), opacity .22s ease; }
+.landing-nav-indicator.is-active { opacity: 1; }
+.landing-nav-indicator.is-akses { transform: translateX(140px); }
 .landing-login { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 42px; width: fit-content; padding: 0 20px; border: 0; border-radius: 999px; color: #fff; background: #0066cc; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color .18s ease, transform .18s ease; }
 .landing-nav > .landing-login { justify-self: end; }
 .landing-nav-login { transition: background-color .18s ease, transform .18s ease, opacity .18s ease, visibility .18s ease; }
@@ -1179,7 +1182,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @keyframes landing-route { to { transform: scaleX(1); } }
 @media (max-width: 900px) {
   .landing-nav { grid-template-columns: 1fr auto; }
-  .landing-nav nav { display: none; }
+  .landing-nav-menu { display: none; }
   .landing-hero { min-height: auto; }
   .landing-hero-inner { grid-template-columns: minmax(0, 1fr); gap: 46px; padding-top: 75px; padding-bottom: 80px; }
   .landing-hero-copy { max-width: 690px; }
