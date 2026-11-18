@@ -47,6 +47,9 @@ export default function Login({ app, portalMode = false, onBack }) {
   return <main className="login-screen">
     <a className="skip-link" href="#login-form">Lewati ke formulir masuk</a>
     <section className="login-left" aria-labelledby="login-story-title">
+      <video className="login-left-video" autoPlay muted loop playsInline preload="auto" aria-hidden="true" tabIndex={-1}>
+        <source src={`${import.meta.env.BASE_URL}assets/left-side-login-page-animation.mp4`} type="video/mp4" />
+      </video>
       <div className="login-brand">
         <div className="apt-mark login-apt-mark"><img width="810" height="308" fetchPriority="high" src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="Bandar Udara A.P.T. Pranoto" /></div>
         <span>E-data AMC Aji Pangeran Tumenggung Pranoto Samarinda</span>
