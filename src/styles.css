@@ -38,15 +38,15 @@
   color-scheme: dark;
   --ink: #f5f5f7;
   --muted: #a3a3aa;
-  --canvas: #18181a;
-  --card: #232326;
-  --card-soft: #29292c;
-  --border: #39393d;
+  --canvas: #000000;
+  --card: #000000;
+  --card-soft: #0b0b0b;
+  --border: #292929;
   --control-border: #75757d;
-  --hairline: #343438;
-  --hover: #30343a;
+  --hairline: #1c1c1c;
+  --hover: #141414;
   --shadow: 0 4px 16px rgba(0, 0, 0, .16);
-  --chart-grid: #3a3a3e;
+  --chart-grid: #242424;
   --warning: #f3b653;
   --warning-bg: #3a2d18;
   --green: #65c388;
@@ -72,11 +72,11 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 :root[data-theme="dark"] .demo-banner { background: #3a2d18; color: #f2d5a2; }
 .demo-dot, .footer-dot { display: inline-block; width: 6px; height: 6px; flex: 0 0 auto; border-radius: 50%; background: #d9942e; }
 .demo-banner-detail { font-weight: 400; opacity: .84; }
-.topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 27px; background: #171719; color: #fff; border-bottom: 1px solid rgba(255,255,255,.09); }
+.topbar { height: 68px; display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 0 27px; background: #000000; color: #fff; border-bottom: 1px solid rgba(255,255,255,.09); }
 .brand-lockup, .topbar-right { display: flex; align-items: center; }
 .brand-lockup { gap: 9px; min-width: 245px; }
 .apt-mark { height: 39px; width: 56px; display: grid; place-items: center; padding: 5px 7px; border-radius: 7px; background: #fff; }
-.apt-mark-dark { background: #171719; border: 1px solid rgba(255,255,255,.12); }
+.apt-mark-dark { background: #000000; border: 1px solid rgba(255,255,255,.12); }
 .apt-mark img { display: block; width: 100%; max-height: 27px; object-fit: contain; }
 .brand-copy { display: flex; flex-direction: column; gap: 0; margin-left: 4px; line-height: 1.15; }
 .brand-copy strong { font-size: 15px; font-weight: 600; letter-spacing: -.25px; }
@@ -390,7 +390,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 /* Login */
 .login-screen { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(430px, .9fr); background: var(--canvas); }
-.login-left { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 28px 46px 24px; color: #fff; background: #19191b; }
+.login-left { position: relative; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; overflow: hidden; padding: 28px 46px 24px; color: #fff; background: #000000; }
 .login-left::before { content: ""; position: absolute; right: -135px; bottom: 11%; width: 500px; height: 500px; border: 1px solid rgba(255,255,255,.055); border-radius: 50%; box-shadow: 0 0 0 78px rgba(255,255,255,.018), 0 0 0 158px rgba(255,255,255,.012); }
 .login-brand { position: relative; z-index: 1; display: flex; align-items: center; gap: 10px; }
 .login-brand .apt-mark { width: 58px; height: 42px; }
@@ -644,7 +644,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 /* Login, service state, and brand lockup */
 .login-screen { height: 100vh; height: 100svh; min-height: 0; overflow: hidden; grid-template-columns: minmax(0, 1.1fr) minmax(430px, .9fr); }
-.login-left { isolation: isolate; height: 100%; min-height: 0; padding: 34px clamp(28px, 4vw, 72px) 26px; background: #19191b; }
+.login-left { isolation: isolate; height: 100%; min-height: 0; padding: 34px clamp(28px, 4vw, 72px) 26px; background: #000000; }
 .login-left::before { z-index: -2; top: 50%; right: -13%; bottom: auto; width: min(62vw, 720px); aspect-ratio: 1; height: auto; transform: translateY(-50%); border-color: rgba(255,255,255,.075); box-shadow: 0 0 0 clamp(38px, 5vw, 90px) rgba(255,255,255,.018), 0 0 0 clamp(76px, 10vw, 180px) rgba(255,255,255,.012); }
 .login-left::after { content: ""; position: absolute; z-index: -1; top: 50%; right: -13%; width: min(62vw, 720px); aspect-ratio: 1; border-radius: 50%; background: conic-gradient(from 0deg, transparent 0 70%, rgba(196,143,66,.36) 76%, transparent 82% 100%); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 1px), #000 calc(100% - .5px)); transform: translateY(-50%); animation: login-ring-turn 72s linear infinite; }
 .login-brand { gap: 12px; flex-wrap: wrap; }
@@ -811,7 +811,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   max-height: none;
   object-fit: contain;
 }
-.topbar .brand-lockup .apt-mark-dark { background: #171719; }
+.topbar .brand-lockup .apt-mark-dark { background: #000000; }
 @keyframes airport-sweep { 0%,65% { left:-55%; opacity:0; } 72% { opacity:.8; } 100% { left:125%; opacity:0; } }
 @keyframes airport-plane { 0%,100% { transform:translate(0,0) rotate(0); } 25% { transform:translate(2px,-2px) rotate(-3deg); } 50% { transform:translate(0,-3px) rotate(0); } 75% { transform:translate(-2px,-2px) rotate(3deg); } }
 
@@ -1140,7 +1140,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-workspace-foot span { display: inline-flex; align-items: center; gap: 7px; }
 .landing-workspace-foot svg { color: #0066cc; }
 .landing-workspace-accent { position: absolute; z-index: -1; right: -80px; bottom: -140px; width: 270px; height: 270px; border: 1px solid rgba(0, 102, 204, .08); border-radius: 50%; box-shadow: 0 0 0 34px rgba(0, 102, 204, .025), 0 0 0 68px rgba(0, 102, 204, .018); }
-.landing-capabilities { color: #fff; background: #272729; }
+.landing-capabilities { color: #fff; background: #000000; }
 .landing-section-inner { width: min(100%, 1440px); margin: 0 auto; padding: 94px clamp(28px, 6vw, 88px) 104px; }
 .landing-capabilities h2, .landing-access h2 { max-width: 650px; margin: 0; font-family: "SF Pro Display", system-ui, sans-serif; font-size: clamp(32px, 3.4vw, 44px); font-weight: 600; line-height: 1.12; letter-spacing: -.9px; }
 .landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 58px; }
