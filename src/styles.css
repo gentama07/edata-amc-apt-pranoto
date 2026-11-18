@@ -1110,6 +1110,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-nav nav a[aria-current="location"]::after { position: absolute; right: 0; bottom: 1px; left: 0; height: 2px; border-radius: 2px; background: #2997ff; content: ""; }
 .landing-login { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 42px; width: fit-content; padding: 0 20px; border: 0; border-radius: 999px; color: #fff; background: #0066cc; font-size: 13px; font-weight: 600; text-decoration: none; cursor: pointer; transition: background-color .18s ease, transform .18s ease; }
 .landing-nav > .landing-login { justify-self: end; }
+.landing-nav-login { transition: background-color .18s ease, transform .18s ease, opacity .18s ease, visibility .18s ease; }
+.landing-nav-login-hidden { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-4px); }
 .landing-login:hover { background: #0071e3; transform: translateY(-1px); }
 .landing-login:active { transform: scale(.95); }
 .landing-hero { display: flex; min-height: min(790px, calc(100svh - 72px)); align-items: center; background: #fff; }
