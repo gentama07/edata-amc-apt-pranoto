@@ -23,8 +23,25 @@ export default function Landing({ onLogin }) {
   const [navScrolled, setNavScrolled] = useState(false);
   const [localLoginVisible, setLocalLoginVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
+  const [previousFeature, setPreviousFeature] = useState(null);
   const [activeRole, setActiveRole] = useState(0);
   const [roleCarouselPaused, setRoleCarouselPaused] = useState(false);
+  const featureTransitionTimer = useRef(null);
+
+  const selectFeature = (nextFeature) => {
+    if (nextFeature === activeFeature) return;
+    window.clearTimeout(featureTransitionTimer.current);
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      setPreviousFeature(null);
+      setActiveFeature(nextFeature);
+      return;
+    }
+    setPreviousFeature(activeFeature);
+    setActiveFeature(nextFeature);
+    featureTransitionTimer.current = window.setTimeout(() => setPreviousFeature(null), 680);
+  };
+
+  useEffect(() => () => window.clearTimeout(featureTransitionTimer.current), []);
 
   useEffect(() => {
     if (roleCarouselPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
@@ -192,9 +209,15 @@ export default function Landing({ onLogin }) {
           <h3 className="landing-feature-title">Pratinjau ruang kerja</h3>
         <div className="landing-feature-preview" data-reveal>
           <div className="landing-feature-visual" role="tabpanel" id="landing-feature-panel" aria-labelledby={`landing-feature-tab-${activeFeature}`}>
+            {previousFeature !== null && <img
+              className="landing-feature-image is-outgoing"
+              src={`${import.meta.env.BASE_URL}assets/${features[previousFeature][2]}`}
+              alt=""
+              aria-hidden="true"
+            />}
             <img
               key={features[activeFeature][2]}
-              className="landing-feature-image"
+              className="landing-feature-image is-entering"
               src={`${import.meta.env.BASE_URL}assets/${features[activeFeature][2]}`}
               alt={features[activeFeature][3]}
               loading="lazy"
@@ -209,7 +232,7 @@ export default function Landing({ onLogin }) {
               if (!direction) return;
               event.preventDefault();
               const next = (activeFeature + direction + features.length) % features.length;
-              setActiveFeature(next);
+              selectFeature(next);
               document.getElementById(`landing-feature-tab-${next}`)?.focus();
             }}
           >
@@ -221,10 +244,10 @@ export default function Landing({ onLogin }) {
               aria-selected={activeFeature === index}
               aria-controls="landing-feature-panel"
               tabIndex={activeFeature === index ? 0 : -1}
-              onClick={() => setActiveFeature(index)}
+              onClick={() => selectFeature(index)}
             >{title}</button>)}
           </div>
-          <p className="landing-feature-caption"><strong>{features[activeFeature][0]}.</strong> {features[activeFeature][1]}</p>
+          <p key={activeFeature} className="landing-feature-caption"><strong>{features[activeFeature][0]}.</strong> {features[activeFeature][1]}</p>
         </div>
         </div>
       </div>
