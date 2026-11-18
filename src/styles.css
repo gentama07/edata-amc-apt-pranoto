@@ -1117,7 +1117,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-nav-login-hidden { visibility: hidden; opacity: 0; pointer-events: none; transform: translateY(-4px); }
 .landing-login:hover { background: #0071e3; transform: translateY(-1px); }
 .landing-login:active { transform: scale(.95); }
-.landing-hero { display: flex; min-height: min(790px, calc(100svh - 72px)); align-items: center; background: #fff; }
+.landing-hero { position: relative; isolation: isolate; overflow: hidden; display: flex; min-height: min(790px, calc(100svh - 72px)); align-items: center; background: #edf2f7; }
+.landing-hero-video { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center; }
+.landing-hero-shade { position: absolute; z-index: -1; inset: 0; background: rgba(248, 250, 252, .7); }
 .landing-hero-inner { display: grid; grid-template-columns: minmax(0, .92fr) minmax(420px, 1.08fr); align-items: center; gap: clamp(42px, 7vw, 104px); width: min(100%, 1440px); margin: 0 auto; padding: 78px clamp(28px, 6vw, 88px) 88px; }
 .landing-hero-copy { max-width: 570px; }
 .landing-hero-copy[data-enter] { animation: landing-enter .72s cubic-bezier(.2,.7,.2,1) both; }
@@ -1236,3 +1238,5 @@ button, a, input, select, textarea { touch-action: manipulation; }
 }
 
 
+
+@media (prefers-reduced-motion: reduce) { .landing-hero-video { display: none; } }

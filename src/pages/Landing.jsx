@@ -89,6 +89,10 @@ export default function Landing({ onLogin }) {
     </header>
 
     <section className="landing-hero" id="beranda" aria-labelledby="landing-title">
+      <video className="landing-hero-video" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" tabIndex={-1}>
+        <source src={`${import.meta.env.BASE_URL}assets/top-landing-page-animation.mp4`} type="video/mp4" />
+      </video>
+      <div className="landing-hero-shade" aria-hidden="true" />
       <div className="landing-hero-inner">
         <div className="landing-hero-copy" data-enter>
           <h1 id="landing-title">Operasi apron,<br /><em>tertata dalam satu ruang kerja.</em></h1>
