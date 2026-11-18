@@ -23,11 +23,9 @@ export default function Landing({ onLogin }) {
     let revealObserver;
     if (!reduceMotion) {
       landing.classList.add('landing-motion-ready');
-      revealObserver = new IntersectionObserver((entries, observer) => {
+      revealObserver = new IntersectionObserver((entries) => {
         entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          entry.target.classList.add('is-visible');
-          observer.unobserve(entry.target);
+          entry.target.classList.toggle('is-visible', entry.isIntersecting);
         });
       }, { threshold: 0.16, rootMargin: '0px 0px -32px 0px' });
 
