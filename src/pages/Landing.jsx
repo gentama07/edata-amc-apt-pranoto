@@ -71,10 +71,16 @@ export default function Landing({ onLogin }) {
         <img src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="" />
         <span><strong>E-data AMC</strong><small>APT Pranoto · Samarinda</small></span>
       </a>
-      <nav aria-label="Navigasi halaman">
-        <a href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined}>Ruang kerja</a>
-        <a href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined}>Akses akun</a>
-      </nav>
+      <div className="landing-nav-menu">
+        <nav aria-label="Navigasi halaman">
+          <a href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined}>Ruang kerja</a>
+          <a href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined}>Akses akun</a>
+        </nav>
+        <span
+          className={`landing-nav-indicator${activeSection ? ' is-active' : ''}${activeSection === 'akses' ? ' is-akses' : ''}`}
+          aria-hidden="true"
+        />
+      </div>
       <button
         className={`landing-login landing-nav-login${activeSection === 'akses' ? ' landing-nav-login-hidden' : ''}`}
         onClick={onLogin}
