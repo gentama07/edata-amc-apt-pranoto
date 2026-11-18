@@ -667,7 +667,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .service-checking i { background: transparent; animation: status-lamp 1s ease-in-out infinite; }
 .service-issue { color: #f09b8f; }
 .service-demo { color: #d3aa68; }
-.login-right { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: clamp(28px, 6vw, 96px); }
+.login-right { height: 100%; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: clamp(22px, 3.4vw, 58px); }
 .login-card { width: min(100%, 430px); }
 .login-card-icon { width: 42px; height: 42px; margin-bottom: 22px; border: 1px solid rgba(0,102,204,.17); border-radius: 8px; }
 .login-card h2 { margin: 8px 0 6px; font-size: 29px; font-weight: 570; letter-spacing: -.9px; }
@@ -1176,8 +1176,21 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-footer .landing-brand img { width: 82px; height: 32px; }
 .landing-footer .landing-brand strong { color: #1d1d1f; font-size: 12px; }
 .landing-footer .landing-brand small, .landing-footer > span { color: #73747a; font-size: 11px; }
-.login-home-link { display: inline-flex; align-items: center; min-height: 38px; margin: 0 0 14px; padding: 0; border: 0; color: var(--blue); background: transparent; font-size: 12px; cursor: pointer; }
-.login-home-link:hover { text-decoration: underline; }
+.login-home-link { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 38px; margin: 0 0 14px; padding: 0 13px; border: 1px solid var(--border); border-radius: 999px; color: var(--ink); background: var(--card); font-size: 12px; font-weight: 550; cursor: pointer; transition: border-color .18s ease, color .18s ease, background-color .18s ease, transform .18s ease; }
+.login-home-link:hover { transform: translateX(-2px); border-color: rgba(0,102,204,.35); color: var(--blue); background: rgba(0,102,204,.06); }
+.login-home-link:active { transform: translateX(-1px); }
+@media (min-width: 768px) and (min-height: 680px) {
+  html:has(.login-screen), body:has(.login-screen), #root:has(.login-screen) { height: 100%; min-height: 0; overflow: hidden; }
+  .login-screen { height: 100vh; height: 100dvh; }
+  .login-right { padding: clamp(18px, 3.4vh, 40px) clamp(22px, 3.4vw, 58px); }
+  .login-card-icon { margin-bottom: 17px; }
+  .login-subtitle { margin-bottom: 17px; }
+  .login-form { gap: 13px; margin-top: 18px; }
+}
+@media (max-height: 679px) and (min-width: 768px) {
+  .login-screen { height: auto; min-height: 100vh; min-height: 100svh; overflow: visible; }
+  .login-left, .login-right { height: auto; min-height: 100vh; min-height: 100svh; }
+}
 @keyframes landing-enter { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes landing-route { to { transform: scaleX(1); } }
 @media (max-width: 900px) {
