@@ -2,14 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
-  ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.jpeg'],
-
-  ['Personel AMC', 'Mencatat pergerakan pesawat dan menangani data serta surat.', 'personel-amc-icon.jpeg'],
-
-  ['Pimpinan', 'Memantau ringkasan, log, laporan, dan tindak lanjut surat.', 'pimpinan-icon.jpeg'],
-
-  ['Ground Handling', 'Mengirim surat kepada AMC, mengikuti status, dan memberi balasan.', 'ground-handling-icon.jpeg'],
-
+  ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.png'],
+  ['Personel AMC', 'Mencatat pergerakan pesawat dan menangani data serta surat.', 'personel-amc.png'],
+  ['Pimpinan', 'Memantau ringkasan, log, laporan, dan tindak lanjut surat.', 'pimpinan-icon.png'],
+  ['Ground Handling', 'Mengirim surat kepada AMC, mengikuti status, dan memberi balasan.', 'ground-handling-icon.png'],
 ];
 
 export default function Landing({ onLogin }) {
@@ -170,4 +166,3 @@ export default function Landing({ onLogin }) {
     </footer>
   </main>;
 }
-
