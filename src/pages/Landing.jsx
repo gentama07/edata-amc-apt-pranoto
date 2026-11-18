@@ -265,7 +265,10 @@ export default function Landing({ onLogin }) {
         <img src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="" />
         <span><strong>Bandar Udara A.P.T. Pranoto</strong><small>Samarinda · WITA</small></span>
       </a>
-      <span>E-data AMC · Sistem operasional Apron Movement Control</span>
+      <div className="landing-footer-meta">
+        <span>E-data AMC · Sistem operasional Apron Movement Control</span>
+        <span className="landing-footer-credit">Dibuat oleh <a href="https://www.instagram.com/ybgntm" target="_blank" rel="noopener noreferrer">@ybgntm</a></span>
+      </div>
     </footer>
   </main>;
 }
