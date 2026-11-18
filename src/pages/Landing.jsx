@@ -38,10 +38,31 @@ export default function Landing({ onLogin }) {
     }
     setPreviousFeature(activeFeature);
     setActiveFeature(nextFeature);
-    featureTransitionTimer.current = window.setTimeout(() => setPreviousFeature(null), 680);
+    featureTransitionTimer.current = window.setTimeout(() => setPreviousFeature(null), 460);
   };
 
   useEffect(() => () => window.clearTimeout(featureTransitionTimer.current), []);
+
+  useEffect(() => {
+    let cancelled = false;
+    const preloadFeatureImages = () => {
+      if (cancelled) return;
+      features.forEach(([, , file]) => {
+        const image = new Image();
+        image.decoding = 'async';
+        image.src = `${import.meta.env.BASE_URL}assets/${file}`;
+      });
+    };
+    const idleId = window.requestIdleCallback
+      ? window.requestIdleCallback(preloadFeatureImages, { timeout: 1600 })
+      : window.setTimeout(preloadFeatureImages, 500);
+
+    return () => {
+      cancelled = true;
+      if (window.cancelIdleCallback) window.cancelIdleCallback(idleId);
+      else window.clearTimeout(idleId);
+    };
+  }, []);
 
   useEffect(() => {
     if (roleCarouselPaused || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
