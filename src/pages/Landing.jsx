@@ -17,10 +17,20 @@ const features = [
   ['Detail surat', 'Baca isi surat, lampiran, konfirmasi, dan percakapan tindak lanjut di satu tempat.', 'feature-preview-detail-surat.png', 'Pratinjau percakapan tindak lanjut surat'],
 ];
 
+const englishTerms = /\b(Ground Handling|Apron Movement Control|Block ON|Block OFF|remark|stand|operator|apron|input|Admin|log)\b/gi;
+const italicTerms = new Set(['ground handling', 'apron movement control', 'block on', 'block off', 'remark', 'stand', 'operator', 'apron', 'input', 'admin', 'log']);
+
+function ItalicTerms({ children }) {
+  return String(children).split(englishTerms).map((part, index) =>
+    italicTerms.has(part.toLowerCase()) ? <em key={`${part}-${index}`}>{part}</em> : part,
+  );
+}
+
 export default function Landing({ onLogin }) {
   const landingRef = useRef(null);
   const [activeSection, setActiveSection] = useState('');
   const [navScrolled, setNavScrolled] = useState(false);
+  const [localLoginVisible, setLocalLoginVisible] = useState(false);
   const [activeFeature, setActiveFeature] = useState(0);
   const [activeRole, setActiveRole] = useState(0);
   const [roleCarouselPaused, setRoleCarouselPaused] = useState(false);
@@ -41,6 +51,17 @@ export default function Landing({ onLogin }) {
 
     document.documentElement.classList.add('landing-scroll-smooth');
     if (!('IntersectionObserver' in window)) return () => document.documentElement.classList.remove('landing-scroll-smooth');
+
+    const visibleLocalLogins = new Set();
+    const localLoginObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) visibleLocalLogins.add(entry.target);
+        else visibleLocalLogins.delete(entry.target);
+      });
+      setLocalLoginVisible(visibleLocalLogins.size > 0);
+    }, { threshold: 0.08 });
+    landing.querySelectorAll('#beranda .landing-login-large, #akses .landing-access-intro .landing-login')
+      .forEach((button) => localLoginObserver.observe(button));
 
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let revealObserver;
@@ -78,6 +99,7 @@ export default function Landing({ onLogin }) {
 
     return () => {
       revealObserver?.disconnect();
+      localLoginObserver.disconnect();
       window.removeEventListener('scroll', updateActiveSection);
       window.removeEventListener('resize', updateActiveSection);
       if (activeSectionFrame) window.cancelAnimationFrame(activeSectionFrame);
@@ -89,27 +111,26 @@ export default function Landing({ onLogin }) {
   return <main className="public-landing" id="landing-content" ref={landingRef}>
     <a className="skip-link" href="#landing-title">Lewati ke konten utama</a>
     <header className={`landing-nav${navScrolled ? ' is-scrolled' : ''}`}>
-      <a className="landing-brand" href="#beranda" aria-label="E-data AMC, beranda">
-        <img src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="" />
-        <span><strong>E-data AMC</strong><small>APT Pranoto · Samarinda</small></span>
-      </a>
-      <div className="landing-nav-menu">
-        <nav aria-label="Navigasi halaman">
-          <a href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined}>Ruang kerja</a>
-          <a href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined}>Akses akun</a>
+      <div className="landing-nav-main">
+        <a className="landing-nav-brand" href="#beranda" aria-label="E-data AMC, beranda">
+          <img src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="Logo Bandar Udara A.P.T. Pranoto" />
+          <span className="landing-nav-brand-compact"><strong>E-data AMC</strong><small>APT Pranoto · Samarinda</small></span>
+        </a>
+        <nav className="landing-nav-menu" aria-label="Navigasi halaman" aria-hidden={navScrolled}>
+          <a className="landing-nav-feature" href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined} tabIndex={navScrolled ? -1 : 0}>Fitur</a>
+          <a className="landing-nav-access-top" href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined} tabIndex={navScrolled ? -1 : 0}>Akses</a>
         </nav>
-        <span
-          className={`landing-nav-indicator${activeSection ? ' is-active' : ''}${activeSection === 'akses' ? ' is-akses' : ''}`}
-          aria-hidden="true"
-        />
       </div>
-      <button
-        className={`landing-login landing-nav-login${activeSection === 'akses' ? ' landing-nav-login-hidden' : ''}`}
-        onClick={onLogin}
-        aria-hidden={activeSection === 'akses'}
-        tabIndex={activeSection === 'akses' ? -1 : 0}
-        disabled={activeSection === 'akses'}
-      >Masuk<ArrowRight size={16} aria-hidden="true" /></button>
+      <div className="landing-nav-actions">
+        <a className="landing-nav-access-compact" href="#akses" aria-hidden={!navScrolled} tabIndex={navScrolled ? 0 : -1}>Akses</a>
+        <button
+          className={`landing-login landing-nav-login${!navScrolled || localLoginVisible ? ' landing-nav-login-hidden' : ''}`}
+          onClick={onLogin}
+          aria-hidden={!navScrolled || localLoginVisible}
+          tabIndex={!navScrolled || localLoginVisible ? -1 : 0}
+          disabled={!navScrolled || localLoginVisible}
+        >Masuk<ArrowRight size={16} aria-hidden="true" /></button>
+      </div>
     </header>
 
     <section className="landing-hero" id="beranda" aria-labelledby="landing-title">
@@ -120,7 +141,7 @@ export default function Landing({ onLogin }) {
       <div className="landing-hero-inner">
         <div className="landing-hero-copy" data-enter>
           <h1 id="landing-title">Operasi apron,<br /><em>tertata dalam satu ruang kerja.</em></h1>
-          <p>E-data AMC A.P.T. Pranoto membantu tim mencatat pergerakan pesawat, melihat ringkasan operasional, dan menindaklanjuti surat antara AMC dan Ground Handling.</p>
+          <p>E-data AMC A.P.T. Pranoto membantu tim mencatat pergerakan pesawat, melihat ringkasan operasional, dan menindaklanjuti surat antara AMC dan <ItalicTerms>Ground Handling</ItalicTerms>.</p>
           <div className="landing-hero-actions">
             <button className="landing-login landing-login-large" onClick={onLogin}>Masuk ke E-data AMC<ArrowRight size={17} aria-hidden="true" /></button>
             <a className="landing-secondary-link" href="#fitur">Lihat yang bisa dikelola<ArrowDownRight size={15} aria-hidden="true" /></a>
@@ -132,11 +153,11 @@ export default function Landing({ onLogin }) {
           <div className="landing-workspace-head"><div><strong>Log pergerakan</strong><span>Ruang kerja operasional</span></div><span className="landing-live">WITA</span></div>
           <div className="landing-workspace-date"><span>DATA PENERBANGAN</span><span>WITA</span></div>
           <div className="landing-journey">
-            <div className="landing-journey-stop"><span className="journey-dot journey-arr" /><div><strong>Kedatangan</strong><small>Jadwal · Aktual · Block ON</small></div></div>
+            <div className="landing-journey-stop"><span className="journey-dot journey-arr" /><div><strong>Kedatangan</strong><small>Jadwal · Aktual · <ItalicTerms>Block ON</ItalicTerms></small></div></div>
             <div className="landing-journey-line"><i /></div>
-            <div className="landing-journey-stop"><span className="journey-dot journey-dep" /><div><strong>Keberangkatan</strong><small>Jadwal · Block OFF · Aktual</small></div></div>
+            <div className="landing-journey-stop"><span className="journey-dot journey-dep" /><div><strong>Keberangkatan</strong><small>Jadwal · <ItalicTerms>Block OFF</ItalicTerms> · Aktual</small></div></div>
           </div>
-          <div className="landing-workspace-foot"><span><Activity size={15} /> Pergerakan apron</span><span><ClipboardList size={15} /> Muatan & remark</span></div>
+          <div className="landing-workspace-foot"><span><Activity size={15} /> Pergerakan <ItalicTerms>apron</ItalicTerms></span><span><ClipboardList size={15} /> Muatan &amp; <ItalicTerms>remark</ItalicTerms></span></div>
           <div className="landing-workspace-accent" aria-hidden="true" />
         </div>
       </div>
@@ -158,7 +179,7 @@ export default function Landing({ onLogin }) {
           <article data-reveal>
             <Activity size={21} strokeWidth={1.7} aria-hidden="true" />
             <h3>Log pergerakan</h3>
-            <p>Catat operator, registrasi, rute, waktu rencana dan aktual, stand, penumpang, bagasi, kargo, serta remark lapangan.</p>
+            <p><ItalicTerms>Catat operator, registrasi, rute, waktu rencana dan aktual, stand, penumpang, bagasi, kargo, serta remark lapangan.</ItalicTerms></p>
           </article>
           <article data-reveal>
             <FileText size={21} strokeWidth={1.7} aria-hidden="true" />
@@ -205,9 +226,9 @@ export default function Landing({ onLogin }) {
               aria-controls="landing-feature-panel"
               tabIndex={activeFeature === index ? 0 : -1}
               onClick={() => setActiveFeature(index)}
-            >{title}</button>)}
+            ><ItalicTerms>{title}</ItalicTerms></button>)}
           </div>
-          <p className="landing-feature-caption"><strong>{features[activeFeature][0]}.</strong> {features[activeFeature][1]}</p>
+          <p className="landing-feature-caption"><strong><ItalicTerms>{features[activeFeature][0]}</ItalicTerms>.</strong> <ItalicTerms>{features[activeFeature][1]}</ItalicTerms></p>
         </div>
         </div>
       </div>
@@ -217,7 +238,7 @@ export default function Landing({ onLogin }) {
       <div className="landing-access-inner">
         <div className="landing-access-intro" data-reveal>
           <h2>Akses mengikuti tanggung jawab setiap akun.</h2>
-          <p>Masuk menggunakan akun operasional yang dibuat oleh Admin. Menu dan tindakan yang tersedia menyesuaikan peran Anda.</p>
+          <p>Masuk menggunakan <strong className="landing-account-emphasis">akun operasional</strong> yang dibuat oleh <ItalicTerms>Admin</ItalicTerms>. Menu dan tindakan yang tersedia menyesuaikan peran Anda.</p>
           <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
         </div>
         <div
@@ -246,7 +267,7 @@ export default function Landing({ onLogin }) {
               aria-hidden={position !== 'current'}
             >
               <img className="landing-role-icon" src={`${import.meta.env.BASE_URL}assets/${icon}`} alt="" loading="lazy" />
-              <div className="landing-role-copy"><span>0{index + 1} / 0{roles.length}</span><h3>{title}</h3><p>{description}</p></div>
+              <div className="landing-role-copy"><span>0{index + 1} / 0{roles.length}</span><h3><ItalicTerms>{title}</ItalicTerms></h3><p><ItalicTerms>{description}</ItalicTerms></p></div>
             </article>;
           })}
           <div className="landing-role-controls" aria-label="Navigasi jenis akun">
@@ -266,9 +287,10 @@ export default function Landing({ onLogin }) {
         <span><strong>Bandar Udara A.P.T. Pranoto</strong><small>Samarinda · WITA</small></span>
       </a>
       <div className="landing-footer-meta">
-        <span>E-data AMC · Sistem operasional Apron Movement Control</span>
+        <span>E-data AMC · Sistem operasional <ItalicTerms>Apron Movement Control</ItalicTerms></span>
         <span className="landing-footer-credit">Dibuat oleh <a href="https://www.instagram.com/ybgntm" target="_blank" rel="noopener noreferrer">@ybgntm</a></span>
       </div>
     </footer>
   </main>;
 }
+
