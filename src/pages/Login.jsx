@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowRight, LockKeyhole, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ShieldCheck } from 'lucide-react';
 import { demoAccounts } from '../config/airportOptions';
 import { isSupabaseConfigured } from '../lib/supabase';
 import ServiceStatus from '../components/ServiceStatus';
@@ -61,9 +61,8 @@ export default function Login({ app, portalMode = false, onBack }) {
     <section className="login-right" aria-label="Akses akun">
       <div className="login-card" id="login-form" tabIndex="-1">
         {onBack && <button type="button" className="login-home-link" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /><span>Kembali ke beranda</span></button>}
-        <div className="login-card-icon"><LockKeyhole size={19} aria-hidden="true" /></div>
         <h2>{forgot ? 'Pulihkan akses akun' : 'Masuk ke E-data AMC'}</h2>
-        <p className="login-subtitle">{forgot ? 'Kami akan mengirim tautan untuk membuat kata sandi baru.' : 'Gunakan akun operasional yang diberikan Admin.'}</p>
+        {forgot && <p className="login-subtitle">Kami akan mengirim tautan untuk membuat kata sandi baru.</p>}
         {app.demo && <div className="login-demo-banner"><ShieldCheck size={16} aria-hidden="true" /><div><strong>Mode Pratinjau Lokal aktif</strong><span>Supabase belum dikonfigurasi. Data pratinjau hanya tersimpan di browser ini.</span></div></div>}
         {app.error && <div className="login-error" role="alert">{app.error}</div>}
         {message && <div className={`login-feedback feedback-${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>{message.text}</div>}
