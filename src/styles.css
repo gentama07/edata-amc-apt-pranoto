@@ -117,7 +117,7 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .signed-copy strong { overflow: hidden; font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .signed-copy span,.signed-copy small { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
 .main-content { position: relative; width: calc(100% - 224px); max-width: 1600px; min-width: 0; margin: 0 auto; padding: 30px 38px 45px; }
-.opening-video { position: relative; display: grid; place-items: center; width: 100%; height: min(75vh, 720px); min-height: 300px; overflow: hidden; border-radius: 8px; background: #151619; }
+.opening-video { position: relative; display: grid; place-items: center; width: 100%; height: min(75vh, 720px); min-height: 300px; overflow: hidden; border-radius: 8px; background: #fff; }
 .opening-video video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center center; }
 .opening-video-preload { position: fixed; z-index: -1; right: 0; bottom: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .opening-video-preload video { position: absolute; width: 1px; height: 1px; }
