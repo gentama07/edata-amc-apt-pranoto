@@ -90,7 +90,7 @@ export default function Landing({ onLogin }) {
 
     <section className="landing-hero" id="beranda" aria-labelledby="landing-title">
       <video className="landing-hero-video" autoPlay muted loop playsInline preload="metadata" aria-hidden="true" tabIndex={-1}>
-        <source src={`${import.meta.env.BASE_URL}assets/top-landing-page-animation.mp4?v=2`} type="video/mp4" />
+        <source src={`${import.meta.env.BASE_URL}assets/top-landing-page-animation.mp4?v=3`} type="video/mp4" />
       </video>
       <div className="landing-hero-shade" aria-hidden="true" />
       <div className="landing-hero-inner">
