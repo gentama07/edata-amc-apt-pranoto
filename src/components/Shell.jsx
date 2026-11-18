@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Sun, UserRoundCog, X } from 'lucide-react';
+import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import { supabase } from '../lib/supabase';
 import ServiceStatus from './ServiceStatus';
@@ -10,6 +10,7 @@ const navItems = [
   { id: 'input', label: 'Input data', Icon: ClipboardList, write: true },
   { id: 'reports', label: 'Laporan', Icon: FileBarChart2 },
   { id: 'letters', label: 'Persuratan', Icon: FileText },
+  { id: 'flights', label: 'Tracking penerbangan', Icon: Plane },
 ];
 
 export function Shell({ app, active, setActive, children }) {
@@ -63,7 +64,7 @@ export function Shell({ app, active, setActive, children }) {
     return () => document.removeEventListener('keydown', closeOnEscape);
   }, [menuOpen]);
   const items = profile.role === 'ground_handling'
-    ? [{ id: 'letters', label: 'Persuratan', Icon: FileText }]
+    ? [{ id: 'flights', label: 'Tracking penerbangan', Icon: Plane }, { id: 'letters', label: 'Persuratan', Icon: FileText }]
     : [...navItems.filter(item => !item.write || canWrite), ...(profile.role === 'admin' ? [{ id: 'users', label: 'Pengguna', Icon: UserRoundCog }] : [])];
   const navigate = id => { if (id !== 'summary') setShowOpening(false); setActive(id); setMenuOpen(false); };
   const handleSignOut = () => { sessionStorage.removeItem(openingKey); signOut(); };
@@ -126,7 +127,8 @@ function Opening({ src, visible, onReady, onDone }) {
 }
 
 export function PageHeading({ title, description, action }) {
-  return <div className="page-heading"><div><h1>{title}</h1>{description && <p>{description}</p>}</div>{action && <div className="page-heading-action">{action}</div>}</div>;
+  const keepSummaryDescription = title === 'Ringkasan operasional';
+  return <div className="page-heading"><div>{keepSummaryDescription && <span className="eyebrow">PUSAT KENDALI APRON</span>}<h1>{title}</h1>{keepSummaryDescription && description && <p>{description}</p>}</div>{action && <div className="page-heading-action">{action}</div>}</div>;
 }
 
 export function EmptyState({ title, body }) { return <div className="empty-state"><div className="empty-icon"><Activity size={22} /></div><strong>{title}</strong><p>{body}</p></div>; }
