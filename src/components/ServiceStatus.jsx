@@ -38,7 +38,6 @@ export default function ServiceStatus({ demo, compact = false }) {
   };
   return <span className={`service-status service-${state} ${compact ? 'service-status-compact' : ''}`} role="status" aria-live="polite">
     <i aria-hidden="true" />
-    {compact && <strong>Sistem Operasional AMC</strong>}
     <span>{labels[state]}</span>
   </span>;
 }
