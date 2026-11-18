@@ -2,10 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { Activity, ArrowDownRight, ArrowRight, ClipboardList, FileText, LayoutDashboard, ShieldCheck } from 'lucide-react';
 
 const roles = [
-  ['Admin', 'Mengelola akun dan akses operasional.'],
-  ['Personel AMC', 'Mencatat pergerakan pesawat dan menangani data serta surat.'],
-  ['Pimpinan', 'Memantau ringkasan, log, laporan, dan tindak lanjut surat.'],
-  ['Ground Handling', 'Mengirim surat kepada AMC, mengikuti status, dan memberi balasan.'],
+  ['Admin', 'Mengelola akun dan akses operasional.', 'admin-icon.jpeg'],
+
+  ['Personel AMC', 'Mencatat pergerakan pesawat dan menangani data serta surat.', 'personel-amc-icon.jpeg'],
+
+  ['Pimpinan', 'Memantau ringkasan, log, laporan, dan tindak lanjut surat.', 'pimpinan-icon.jpeg'],
+
+  ['Ground Handling', 'Mengirim surat kepada AMC, mengikuti status, dan memberi balasan.', 'ground-handling-icon.jpeg'],
+
 ];
 
 export default function Landing({ onLogin }) {
@@ -149,8 +153,8 @@ export default function Landing({ onLogin }) {
           <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
         </div>
         <div className="landing-role-list">
-          {roles.map(([title, description], index) => <article key={title} data-reveal>
-            <span className="landing-role-number">0{index + 1}</span>
+          {roles.map(([title, description, icon]) => <article key={title} data-reveal>
+            <img className="landing-role-icon" src={`${import.meta.env.BASE_URL}assets/${icon}`} alt="" loading="lazy" />
             <div><h3>{title}</h3><p>{description}</p></div>
           </article>)}
         </div>
