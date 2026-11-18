@@ -1121,6 +1121,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-hero-note { display: flex; align-items: center; gap: 8px; margin-top: 25px; color: #73747a; font-size: 12px; }
 .landing-hero-note svg { color: #0066cc; }
 .landing-workspace { position: relative; isolation: isolate; min-height: 380px; padding: 25px 28px 22px; overflow: hidden; border: 1px solid #e3e4e8; border-radius: 18px; background: #fafafc; box-shadow: 3px 5px 30px rgba(0, 0, 0, .12); }
+.landing-workspace[data-enter] { animation: landing-enter .82s cubic-bezier(.2,.7,.2,1) .12s both; }
 .landing-workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding-bottom: 21px; border-bottom: 1px solid #e6e6ea; }
 .landing-workspace-head > div { display: grid; gap: 4px; }
 .landing-workspace-head strong { font-size: 17px; font-weight: 600; letter-spacing: -.35px; }
@@ -1135,7 +1136,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-journey-stop strong { font-size: 13px; font-weight: 600; }
 .landing-journey-stop small { color: #777880; font-size: 10px; line-height: 1.4; }
 .landing-journey-line { position: relative; height: 1px; overflow: hidden; background: #d9dbe0; }
-.landing-journey-line i { position: absolute; inset: 0 auto 0 0; width: 25%; background: #0066cc; animation: landing-route 3.6s ease-in-out infinite; }
+.landing-journey-line i { position: absolute; inset: 0 auto 0 0; width: 100%; background: #0066cc; transform: scaleX(0); transform-origin: left center; animation: landing-route 1.8s cubic-bezier(.2,.7,.2,1) .55s both; }
 .landing-workspace-foot { display: flex; align-items: center; flex-wrap: wrap; gap: 11px 22px; margin-top: 21px; color: #5f6066; font-size: 11px; }
 .landing-workspace-foot span { display: inline-flex; align-items: center; gap: 7px; }
 .landing-workspace-foot svg { color: #0066cc; }
@@ -1143,7 +1144,12 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-capabilities { color: #fff; background: #000000; }
 .landing-section-inner { width: min(100%, 1440px); margin: 0 auto; padding: 94px clamp(28px, 6vw, 88px) 104px; }
 .landing-capabilities h2, .landing-access h2 { max-width: 650px; margin: 0; font-family: "SF Pro Display", system-ui, sans-serif; font-size: clamp(32px, 3.4vw, 44px); font-weight: 600; line-height: 1.12; letter-spacing: -.9px; }
+.landing-motion-ready [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
+.landing-motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
 .landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 58px; }
+.landing-capability-list article:nth-child(2), .landing-role-list article:nth-child(2) { transition-delay: .08s; }
+.landing-capability-list article:nth-child(3), .landing-role-list article:nth-child(3) { transition-delay: .16s; }
+.landing-role-list article:nth-child(4) { transition-delay: .24s; }
 .landing-capability-list article { padding-top: 22px; border-top: 1px solid rgba(255,255,255,.22); }
 .landing-capability-list article > svg { color: #2997ff; }
 .landing-capability-list h3 { margin: 20px 0 9px; font-size: 19px; font-weight: 600; letter-spacing: -.35px; }
@@ -1163,7 +1169,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .login-home-link { display: inline-flex; align-items: center; min-height: 38px; margin: 0 0 14px; padding: 0; border: 0; color: var(--blue); background: transparent; font-size: 12px; cursor: pointer; }
 .login-home-link:hover { text-decoration: underline; }
 @keyframes landing-enter { from { opacity: 0; transform: translateY(13px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes landing-route { 0% { transform: translateX(-110%); } 55%, 100% { transform: translateX(410%); } }
+@keyframes landing-route { to { transform: scaleX(1); } }
 @media (max-width: 900px) {
   .landing-nav { grid-template-columns: 1fr auto; }
   .landing-nav nav { display: none; }
@@ -1201,7 +1207,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-footer > span { line-height: 1.5; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .landing-hero-copy[data-enter], .landing-journey-line i { animation: none !important; }
+  .landing-hero-copy[data-enter], .landing-workspace[data-enter], .landing-journey-line i { animation: none !important; }
+  .landing-motion-ready [data-reveal] { opacity: 1; transform: none; transition: none; }
 }
 
 
