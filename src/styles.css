@@ -1197,11 +1197,12 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-feature-visual { position: relative; width: 100%; aspect-ratio: 2.2 / 1; overflow: hidden; border-radius: 18px; background: #fff; box-shadow: 0 20px 54px rgba(18,24,32,.13); }
 .landing-feature-image { display: block; width: 100%; height: 100%; object-fit: contain; animation: landing-feature-in .42s cubic-bezier(.22,1,.36,1) both; will-change: opacity; }
 .landing-feature-image.is-outgoing { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none; animation: landing-feature-out .38s ease both; will-change: opacity; }
-.landing-feature-tabs { display: flex; align-items: center; justify-content: center; gap: 3px; width: fit-content; max-width: 100%; margin: 22px auto 0; padding: 4px; overflow-x: auto; border-radius: 999px; background: #e9e9ed; scrollbar-width: none; }
+.landing-feature-tabs { position: relative; display: flex; align-items: center; justify-content: center; gap: 3px; width: fit-content; max-width: 100%; margin: 22px auto 0; padding: 4px; overflow-x: auto; border-radius: 999px; background: #e9e9ed; scrollbar-width: none; }
 .landing-feature-tabs::-webkit-scrollbar { display: none; }
-.landing-feature-tabs button { flex: 0 0 auto; min-height: 34px; padding: 0 15px; border: 0; border-radius: 999px; color: #505158; background: transparent; font-size: 12px; cursor: pointer; transition: color .18s ease, background-color .18s ease, box-shadow .18s ease; }
-.landing-feature-tabs button[aria-selected="true"] { color: #fff; background: #1d1d1f; box-shadow: 0 1px 3px rgba(0,0,0,.18); }
-.landing-feature-tabs button:not([aria-selected="true"]):hover { color: #1d1d1f; background: rgba(255,255,255,.7); }
+.landing-feature-indicator { position: absolute; z-index: 0; top: 4px; bottom: 4px; left: 0; border-radius: 999px; background: #1d1d1f; pointer-events: none; transition: width .44s cubic-bezier(.22,1,.36,1), transform .44s cubic-bezier(.22,1,.36,1); }
+.landing-feature-tabs button { position: relative; z-index: 1; flex: 0 0 auto; min-height: 34px; padding: 0 15px; border: 0; border-radius: 999px; color: #505158; background: transparent; font-size: 12px; cursor: pointer; transition: color .2s ease; }
+.landing-feature-tabs button[aria-selected="true"] { color: #fff; background: transparent; }
+.landing-feature-tabs button:not([aria-selected="true"]):hover { color: #1d1d1f; background: transparent; }
 .landing-feature-caption { max-width: 800px; margin: 18px auto 0; color: #d0d0d5; font-size: 15px; line-height: 1.55; text-align: center; animation: landing-caption-in .38s cubic-bezier(.22,1,.36,1) both; }
 .landing-feature-caption strong { color: #0066cc; font-weight: 600; }
 .landing-motion-ready [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
@@ -1331,3 +1332,60 @@ button, a, input, select, textarea { touch-action: manipulation; }
 
 
 .login-left::before, .login-left::after { display: none; }
+
+.flight-tracking-panel { overflow: hidden; border: 1px solid var(--border); border-radius: 11px; background: var(--card); box-shadow: var(--shadow); }
+.flight-tracking-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 17px 19px; border-bottom: 1px solid var(--hairline); }
+.flight-tracking-title { display: flex; align-items: center; gap: 11px; min-width: 200px; }
+.flight-tracking-icon { width: 35px; height: 35px; display: grid; place-items: center; border-radius: 8px; color: var(--blue); background: rgba(0,102,204,.09); }
+.flight-tracking-title > div { display: flex; flex-direction: column; gap: 2px; }
+.flight-tracking-title strong { font-size: 13px; font-weight: 600; }
+.flight-tracking-title span:not(.flight-tracking-icon) { color: var(--muted); font-size: 10px; }
+.flight-search { display: flex; align-items: center; gap: 8px; width: min(100%, 370px); }
+.flight-search-field { height: 36px; display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0; padding: 0 10px; border: 1px solid var(--border); border-radius: 7px; color: var(--muted); background: var(--card); }
+.flight-search-field:focus-within { border-color: var(--blue); }
+.flight-search-field input { width: 100%; min-width: 0; border: 0; outline: 0; color: var(--ink); background: transparent; font-size: 11px; }
+.flight-search-field input::placeholder { color: var(--muted); }
+.flight-tracking-meta { min-height: 55px; display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 9px 19px; }
+.flight-direction-label { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; }
+.flight-direction { min-height: 31px; padding: 0 28px 0 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--card); font-size: 11px; }
+.flight-updated { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.flight-table-scroll { width: 100%; overflow-x: auto; }
+.flight-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 11px; }
+.flight-table th { padding: 10px 13px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); color: var(--muted); background: var(--card-soft); font-size: 9px; font-weight: 600; text-align: left; white-space: nowrap; }
+.flight-table td { padding: 12px 13px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
+.flight-table tr:last-child td { border-bottom: 0; }
+.flight-table tbody tr:hover { background: var(--hover); }
+.flight-number, .flight-route, .flight-table td > strong { display: block; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.flight-airline, .flight-airports { display: block; max-width: 240px; margin-top: 3px; overflow: hidden; color: var(--muted); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.flight-position { display: inline-flex; align-items: center; gap: 4px; color: var(--ink); font-size: 10px; white-space: nowrap; }
+.flight-position svg { color: var(--blue); }
+.flight-position small { margin-left: 2px; color: var(--muted); font-size: 9px; }
+.flight-muted { color: var(--muted); font-size: 10px; }
+.flight-status { display: inline-flex; align-items: center; min-height: 22px; padding: 0 8px; border-radius: 5px; font-size: 9px; font-weight: 600; white-space: nowrap; }
+.flight-status-live { color: var(--blue); background: rgba(0,102,204,.1); }
+.flight-status-scheduled { color: var(--navy); background: var(--navy-bg); }
+.flight-status-done { color: var(--green); background: var(--green-bg); }
+.flight-status-warn { color: var(--warning); background: var(--warning-bg); }
+.flight-loading { min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; color: var(--muted); font-size: 11px; }
+.flight-loading-mark { width: 38px; height: 38px; display: grid; place-items: center; border: 1px solid var(--border); border-radius: 9px; color: var(--blue); background: var(--card-soft); }
+.flight-empty { padding: 8px 18px; }
+.flight-empty .empty-state { border: 0; }
+.flight-error { min-height: 190px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 22px; text-align: center; }
+.flight-error strong { font-size: 13px; }
+.flight-error > span { max-width: 480px; color: var(--muted); font-size: 11px; }
+.flight-error button { margin-top: 4px; }
+.flight-source { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 9px; }
+.flight-source > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
+.flight-source i { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+.flight-refreshing { animation: flight-spin .9s linear infinite; }
+@keyframes flight-spin { to { transform: rotate(360deg); } }
+@media (max-width: 700px) {
+  .flight-tracking-toolbar { align-items: stretch; flex-direction: column; gap: 14px; padding: 14px; }
+  .flight-search { width: 100%; }
+  .flight-tracking-meta { align-items: flex-start; flex-direction: column; padding: 11px 14px; }
+  .flight-empty { padding: 6px 10px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .landing-feature-indicator { transition: none; }
+  .flight-refreshing { animation: none; }
+}
