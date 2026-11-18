@@ -1183,11 +1183,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .landing-feature-image { display: block; width: 100%; max-width: 540px; height: auto; justify-self: end; object-fit: contain; }
 .landing-motion-ready [data-reveal] { opacity: 0; transform: translateY(14px); transition: opacity .55s ease, transform .55s cubic-bezier(.2,.7,.2,1); }
 .landing-motion-ready [data-reveal].is-visible { opacity: 1; transform: translateY(0); }
-.landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 58px; }
+.landing-capability-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 36px; margin-top: 28px; }
 .landing-capability-list article:nth-child(2), .landing-role-list article:nth-child(2) { transition-delay: .08s; }
 .landing-capability-list article:nth-child(3), .landing-role-list article:nth-child(3) { transition-delay: .16s; }
 .landing-role-list article:nth-child(4) { transition-delay: .24s; }
-.landing-capability-list article { padding-top: 22px; border-top: 1px solid rgba(255,255,255,.22); }
+.landing-capability-list article { padding-top: 0; }
 .landing-capability-list article > svg { color: #2997ff; }
 .landing-capability-list h3 { margin: 20px 0 9px; font-size: 19px; font-weight: 600; letter-spacing: -.35px; }
 .landing-capability-list p { max-width: 360px; margin: 0; color: #d0d0d5; font-size: 15px; line-height: 1.55; }
@@ -1251,8 +1251,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .landing-capabilities h2, .landing-access h2 { font-size: 33px; }
   .landing-section-top { grid-template-columns: minmax(0, 1fr); gap: 26px; }
   .landing-feature-image { width: min(100%, 460px); justify-self: center; }
-  .landing-capability-list { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 38px; }
-  .landing-capability-list article { padding-top: 17px; }
+  .landing-capability-list { grid-template-columns: minmax(0, 1fr); gap: 28px; margin-top: 24px; }
+  .landing-capability-list article { padding-top: 0; }
   .landing-capability-list h3 { margin-top: 13px; }
   .landing-access-inner { grid-template-columns: minmax(0, 1fr); gap: 38px; padding: 70px 22px 76px; }
   .landing-footer { align-items: flex-start; flex-direction: column; gap: 15px; padding: 24px 22px; }
