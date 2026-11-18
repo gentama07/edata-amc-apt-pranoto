@@ -38,7 +38,7 @@ export default function Landing({ onLogin }) {
       const visibleSection = entries
         .filter((entry) => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-      if (visibleSection) setActiveSection(visibleSection.target.id);
+      setActiveSection(visibleSection?.target.id ?? '');
     }, { threshold: [0.15, 0.35, 0.55], rootMargin: '-18% 0px -58% 0px' });
     ['fitur', 'akses'].forEach((id) => {
       const section = landing.querySelector(`#${id}`);
@@ -64,7 +64,13 @@ export default function Landing({ onLogin }) {
         <a href="#fitur" aria-current={activeSection === 'fitur' ? 'location' : undefined}>Ruang kerja</a>
         <a href="#akses" aria-current={activeSection === 'akses' ? 'location' : undefined}>Akses akun</a>
       </nav>
-      <button className="landing-login" onClick={onLogin}>Masuk<ArrowRight size={16} aria-hidden="true" /></button>
+      <button
+        className={`landing-login landing-nav-login${activeSection === 'akses' ? ' landing-nav-login-hidden' : ''}`}
+        onClick={onLogin}
+        aria-hidden={activeSection === 'akses'}
+        tabIndex={activeSection === 'akses' ? -1 : 0}
+        disabled={activeSection === 'akses'}
+      >Masuk<ArrowRight size={16} aria-hidden="true" /></button>
     </header>
 
     <section className="landing-hero" id="beranda" aria-labelledby="landing-title">
