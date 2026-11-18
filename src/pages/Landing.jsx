@@ -242,6 +242,7 @@ export default function Landing({ onLogin }) {
               src={`${import.meta.env.BASE_URL}assets/${features[activeFeature][2]}`}
               alt={features[activeFeature][3]}
               loading="lazy"
+              decoding="async"
             />
           </div>
           <div
