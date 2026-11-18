@@ -14,4 +14,5 @@ verify_jwt = false
 [functions.account-recovery]
 verify_jwt = false
 
-
+[functions.flight-tracking]
+verify_jwt = true
