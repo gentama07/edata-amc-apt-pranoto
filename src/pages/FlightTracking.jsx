@@ -47,7 +47,7 @@ function FlightMap({ flights, updatedAt }) {
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
-    const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false, preferCanvas: true }).setView(airportPosition, 7);
+    const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: true, preferCanvas: true }).setView(airportPosition, 7);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors',
       subdomains: 'abc',
