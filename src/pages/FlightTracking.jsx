@@ -44,9 +44,9 @@ function FlightMap({ flights, updatedAt }) {
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return undefined;
     const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false, preferCanvas: true }).setView(airportPosition, 7);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
-      subdomains: 'abcd',
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      subdomains: 'abc',
       maxZoom: 19,
     }).addTo(map);
     markerLayerRef.current = L.layerGroup().addTo(map);
