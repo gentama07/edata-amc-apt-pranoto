@@ -133,6 +133,6 @@ export function PageHeading({ title, description, action }) {
 
 export function EmptyState({ title, body }) { return <div className="empty-state"><div className="empty-icon"><Activity size={22} /></div><strong>{title}</strong><p>{body}</p></div>; }
 
-export function StatCard({ label, value, note, Icon, tone = 'blue' }) { return <article className="stat-card"><div className={`stat-icon stat-${tone}`}><Icon size={19} strokeWidth={1.8} /></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></article>; }
+export function StatCard({ label, value, note, Icon, tone = 'blue', visual = 'flights' }) { return <article className={`stat-card stat-card-${visual}`}><div className={`stat-icon stat-${tone}`}><Icon size={19} strokeWidth={1.8} /></div><div className="stat-label">{label}</div><div className="stat-value">{value}</div><div className="stat-note">{note}</div></article>; }
 
 

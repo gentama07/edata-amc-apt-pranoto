@@ -142,7 +142,11 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .button-danger { color: #fff; background: #b53d35; }
 .button-danger:hover { background: #9f3029; }
 .stats-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin: 0 0 17px; }
-.stat-card { min-height: 133px; position: relative; padding: 16px 17px 13px; border: 1px solid var(--border); border-radius: 11px; background: var(--card); box-shadow: var(--shadow); }
+.stat-card { min-height: 133px; position: relative; padding: 16px 17px 13px; border: 1px solid var(--border); border-radius: 11px; background-color: var(--card); background-image: linear-gradient(90deg, var(--card) 0%, var(--card) 48%, transparent 100%), var(--stat-image); background-repeat: no-repeat; background-position: center; background-size: 100% 100%, 100% 100%; box-shadow: var(--shadow); }
+.stat-card-flights { --stat-image: url("/assets/dashboard-stat-flights.webp"); }
+.stat-card-passengers { --stat-image: url("/assets/dashboard-stat-passengers.webp"); }
+.stat-card-baggage { --stat-image: url("/assets/dashboard-stat-baggage.webp"); }
+.stat-card-cargo { --stat-image: url("/assets/dashboard-stat-cargo.webp"); }
 .stat-icon { width: 31px; height: 31px; display: grid; place-items: center; margin-bottom: 12px; border-radius: 8px; color: var(--blue); background: rgba(0,102,204,.09); }
 .stat-navy { color: var(--navy); background: var(--navy-bg); }
 .stat-amber { color: var(--amber); background: var(--amber-bg); }

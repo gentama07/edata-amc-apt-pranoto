@@ -44,10 +44,10 @@ export default function Dashboard({ rows, selectedDate, setSelectedDate }) {
   return <>
     <PageHeading eyebrow="PUSAT KENDALI APRON" title="Ringkasan operasional" description={`${dateLabel} · Bandar Udara A.P.T. Pranoto`} action={<label className="date-picker-label">Tanggal operasional<input name="operating-date" type="date" value={selectedDate || airportDate()} onChange={event => setSelectedDate(event.target.value || airportDate())} /></label>} />
     {dayRows.length ? <div className="stats-grid">
-      <StatCard label="Total penerbangan" value={kpis.arr + kpis.dep} note={`${kpis.arr} kedatangan · ${kpis.dep} keberangkatan`} Icon={BriefcaseBusiness} />
-      <StatCard label="Penumpang" value={(kpis.paxArr + kpis.paxDep).toLocaleString('id-ID')} note={`${kpis.paxArr.toLocaleString('id-ID')} ARR · ${kpis.paxDep.toLocaleString('id-ID')} DEP`} Icon={Users} tone="navy" />
-      <StatCard label="Bagasi" value={`${kpis.baggage.toLocaleString('id-ID')} kg`} note="Akumulasi hari ini" Icon={Luggage} tone="amber" />
-      <StatCard label="Kargo" value={`${kpis.cargo.toLocaleString('id-ID')} kg`} note="Akumulasi hari ini" Icon={Package} tone="green" />
+      <StatCard label="Total penerbangan" value={kpis.arr + kpis.dep} note={`${kpis.arr} kedatangan · ${kpis.dep} keberangkatan`} Icon={BriefcaseBusiness} visual="flights" />
+      <StatCard label="Penumpang" value={(kpis.paxArr + kpis.paxDep).toLocaleString('id-ID')} note={`${kpis.paxArr.toLocaleString('id-ID')} ARR · ${kpis.paxDep.toLocaleString('id-ID')} DEP`} Icon={Users} tone="navy" visual="passengers" />
+      <StatCard label="Bagasi" value={`${kpis.baggage.toLocaleString('id-ID')} kg`} note="Akumulasi hari ini" Icon={Luggage} tone="amber" visual="baggage" />
+      <StatCard label="Kargo" value={`${kpis.cargo.toLocaleString('id-ID')} kg`} note="Akumulasi hari ini" Icon={Package} tone="green" visual="cargo" />
     </div> : <div className="empty-day"><div className="empty-day-mark"><Clock3 size={22} /></div><div><strong>Belum ada data pada tanggal ini</strong><span>Ringkasan menampilkan data operasional yang benar-benar tercatat.</span></div></div>}
     <div className="dashboard-grid dashboard-grid-top">
       <section className="panel traffic-panel"><div className="panel-heading"><div><span className="panel-kicker">PERGERAKAN BULANAN</span><h2>Arus penerbangan</h2></div><span className="panel-period">{new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric', timeZone: 'Asia/Makassar' }).format(new Date(`${selectedDate.slice(0, 7)}-01T12:00:00+08:00`))}</span></div><TrafficChart rows={rows} date={selectedDate} /></section>
