@@ -105,7 +105,6 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 :root[data-theme="dark"] .nav-link { color: #b1b1b8; }
 .nav-link:hover { color: var(--ink); background: var(--hover); }
 .nav-active, .nav-active:hover { color: var(--blue); background: rgba(0,102,204,.09); font-weight: 600; }
-.nav-live { width: 6px; height: 6px; margin-left: auto; border-radius: 50%; background: #3c9d60; }
 .sidebar-bottom { margin-top: auto; }
 .airport-card { position: relative; isolation: isolate; display: flex; flex-direction: column; gap: 4px; margin: 0 3px 16px; padding: 16px; border: 1px solid var(--border); border-radius: 9px; color: #fff; background: #17202a; overflow: hidden; }
 .airport-card-video { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; }
