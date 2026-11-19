@@ -56,6 +56,8 @@ Deno.serve(async request => {
 
     if (input.action === 'update') {
       const userId = String(input.userId || '')
+      if (!userId) return json({ error: 'Akun yang akan diperbarui tidak ditemukan.' }, 400, origin)
+      if (userId === user.id && input.active === false) return json({ error: 'Admin tidak dapat menjeda akunnya sendiri.' }, 409, origin)
       const profilePatch: Record<string, unknown> = {}
       if (typeof input.role === 'string') {
         if (!['admin', 'personel', 'pimpinan', 'ground_handling'].includes(input.role)) return json({ error: 'Peran tidak dikenal.' }, 400, origin)

@@ -13,7 +13,7 @@ export default function PasswordRecovery({ finishPasswordRecovery, invalid = fal
     catch (reason) { setError(reason.message || 'Kata sandi gagal diperbarui.'); }
     finally { setBusy(false); }
   };
-  return <main className="password-recovery-screen"><section className="panel password-recovery-card" aria-labelledby="recovery-title">
+  return <main className="password-recovery-screen"><section className={`panel password-recovery-card ${saved ? 'recovery-saved' : ''}`} aria-labelledby="recovery-title">
     <span className="login-card-icon"><LockKeyhole size={19} /></span>
     <span className="panel-kicker">PEMULIHAN AKUN</span><h1 id="recovery-title">{invalid ? 'Tautan tidak berlaku' : saved ? 'Kata sandi diperbarui' : 'Atur kata sandi baru'}</h1>
     {invalid ? <><p>Tautan pemulihan sudah kedaluwarsa, tidak valid, atau sesi pemulihannya tidak ditemukan. Minta tautan baru dari halaman masuk.</p><a className="button-primary recovery-return" href={import.meta.env.BASE_URL}>Kembali ke halaman masuk</a></> : null}

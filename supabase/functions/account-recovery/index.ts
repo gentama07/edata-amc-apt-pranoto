@@ -124,8 +124,14 @@ Deno.serve(async request => {
       }
       // A resetting token is short-lived and single-use; wait until its claim expires before opening another request.
       if (open?.status === 'resetting' && !resettingExpired) return json({ stage: 'submitted' }, 200, origin)
-      const { error: insertError } = await admin.from('account_recovery_requests').insert({ user_id: profile.id })
+      const { data: createdRequest, error: insertError } = await admin.from('account_recovery_requests').insert({ user_id: profile.id }).select('id').single()
       if (insertError) throw insertError
+      const { data: account } = await admin.from('profiles').select('display_name').eq('id', profile.id).maybeSingle()
+      const { error: notificationError } = await admin.from('admin_notifications').insert({
+        type: 'account_recovery', reference_id: createdRequest.id, user_id: profile.id,
+        title: 'Permintaan pemulihan akun', body: `${account?.display_name || 'Pengguna'} mengajukan pemulihan akun.`,
+      })
+      if (notificationError) console.error('Gagal membuat notifikasi pemulihan:', notificationError)
       return json({ stage: 'submitted' }, 200, origin)
     }
 

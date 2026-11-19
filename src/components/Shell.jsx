@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Activity, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
+import { Activity, Bell, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import { supabase } from '../lib/supabase';
 import ServiceStatus from './ServiceStatus';
+import SupportChatPanel from './SupportChatPanel';
 
 const navItems = [
   { id: 'summary', label: 'Ringkasan', Icon: LayoutDashboard },
@@ -25,6 +26,7 @@ export function Shell({ app, active, setActive, children }) {
   const [airportVideo, setAirportVideo] = useState('');
   const [openingVideo, setOpeningVideo] = useState('');
   const [openingVideoReady, setOpeningVideoReady] = useState(false);
+  const [supportOpen, setSupportOpen] = useState(false);
   useEffect(() => {
     if (!app.openingRequested || window.matchMedia('(prefers-reduced-motion: reduce)').matches || sessionStorage.getItem(openingKey)) return;
     sessionStorage.setItem(openingKey, '1');
@@ -80,6 +82,7 @@ export function Shell({ app, active, setActive, children }) {
       </div>
       <div className="topbar-right">
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
+        {profile.role === 'admin' && !demo && <AdminNotificationCenter onOpenUsers={() => navigate('users')} />}
         <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
         <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label="Ganti tema" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
         <button className="logout-button" aria-label="Keluar" onClick={handleSignOut}><LogOut size={16} /><span>Keluar</span></button>
@@ -98,6 +101,37 @@ export function Shell({ app, active, setActive, children }) {
       <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? openingVideo ? <>{!openingVideoReady && <div className="opening-video" role="status" aria-label="Menyiapkan video pembuka" />}<Opening src={openingVideo} visible={openingVideoReady} onReady={() => setOpeningVideoReady(true)} onDone={finishOpening} /></> : <div className="opening-video" role="status" aria-label="Memuat video pembuka" /> : children}</main>
     </div>
     <nav className="bottom-nav" aria-label="Navigasi bawah">{items.map(({ id, label, Icon }) => <button key={id} onClick={() => navigate(id)} className={active === id ? 'bottom-active' : ''} aria-current={active === id ? 'page' : undefined}><Icon size={19} /><span>{label === 'Log pergerakan' ? 'Log' : label === 'Input data' ? 'Input' : label === 'Pengguna' ? 'Pengguna' : label}</span></button>)}</nav>
+    {profile.role !== 'admin' && !demo && <><button className="support-fab" onClick={() => setSupportOpen(true)}><MessageCircle size={17} /><span>Bantuan</span></button>{supportOpen && <SupportChatPanel app={app} onClose={() => setSupportOpen(false)} />}</>}
+  </div>;
+}
+
+function AdminNotificationCenter({ onOpenUsers }) {
+  const [items, setItems] = useState([]);
+  const [open, setOpen] = useState(false);
+  const unread = items.filter(item => !item.read_at).length;
+  useEffect(() => {
+    if (!supabase) return undefined;
+    let alive = true;
+    const load = async () => {
+      const { data } = await supabase.from('admin_notifications').select('id,type,reference_id,user_id,title,body,created_at,read_at').order('created_at', { ascending: false }).limit(30);
+      if (alive) setItems(data || []);
+    };
+    load();
+    const channel = supabase.channel('admin-web-notifications').on('postgres_changes', { event: '*', schema: 'public', table: 'admin_notifications' }, load).subscribe();
+    return () => { alive = false; supabase.removeChannel(channel); };
+  }, []);
+  const openNotification = async item => {
+    if (!item.read_at) {
+      await supabase.from('admin_notifications').update({ read_at: new Date().toISOString() }).eq('id', item.id);
+      setItems(current => current.map(row => row.id === item.id ? { ...row, read_at: new Date().toISOString() } : row));
+    }
+    localStorage.setItem('amc-admin-notification-target', JSON.stringify({ type: item.type, referenceId: item.reference_id, userId: item.user_id }));
+    setOpen(false);
+    onOpenUsers(item);
+  };
+  return <div className="admin-notification-center">
+    <button className="admin-notification-button" aria-label={`Notifikasi${unread ? `, ${unread} belum dibaca` : ''}`} aria-expanded={open} onClick={() => setOpen(value => !value)}><Bell size={18} />{unread > 0 && <span>{unread > 9 ? '9+' : unread}</span>}</button>
+    {open && <><button className="notification-dismiss" aria-label="Tutup notifikasi" onClick={() => setOpen(false)} /><section className="admin-notification-popover" aria-label="Notifikasi Admin"><header><strong>Notifikasi</strong><span>{unread ? `${unread} belum dibaca` : 'Semua sudah dibaca'}</span></header>{items.length ? <div className="admin-notification-list">{items.map(item => <button key={item.id} className={`admin-notification-item ${item.read_at ? '' : 'notification-unread'}`} onClick={() => openNotification(item)}><i className={item.type === 'account_recovery' ? 'notification-recovery-icon' : 'notification-chat-icon'}>{item.type === 'account_recovery' ? <UserRoundCog size={15} /> : <MessageCircle size={15} />}</i><span><strong>{item.title}</strong><small>{item.body}</small><time>{new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</time></span>{!item.read_at && <b aria-label="Belum dibaca" />}</button>)}</div> : <div className="notification-empty">Belum ada pesan CS atau permintaan pemulihan akun.</div>}<footer><button onClick={() => { setOpen(false); onOpenUsers(); }}>Buka manajemen pengguna</button></footer></section></>}
   </div>;
 }
 

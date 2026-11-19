@@ -168,6 +168,7 @@ export function useEdata() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'movements' }, () => loadRemote().catch(err => setError(err.message)))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'incoming_letters' }, () => loadRemote().catch(err => setError(err.message)))
       .on('postgres_changes', { event: '*', schema: 'public', table: 'correspondence_messages' }, () => loadRemote().catch(err => setError(err.message)))
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${session.user.id}` }, () => loadRemote().catch(err => setError(err.message)))
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [session, loadRemote]);
