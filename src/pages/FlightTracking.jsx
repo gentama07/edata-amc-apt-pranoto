@@ -6,7 +6,7 @@ import { EmptyState } from '../components/Shell';
 import { supabase } from '../lib/supabase';
 
 const airportCode = 'AAP';
-const airportPosition = [-0.4842, 117.1577];
+const airportPosition = [-0.375556, 117.251389];
 
 function validCoordinates(live) {
   if (!live || typeof live !== 'object') return false;
