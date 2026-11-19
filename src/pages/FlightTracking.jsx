@@ -211,10 +211,10 @@ export default function FlightTracking() {
       <button className="button-primary" onClick={() => loadFlights()} disabled={loading}><RefreshCw size={15} className={loading ? 'flight-refreshing' : ''} />Perbarui data</button>
     </div>
     {!loading && !error && flights.length > 0 && <section className="flight-summary" aria-label="Ringkasan penerbangan">
-      <article className="flight-summary-card"><span className="flight-summary-icon"><Plane size={17} /></span><div><small>Penerbangan</small><strong>{flights.length}</strong><span>hasil untuk AAP</span></div></article>
-      <article className="flight-summary-card"><span className="flight-summary-icon is-active"><Activity size={17} /></span><div><small>Sedang berlangsung</small><strong>{activeCount}</strong><span>status dari penyedia</span></div></article>
-      <article className="flight-summary-card"><span className="flight-summary-icon is-position"><MapPin size={17} /></span><div><small>Posisi tersedia</small><strong>{liveCount}</strong><span>dapat dilihat di peta</span></div></article>
-      <article className="flight-summary-card"><span className="flight-summary-icon is-landed"><CheckCircle2 size={17} /></span><div><small>Sudah mendarat</small><strong>{landedCount}</strong><span>status dari penyedia</span></div></article>
+      <article className="flight-summary-card is-flight"><span className="flight-summary-icon"><Plane size={17} /></span><div><small>Penerbangan</small><strong>{flights.length}</strong><span>hasil untuk AAP</span></div></article>
+      <article className="flight-summary-card is-active"><span className="flight-summary-icon is-active"><Activity size={17} /></span><div><small>Sedang berlangsung</small><strong>{activeCount}</strong><span>status dari penyedia</span></div></article>
+      <article className="flight-summary-card is-position"><span className="flight-summary-icon is-position"><MapPin size={17} /></span><div><small>Posisi tersedia</small><strong>{liveCount}</strong><span>dapat dilihat di peta</span></div></article>
+      <article className="flight-summary-card is-landed"><span className="flight-summary-icon is-landed"><CheckCircle2 size={17} /></span><div><small>Sudah mendarat</small><strong>{landedCount}</strong><span>status dari penyedia</span></div></article>
     </section>}
     <section className="flight-tracking-panel">
       <div className="flight-tracking-toolbar">
