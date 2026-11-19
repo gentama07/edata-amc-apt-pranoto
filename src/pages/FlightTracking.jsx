@@ -8,7 +8,8 @@ import { supabase } from '../lib/supabase';
 const airportCode = 'AAP';
 const airportPosition = [-0.4842, 117.1577];
 
-function validCoordinates(live = {}) {
+function validCoordinates(live) {
+  if (!live || typeof live !== 'object') return false;
   const latitude = Number(live.latitude);
   const longitude = Number(live.longitude);
   return live.latitude !== null && live.latitude !== undefined && live.latitude !== ''
