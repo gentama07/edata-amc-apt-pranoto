@@ -1349,6 +1349,32 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .flight-direction-label { display: flex; align-items: center; gap: 9px; color: var(--muted); font-size: 10px; }
 .flight-direction { min-height: 31px; padding: 0 28px 0 9px; border: 1px solid var(--border); border-radius: 6px; color: var(--ink); background: var(--card); font-size: 11px; }
 .flight-updated { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
+.flight-map-panel { margin: 0 18px 16px; overflow: hidden; border: 1px solid #26333d; border-radius: 9px; background: #101820; }
+.flight-map-heading { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 14px; color: #edf4f7; }
+.flight-map-heading > div { display: flex; align-items: center; gap: 9px; min-width: 0; }
+.flight-map-heading strong { font-size: 11px; font-weight: 600; }
+.flight-map-live-dot { width: 7px; height: 7px; flex: 0 0 auto; border-radius: 50%; background: #53d3a3; box-shadow: 0 0 10px rgba(83,211,163,.55); }
+.flight-map-count, .flight-map-source { color: #99aab4; font-size: 9px; }
+.flight-map-source { white-space: nowrap; }
+.flight-map-canvas { width: 100%; height: clamp(270px, 37vw, 430px); background: #0d1720; z-index: 0; }
+.flight-map-canvas .leaflet-control-attribution { background: rgba(11,18,25,.75); color: #9aaab3; font-size: 8px; }
+.flight-map-canvas .leaflet-control-attribution a { color: #a7c7dc; }
+.flight-map-canvas .leaflet-bar { border: 1px solid #3b4a54; box-shadow: none; }
+.flight-map-canvas .leaflet-bar a { border-bottom: 1px solid #3b4a54; color: #e6eef2; background: #15222d; }
+.flight-map-canvas .leaflet-bar a:hover { color: #fff; background: #233541; }
+.flight-map-canvas .leaflet-popup-content-wrapper, .flight-map-canvas .leaflet-popup-tip { color: #e8f0f3; background: #14212b; }
+.flight-map-canvas .leaflet-popup-content { margin: 10px 12px; }
+.flight-map-airport-icon, .flight-map-aircraft-icon { border: 0; background: transparent; }
+.flight-map-airport-icon span { width: 38px; height: 38px; display: grid; place-items: center; border: 2px solid #f0b94d; border-radius: 50%; color: #101820; background: #f0b94d; box-shadow: 0 0 0 5px rgba(240,185,77,.16), 0 2px 12px rgba(0,0,0,.35); font-size: 9px; font-weight: 800; }
+.flight-map-aircraft-icon span { position: relative; width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(75,190,255,.7); border-radius: 50%; color: #eaf8ff; background: rgba(0,112,190,.86); box-shadow: 0 0 0 5px rgba(30,160,230,.17), 0 2px 12px rgba(0,0,0,.42); }
+.flight-map-aircraft-icon svg { width: 19px; height: 19px; fill: currentColor; }
+.flight-map-aircraft-icon b { position: absolute; top: -5px; right: -8px; min-width: 16px; height: 16px; display: grid; place-items: center; padding: 0 3px; border: 1px solid #14212b; border-radius: 9px; color: #0d1820; background: #79d5ff; font-size: 8px; }
+.flight-map-popup { min-width: 150px; }
+.flight-map-popup-item { display: grid; gap: 3px; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.12); }
+.flight-map-popup-item:last-child { border-bottom: 0; }
+.flight-map-popup-item strong { font-size: 11px; }
+.flight-map-popup-item span, .flight-map-popup-item small { color: #afbec6; font-size: 9px; }
+.flight-map-note { margin: 0; padding: 9px 14px 10px; color: #99aab4; font-size: 9px; }
 .flight-table-scroll { width: 100%; overflow-x: auto; }
 .flight-table { width: 100%; min-width: 900px; border-collapse: collapse; font-size: 11px; }
 .flight-table th { padding: 10px 13px; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); color: var(--muted); background: var(--card-soft); font-size: 9px; font-weight: 600; text-align: left; white-space: nowrap; }
@@ -1383,6 +1409,10 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .flight-tracking-toolbar { align-items: stretch; flex-direction: column; gap: 14px; padding: 14px; }
   .flight-search { width: 100%; }
   .flight-tracking-meta { align-items: flex-start; flex-direction: column; padding: 11px 14px; }
+  .flight-map-panel { margin: 0 10px 12px; }
+  .flight-map-heading { align-items: flex-start; flex-direction: column; justify-content: center; gap: 4px; padding: 9px 12px; }
+  .flight-map-heading > div { flex-wrap: wrap; }
+  .flight-map-canvas { height: 300px; }
   .flight-empty { padding: 6px 10px; }
 }
 @media (prefers-reduced-motion: reduce) {

@@ -1,9 +1,111 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Clock3, MapPin, Plane, RefreshCw, Search } from 'lucide-react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { EmptyState, PageHeading } from '../components/Shell';
 import { supabase } from '../lib/supabase';
 
 const airportCode = 'AAP';
+const airportPosition = [-0.4842, 117.1577];
+
+function validCoordinates(live = {}) {
+  const latitude = Number(live.latitude);
+  const longitude = Number(live.longitude);
+  return live.latitude !== null && live.latitude !== undefined && live.latitude !== ''
+    && live.longitude !== null && live.longitude !== undefined && live.longitude !== ''
+    && Number.isFinite(latitude) && Number.isFinite(longitude)
+    && Math.abs(latitude) <= 90 && Math.abs(longitude) <= 180;
+}
+
+function flightMapPopup(flights) {
+  const popup = document.createElement('div');
+  popup.className = 'flight-map-popup';
+  flights.forEach(flight => {
+    const item = document.createElement('div');
+    item.className = 'flight-map-popup-item';
+    const title = document.createElement('strong');
+    title.textContent = flight.flight?.iata || flight.flight?.icao || flight.flight?.number || 'Penerbangan';
+    const airline = document.createElement('span');
+    airline.textContent = flight.airline?.name || 'Maskapai tidak diketahui';
+    const route = document.createElement('small');
+    route.textContent = `${flight.departure?.iata || '—'} → ${flight.arrival?.iata || '—'} · ${flight.live?.altitude != null ? `${Number(flight.live.altitude).toLocaleString('id-ID')} ft` : 'ketinggian tidak tersedia'}`;
+    item.append(title, airline, route);
+    popup.append(item);
+  });
+  return popup;
+}
+
+function FlightMap({ flights, updatedAt }) {
+  const containerRef = useRef(null);
+  const mapRef = useRef(null);
+  const markerLayerRef = useRef(null);
+
+  useEffect(() => {
+    if (!containerRef.current || mapRef.current) return undefined;
+    const map = L.map(containerRef.current, { zoomControl: true, scrollWheelZoom: false, preferCanvas: true }).setView(airportPosition, 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+      subdomains: 'abcd',
+      maxZoom: 19,
+    }).addTo(map);
+    markerLayerRef.current = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    const resize = () => map.invalidateSize();
+    window.addEventListener('resize', resize);
+    const timer = window.setTimeout(resize, 80);
+    return () => {
+      window.clearTimeout(timer);
+      window.removeEventListener('resize', resize);
+      map.remove();
+      mapRef.current = null;
+      markerLayerRef.current = null;
+    };
+  }, []);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    const layer = markerLayerRef.current;
+    if (!map || !layer) return;
+    layer.clearLayers();
+    const airportIcon = L.divIcon({ className: 'flight-map-airport-icon', html: '<span>AAP</span>', iconSize: [38, 38], iconAnchor: [19, 19] });
+    L.marker(airportPosition, { icon: airportIcon, keyboard: true }).bindPopup('<strong>Bandara A.P.T. Pranoto · AAP</strong>').addTo(layer);
+
+    const groups = new Map();
+    flights.filter(flight => validCoordinates(flight.live)).forEach(flight => {
+      const lat = Number(flight.live.latitude);
+      const lng = Number(flight.live.longitude);
+      const key = `${lat.toFixed(4)}:${lng.toFixed(4)}`;
+      groups.set(key, [...(groups.get(key) || []), flight]);
+    });
+    const positions = [airportPosition];
+    groups.forEach((items, key) => {
+      const [lat, lng] = key.split(':').map(Number);
+      const direction = Number(items[0]?.live?.direction);
+      const rotation = Number.isFinite(direction) ? ((direction % 360) + 360) % 360 : 0;
+      const icon = L.divIcon({
+        className: 'flight-map-aircraft-icon',
+        html: `<span><svg viewBox="0 0 24 24" style="transform:rotate(${rotation}deg)" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5L21 16Z"/></svg>${items.length > 1 ? `<b>${items.length}</b>` : ''}</span>`,
+        iconSize: [38, 38],
+        iconAnchor: [19, 19],
+      });
+      L.marker([lat, lng], { icon, keyboard: true }).bindPopup(flightMapPopup(items)).addTo(layer);
+      positions.push([lat, lng]);
+    });
+    if (positions.length > 1) map.fitBounds(L.latLngBounds(positions).pad(0.18), { maxZoom: 8, animate: true });
+    else map.setView(airportPosition, 7, { animate: true });
+  }, [flights, updatedAt]);
+
+  const liveCount = flights.filter(flight => validCoordinates(flight.live)).length;
+  return <section className="flight-map-panel" aria-label="Peta posisi pesawat">
+    <div className="flight-map-heading">
+      <div><span className="flight-map-live-dot" /><strong>Posisi pesawat</strong><span className="flight-map-count">{liveCount} posisi dari {flights.length} penerbangan</span></div>
+      <span className="flight-map-source">Aviationstack · pembaruan manual</span>
+    </div>
+    <div className="flight-map-canvas" ref={containerRef} role="application" aria-label="Peta interaktif posisi penerbangan di sekitar Samarinda" />
+    {!liveCount && <p className="flight-map-note">Belum ada koordinat posisi pada hasil ini. Tekan Perbarui data untuk meminta data terbaru.</p>}
+    {!!liveCount && <p className="flight-map-note">Posisi ditampilkan sesuai koordinat terakhir dari API; sebagian penerbangan belum memiliki posisi live.</p>}
+  </section>;
+}
 
 function localTime(value) {
   if (!value) return '—';
@@ -32,7 +134,7 @@ function FlightRow({ flight }) {
     <td><span className="flight-route">{route}</span><span className="flight-airports">{departure.airport || 'Asal belum tersedia'} → {arrival.airport || 'Tujuan belum tersedia'}</span></td>
     <td><strong>{localTime(departure.estimated || departure.scheduled || departure.actual)}</strong><span className="flight-airline">{departure.gate ? `Gate ${departure.gate}` : departure.terminal ? `Terminal ${departure.terminal}` : departure.iata || '—'}</span></td>
     <td><strong>{localTime(arrival.estimated || arrival.scheduled || arrival.actual)}</strong><span className="flight-airline">{arrival.gate ? `Gate ${arrival.gate}` : arrival.terminal ? `Terminal ${arrival.terminal}` : arrival.iata || '—'}</span></td>
-    <td>{Number.isFinite(Number(live.latitude)) && Number.isFinite(Number(live.longitude))
+    <td>{validCoordinates(live)
       ? <span className="flight-position"><MapPin size={13} />{Number(live.latitude).toFixed(2)}, {Number(live.longitude).toFixed(2)}{live.altitude != null && <small>{Number(live.altitude).toLocaleString('id-ID')} ft</small>}</span>
       : <span className="flight-muted">Posisi live belum tersedia</span>}</td>
     <td><span className={`flight-status ${statusClass(flight.flight_status)}`}>{statusLabel(flight.flight_status)}</span></td>
@@ -117,7 +219,7 @@ export default function FlightTracking() {
       </div>
       {error ? <div className="flight-error" role="alert"><strong>Data penerbangan belum tersedia</strong><span>{error}</span><button className="button-secondary" onClick={() => loadFlights()}>Coba lagi</button></div>
         : loading ? <div className="flight-loading" role="status"><span className="flight-loading-mark"><Plane size={18} /></span><strong>Mengambil data penerbangan…</strong></div>
-          : flights.length ? <div className="flight-table-scroll"><table className="flight-table"><thead><tr><th>Penerbangan</th><th>Rute</th><th>Berangkat</th><th>Tiba</th><th>Posisi</th><th>Status</th></tr></thead><tbody>{flights.map((flight, index) => <FlightRow key={`${flight.flight?.iata || flight.flight?.icao || 'flight'}-${flight.flight_date || ''}-${index}`} flight={flight} />)}</tbody></table></div>
+          : flights.length ? <><FlightMap flights={flights} updatedAt={lastUpdated} /><div className="flight-table-scroll"><table className="flight-table"><thead><tr><th>Penerbangan</th><th>Rute</th><th>Berangkat</th><th>Tiba</th><th>Posisi</th><th>Status</th></tr></thead><tbody>{flights.map((flight, index) => <FlightRow key={`${flight.flight?.iata || flight.flight?.icao || 'flight'}-${flight.flight_date || ''}-${index}`} flight={flight} />)}</tbody></table></div></>
             : <div className="flight-empty"><EmptyState title="Belum ada data penerbangan" body={appliedSearch ? 'Kode penerbangan belum ditemukan. Periksa kembali kode lalu coba lagi.' : `Aviationstack belum mengembalikan penerbangan untuk ${direction === 'arrivals' ? 'kedatangan' : 'keberangkatan'} AAP.`} /></div>}
       <div className="flight-source"><span><i />Sumber Aviationstack</span><span>{flights.length} penerbangan</span></div>
     </section>
