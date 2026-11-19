@@ -7,6 +7,7 @@ import { supabase } from '../lib/supabase';
 
 const airportCode = 'AAP';
 const airportPosition = [-0.375556, 117.251389];
+const trackingApiPaused = true;
 
 function validCoordinates(live) {
   if (!live || typeof live !== 'object') return false;
@@ -151,7 +152,7 @@ export default function FlightTracking() {
   const [search, setSearch] = useState('');
   const [appliedSearch, setAppliedSearch] = useState('');
   const [flights, setFlights] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
   const initialRequestStarted = useRef(false);
@@ -160,6 +161,7 @@ export default function FlightTracking() {
   const landedCount = flights.filter(flight => String(flight.flight_status || '').toLowerCase() === 'landed').length;
 
   const loadFlights = useCallback(async (flightIata = appliedSearch, nextDirection = direction) => {
+    if (trackingApiPaused) return;
     if (!supabase) {
       setError('Koneksi layanan belum dikonfigurasi.');
       setLoading(false);
@@ -185,6 +187,7 @@ export default function FlightTracking() {
   }, [appliedSearch, direction]);
 
   useEffect(() => {
+    if (trackingApiPaused) return;
     if (initialRequestStarted.current) return;
     initialRequestStarted.current = true;
     loadFlights('');
@@ -205,9 +208,24 @@ export default function FlightTracking() {
   };
 
   const title = direction === 'arrivals' ? 'Kedatangan ke AAP' : 'Keberangkatan dari AAP';
+  if (trackingApiPaused) return <>
+    <div className="flight-page-heading">
+      <h1>Tracking penerbangan</h1>
+    </div>
+    <section className="flight-tracking-panel flight-paused-panel" aria-labelledby="flight-paused-title">
+      <div className="flight-paused-state" role="status">
+        <span className="flight-paused-icon"><Plane size={21} /></span>
+        <span className="flight-paused-label">SEMENTARA DIJEDA</span>
+        <h2 id="flight-paused-title">Pengambilan data penerbangan dihentikan</h2>
+        <p>Permintaan ke Aviationstack dimatikan sementara untuk menjaga kuota. Membuka halaman ini tidak akan mengambil data atau memakai API.</p>
+        <span className="flight-paused-footnote">Tracking akan tersedia kembali setelah penggunaan API dinyatakan aman.</span>
+      </div>
+      <div className="flight-source"><span><i />Sumber data: Aviationstack · sementara dijeda</span><span>Tidak ada permintaan API yang berjalan</span></div>
+    </section>
+  </>;
   return <>
     <div className="flight-page-heading">
-      <div><span className="flight-page-kicker">BANDAR UDARA A.P.T. PRANOTO · AAP / WALS</span><h1>Tracking penerbangan</h1><p>Pantau jadwal, status, dan posisi yang tersedia untuk kedatangan atau keberangkatan.</p></div>
+      <div><h1>Tracking penerbangan</h1></div>
       <button className="button-primary" onClick={() => loadFlights()} disabled={loading}><RefreshCw size={15} className={loading ? 'flight-refreshing' : ''} />Perbarui data</button>
     </div>
     {!loading && !error && flights.length > 0 && <section className="flight-summary" aria-label="Ringkasan penerbangan">

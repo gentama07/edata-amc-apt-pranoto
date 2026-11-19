@@ -12,6 +12,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 const cache = new Map<string, { expiresAt: number; payload: unknown }>()
 const airportIata = 'AAP'
 const cacheTtlMs = 30_000
+const aviationstackPaused = true
 
 function publishableKey() {
   const legacy = Deno.env.get('SUPABASE_ANON_KEY')
@@ -41,6 +42,10 @@ Deno.serve(async (req) => {
     const { data: profile, error: profileError } = await supabase.from('profiles').select('role').eq('id', user.id).maybeSingle()
     if (profileError || !['admin', 'personel', 'pimpinan', 'ground_handling'].includes(profile?.role)) {
       return json({ error: 'Akun ini belum memiliki akses tracking penerbangan.' }, 403)
+    }
+
+    if (aviationstackPaused) {
+      return json({ error: 'Tracking penerbangan dijeda sementara. Tidak ada permintaan yang dikirim ke Aviationstack.' }, 503)
     }
 
     let body: { direction?: unknown; flightIata?: unknown }
