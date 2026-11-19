@@ -1433,10 +1433,19 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .flight-error button { margin-top: 4px; }
 .flight-paused-panel { min-height: 340px; display: flex; flex-direction: column; justify-content: space-between; }
 .flight-paused-state { min-height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 34px 22px; text-align: center; }
-.flight-paused-icon { width: 48px; height: 48px; display: grid; place-items: center; margin-bottom: 16px; border-radius: 12px; color: var(--blue); background: var(--navy-bg); }
+.flight-paused-radar { width: 92px; height: 92px; display: grid; place-items: center; margin-bottom: 13px; border: 1px solid color-mix(in srgb, var(--blue) 16%, transparent); border-radius: 50%; color: var(--blue); background: radial-gradient(circle, color-mix(in srgb, var(--blue) 8%, var(--card)) 0%, var(--card) 72%); }
+.flight-paused-radar svg { width: 76px; height: 76px; overflow: visible; }
+.flight-radar-ring { fill: none; stroke: color-mix(in srgb, var(--blue) 22%, var(--border)); stroke-width: 1; }
+.flight-radar-ring-outer { stroke: color-mix(in srgb, var(--blue) 30%, var(--border)); stroke-dasharray: 2 4; }
+.flight-radar-sweep { fill: color-mix(in srgb, var(--blue) 12%, transparent); transform-origin: 48px 48px; animation: flight-radar-scan 3.2s cubic-bezier(.34,.02,.2,1) 1 both; }
+.flight-radar-arm { fill: none; stroke: var(--blue); stroke-width: 1.4; stroke-linecap: round; transform-origin: 48px 48px; animation: flight-radar-scan 3.2s cubic-bezier(.34,.02,.2,1) 1 both; }
+.flight-radar-blip { fill: var(--blue); opacity: 0; animation: flight-radar-detect .55s ease-out 1.2s 1 forwards; }
+.flight-radar-blip-two { animation-delay: 2.1s; }
+.flight-radar-center { fill: var(--blue); }
+@keyframes flight-radar-scan { from { transform: rotate(-32deg); } to { transform: rotate(328deg); } }
+@keyframes flight-radar-detect { 0% { opacity: 0; r: 1px; } 60% { opacity: .9; r: 4px; } 100% { opacity: .65; r: 2.5px; } }
 .flight-paused-label { color: var(--blue); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
 .flight-paused-state h2 { margin: 10px 0 7px; font-size: 17px; font-weight: 650; }
-.flight-paused-state p { max-width: 480px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.65; }
 .flight-paused-footnote { margin-top: 13px; color: var(--muted); font-size: 10px; }
 .flight-source { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 0 18px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 9px; }
 .flight-source > span:first-child { display: inline-flex; align-items: center; gap: 7px; }
@@ -1471,4 +1480,6 @@ button, a, input, select, textarea { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   .landing-feature-indicator { transition: none; }
   .flight-refreshing { animation: none; }
+  .flight-radar-sweep, .flight-radar-arm, .flight-radar-blip { animation: none; }
+  .flight-radar-sweep, .flight-radar-blip { opacity: .65; }
 }

@@ -214,10 +214,20 @@ export default function FlightTracking() {
     </div>
     <section className="flight-tracking-panel flight-paused-panel" aria-labelledby="flight-paused-title">
       <div className="flight-paused-state" role="status">
-        <span className="flight-paused-icon"><Plane size={21} /></span>
+        <div className="flight-paused-radar" aria-hidden="true">
+          <svg viewBox="0 0 96 96">
+            <circle className="flight-radar-ring flight-radar-ring-outer" cx="48" cy="48" r="36" />
+            <circle className="flight-radar-ring" cx="48" cy="48" r="24" />
+            <circle className="flight-radar-ring" cx="48" cy="48" r="12" />
+            <path className="flight-radar-sweep" d="M48 48V12A36 36 0 0 1 78 28Z" />
+            <path className="flight-radar-arm" d="M48 48V12" />
+            <circle className="flight-radar-blip flight-radar-blip-one" cx="67" cy="32" r="3" />
+            <circle className="flight-radar-blip flight-radar-blip-two" cx="31" cy="55" r="2.5" />
+            <circle className="flight-radar-center" cx="48" cy="48" r="3.5" />
+          </svg>
+        </div>
         <span className="flight-paused-label">SEMENTARA DIJEDA</span>
         <h2 id="flight-paused-title">Pengambilan data penerbangan dihentikan</h2>
-        <p>Permintaan ke Aviationstack dimatikan sementara untuk menjaga kuota. Membuka halaman ini tidak akan mengambil data atau memakai API.</p>
         <span className="flight-paused-footnote">Tracking akan tersedia kembali setelah penggunaan API dinyatakan aman.</span>
       </div>
       <div className="flight-source"><span><i />Sumber data: Aviationstack · sementara dijeda</span><span>Tidak ada permintaan API yang berjalan</span></div>
