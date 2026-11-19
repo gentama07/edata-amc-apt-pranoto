@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Clock3, MapPin, Plane, RefreshCw, Search } from 'lucide-react';
+import { Activity, CheckCircle2, Clock3, MapPin, Plane, RefreshCw, Search } from 'lucide-react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { EmptyState, PageHeading } from '../components/Shell';
+import { EmptyState } from '../components/Shell';
 import { supabase } from '../lib/supabase';
 
 const airportCode = 'AAP';
@@ -29,7 +29,11 @@ function flightMapPopup(flights) {
     const airline = document.createElement('span');
     airline.textContent = flight.airline?.name || 'Maskapai tidak diketahui';
     const route = document.createElement('small');
-    route.textContent = `${flight.departure?.iata || '—'} → ${flight.arrival?.iata || '—'} · ${flight.live?.altitude != null ? `${Number(flight.live.altitude).toLocaleString('id-ID')} ft` : 'ketinggian tidak tersedia'}`;
+    const coordinates = validCoordinates(flight.live)
+      ? `${Number(flight.live.latitude).toFixed(3)}, ${Number(flight.live.longitude).toFixed(3)}`
+      : 'Koordinat tidak tersedia';
+    const altitude = flight.live?.altitude != null ? ` · ${Number(flight.live.altitude).toLocaleString('id-ID')} ft` : '';
+    route.textContent = `${flight.departure?.iata || '—'} → ${flight.arrival?.iata || '—'} · ${coordinates}${altitude}`;
     item.append(title, airline, route);
     popup.append(item);
   });
@@ -99,12 +103,12 @@ function FlightMap({ flights, updatedAt }) {
   const liveCount = flights.filter(flight => validCoordinates(flight.live)).length;
   return <section className="flight-map-panel" aria-label="Peta posisi pesawat">
     <div className="flight-map-heading">
-      <div><span className="flight-map-live-dot" /><strong>Posisi pesawat</strong><span className="flight-map-count">{liveCount} posisi dari {flights.length} penerbangan</span></div>
-      <span className="flight-map-source">Aviationstack · pembaruan manual</span>
+      <div className="flight-map-heading-copy"><strong>Peta pergerakan</strong><span>Posisi tersedia untuk {liveCount} dari {flights.length} penerbangan</span></div>
+      <span className="flight-map-source"><i />Data posisi · Aviationstack</span>
     </div>
     <div className="flight-map-canvas" ref={containerRef} role="application" aria-label="Peta interaktif posisi penerbangan di sekitar Samarinda" />
-    {!liveCount && <p className="flight-map-note">Belum ada koordinat posisi pada hasil ini. Tekan Perbarui data untuk meminta data terbaru.</p>}
-    {!!liveCount && <p className="flight-map-note">Posisi ditampilkan sesuai koordinat terakhir dari API; sebagian penerbangan belum memiliki posisi live.</p>}
+    {!liveCount && <p className="flight-map-note">Koordinat pesawat belum tersedia pada hasil ini. Tekan Perbarui data untuk meminta hasil baru dari penyedia.</p>}
+    {!!liveCount && <p className="flight-map-note">Peta memakai koordinat terakhir yang dikirim Aviationstack. Posisi tidak bergerak otomatis; Perbarui data meminta pengambilan berikutnya.</p>}
   </section>;
 }
 
@@ -133,11 +137,11 @@ function FlightRow({ flight }) {
   return <tr>
     <td><strong className="flight-number">{number}</strong><span className="flight-airline">{flight.airline?.name || 'Maskapai tidak diketahui'}</span></td>
     <td><span className="flight-route">{route}</span><span className="flight-airports">{departure.airport || 'Asal belum tersedia'} → {arrival.airport || 'Tujuan belum tersedia'}</span></td>
-    <td><strong>{localTime(departure.estimated || departure.scheduled || departure.actual)}</strong><span className="flight-airline">{departure.gate ? `Gate ${departure.gate}` : departure.terminal ? `Terminal ${departure.terminal}` : departure.iata || '—'}</span></td>
-    <td><strong>{localTime(arrival.estimated || arrival.scheduled || arrival.actual)}</strong><span className="flight-airline">{arrival.gate ? `Gate ${arrival.gate}` : arrival.terminal ? `Terminal ${arrival.terminal}` : arrival.iata || '—'}</span></td>
+    <td><strong>{localTime(departure.estimated || departure.scheduled || departure.actual)}</strong><span className="flight-airline">{departure.gate ? `Gate ${departure.gate}` : departure.terminal ? `Terminal ${departure.terminal}` : 'Waktu WITA'}</span></td>
+    <td><strong>{localTime(arrival.estimated || arrival.scheduled || arrival.actual)}</strong><span className="flight-airline">{arrival.gate ? `Gate ${arrival.gate}` : arrival.terminal ? `Terminal ${arrival.terminal}` : 'Waktu WITA'}</span></td>
     <td>{validCoordinates(live)
-      ? <span className="flight-position"><MapPin size={13} />{Number(live.latitude).toFixed(2)}, {Number(live.longitude).toFixed(2)}{live.altitude != null && <small>{Number(live.altitude).toLocaleString('id-ID')} ft</small>}</span>
-      : <span className="flight-muted">Posisi live belum tersedia</span>}</td>
+      ? <span className="flight-position"><MapPin size={13} /><span>{Number(live.latitude).toFixed(3)}, {Number(live.longitude).toFixed(3)}{live.altitude != null && <small>{Number(live.altitude).toLocaleString('id-ID')} ft</small>}</span></span>
+      : <span className="flight-muted">Belum ada koordinat</span>}</td>
     <td><span className={`flight-status ${statusClass(flight.flight_status)}`}>{statusLabel(flight.flight_status)}</span></td>
   </tr>;
 }
@@ -151,6 +155,9 @@ export default function FlightTracking() {
   const [error, setError] = useState('');
   const [lastUpdated, setLastUpdated] = useState(null);
   const initialRequestStarted = useRef(false);
+  const liveCount = flights.filter(flight => validCoordinates(flight.live)).length;
+  const activeCount = flights.filter(flight => String(flight.flight_status || '').toLowerCase() === 'active').length;
+  const landedCount = flights.filter(flight => String(flight.flight_status || '').toLowerCase() === 'landed').length;
 
   const loadFlights = useCallback(async (flightIata = appliedSearch, nextDirection = direction) => {
     if (!supabase) {
@@ -190,8 +197,7 @@ export default function FlightTracking() {
     loadFlights(nextSearch);
   };
 
-  const setFlightDirection = event => {
-    const nextDirection = event.target.value;
+  const setFlightDirection = nextDirection => {
     setDirection(nextDirection);
     setAppliedSearch('');
     setSearch('');
@@ -200,29 +206,36 @@ export default function FlightTracking() {
 
   const title = direction === 'arrivals' ? 'Kedatangan ke AAP' : 'Keberangkatan dari AAP';
   return <>
-    <PageHeading title="Tracking penerbangan" action={<button className="button-primary" onClick={() => loadFlights()} disabled={loading}><RefreshCw size={15} className={loading ? 'flight-refreshing' : ''} />Perbarui data</button>} />
+    <div className="flight-page-heading">
+      <div><span className="flight-page-kicker">BANDAR UDARA A.P.T. PRANOTO · AAP / WALS</span><h1>Tracking penerbangan</h1><p>Pantau jadwal, status, dan posisi yang tersedia untuk kedatangan atau keberangkatan.</p></div>
+      <button className="button-primary" onClick={() => loadFlights()} disabled={loading}><RefreshCw size={15} className={loading ? 'flight-refreshing' : ''} />Perbarui data</button>
+    </div>
+    {!loading && !error && flights.length > 0 && <section className="flight-summary" aria-label="Ringkasan penerbangan">
+      <article className="flight-summary-card"><span className="flight-summary-icon"><Plane size={17} /></span><div><small>Penerbangan</small><strong>{flights.length}</strong><span>hasil untuk AAP</span></div></article>
+      <article className="flight-summary-card"><span className="flight-summary-icon is-active"><Activity size={17} /></span><div><small>Sedang berlangsung</small><strong>{activeCount}</strong><span>status dari penyedia</span></div></article>
+      <article className="flight-summary-card"><span className="flight-summary-icon is-position"><MapPin size={17} /></span><div><small>Posisi tersedia</small><strong>{liveCount}</strong><span>dapat dilihat di peta</span></div></article>
+      <article className="flight-summary-card"><span className="flight-summary-icon is-landed"><CheckCircle2 size={17} /></span><div><small>Sudah mendarat</small><strong>{landedCount}</strong><span>status dari penyedia</span></div></article>
+    </section>}
     <section className="flight-tracking-panel">
       <div className="flight-tracking-toolbar">
-        <div className="flight-tracking-title"><span className="flight-tracking-icon"><Plane size={18} /></span><div><strong>{appliedSearch ? `Penerbangan ${appliedSearch}` : title}</strong><span>Bandara A.P.T. Pranoto · {airportCode}</span></div></div>
+        <div className="flight-tracking-title"><span className="flight-tracking-icon"><Plane size={18} /></span><div><strong>{appliedSearch ? `Penerbangan ${appliedSearch}` : title}</strong><span>{direction === 'arrivals' ? 'Menuju Bandar Udara A.P.T. Pranoto' : 'Berangkat dari Bandar Udara A.P.T. Pranoto'}</span></div></div>
         <form className="flight-search" onSubmit={submitSearch}>
-          <label className="flight-search-field"><Search size={16} /><input value={search} onChange={event => setSearch(event.target.value)} maxLength={12} placeholder="Cari kode penerbangan" aria-label="Cari kode penerbangan" /></label>
+          <label className="flight-search-field"><Search size={16} /><input value={search} onChange={event => setSearch(event.target.value)} maxLength={12} placeholder="Cari kode · mis. QG422" aria-label="Cari kode penerbangan" /></label>
           <button className="button-secondary" type="submit" disabled={loading}>Cari</button>
         </form>
       </div>
       <div className="flight-tracking-meta">
-        <label className="flight-direction-label" htmlFor="flight-direction">Pergerakan
-          <select id="flight-direction" className="flight-direction" value={direction} onChange={setFlightDirection} disabled={loading}>
-            <option value="arrivals">Kedatangan</option>
-            <option value="departures">Keberangkatan</option>
-          </select>
-        </label>
-        <span className="flight-updated"><Clock3 size={14} />{lastUpdated ? `Diperbarui ${new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit' }).format(lastUpdated)} WITA` : 'Menunggu data'}</span>
+        <div className="flight-direction-group" role="group" aria-label="Pilih arah penerbangan">
+          <button type="button" className={direction === 'arrivals' ? 'is-selected' : ''} aria-pressed={direction === 'arrivals'} onClick={() => setFlightDirection('arrivals')} disabled={loading}>Kedatangan</button>
+          <button type="button" className={direction === 'departures' ? 'is-selected' : ''} aria-pressed={direction === 'departures'} onClick={() => setFlightDirection('departures')} disabled={loading}>Keberangkatan</button>
+        </div>
+        <span className="flight-updated"><Clock3 size={15} /><span>{lastUpdated ? <>Pembaruan manual<strong>{new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit' }).format(lastUpdated)} WITA</strong></> : <>Pembaruan<strong>Menunggu data</strong></>}</span></span>
       </div>
       {error ? <div className="flight-error" role="alert"><strong>Data penerbangan belum tersedia</strong><span>{error}</span><button className="button-secondary" onClick={() => loadFlights()}>Coba lagi</button></div>
         : loading ? <div className="flight-loading" role="status"><span className="flight-loading-mark"><Plane size={18} /></span><strong>Mengambil data penerbangan…</strong></div>
-          : flights.length ? <><FlightMap flights={flights} updatedAt={lastUpdated} /><div className="flight-table-scroll"><table className="flight-table"><thead><tr><th>Penerbangan</th><th>Rute</th><th>Berangkat</th><th>Tiba</th><th>Posisi</th><th>Status</th></tr></thead><tbody>{flights.map((flight, index) => <FlightRow key={`${flight.flight?.iata || flight.flight?.icao || 'flight'}-${flight.flight_date || ''}-${index}`} flight={flight} />)}</tbody></table></div></>
+          : flights.length ? <><FlightMap flights={flights} updatedAt={lastUpdated} /><div className="flight-list-heading"><div><h2>Daftar penerbangan</h2><p>Waktu ditampilkan dalam WITA. Pilih pesawat di peta untuk melihat detail posisi.</p></div><span>{flights.length} hasil</span></div><div className="flight-table-scroll"><table className="flight-table"><thead><tr><th>Penerbangan</th><th>Rute</th><th>Berangkat · WITA</th><th>Tiba · WITA</th><th>Posisi terakhir</th><th>Status</th></tr></thead><tbody>{flights.map((flight, index) => <FlightRow key={`${flight.flight?.iata || flight.flight?.icao || 'flight'}-${flight.flight_date || ''}-${index}`} flight={flight} />)}</tbody></table></div></>
             : <div className="flight-empty"><EmptyState title="Belum ada data penerbangan" body={appliedSearch ? 'Kode penerbangan belum ditemukan. Periksa kembali kode lalu coba lagi.' : `Aviationstack belum mengembalikan penerbangan untuk ${direction === 'arrivals' ? 'kedatangan' : 'keberangkatan'} AAP.`} /></div>}
-      <div className="flight-source"><span><i />Sumber Aviationstack</span><span>{flights.length} penerbangan</span></div>
+      <div className="flight-source"><span><i />Sumber data: Aviationstack</span><span>{lastUpdated ? `Terakhir diminta ${new Intl.DateTimeFormat('id-ID', { timeZone: 'Asia/Makassar', hour: '2-digit', minute: '2-digit' }).format(lastUpdated)} WITA` : 'Belum ada pembaruan'}</span></div>
     </section>
   </>;
 }
