@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 
 export default function ServiceStatus({ demo, compact = false }) {
   const [state, setState] = useState(demo ? 'demo' : 'checking');
+  const [showLabel, setShowLabel] = useState(false);
 
   useEffect(() => {
     if (demo) return undefined;
@@ -36,6 +37,18 @@ export default function ServiceStatus({ demo, compact = false }) {
     issue: 'Layanan sulit dijangkau',
     demo: 'Pratinjau lokal',
   };
+  if (compact) return <button
+    type="button"
+    className={`service-status service-status-compact service-${state} ${showLabel ? 'is-open' : ''}`}
+    aria-label={`Status layanan: ${labels[state]}. Tekan untuk menampilkan keterangannya.`}
+    aria-expanded={showLabel}
+    onClick={() => setShowLabel(value => !value)}
+    onBlur={() => setShowLabel(false)}
+  >
+    <i aria-hidden="true" />
+    <span aria-hidden="true">{labels[state]}</span>
+  </button>;
+
   return <span className={`service-status service-${state} ${compact ? 'service-status-compact' : ''}`} role="status" aria-live="polite">
     <i aria-hidden="true" />
     <span>{labels[state]}</span>
