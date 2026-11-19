@@ -96,7 +96,11 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .mobile-menu-icon { display: none; }
 .workspace { min-height: calc(100vh - 68px); display: flex; }
 .sidebar { position: sticky; top: 0; width: 224px; height: calc(100vh - 68px); min-height: 560px; flex: 0 0 224px; display: flex; flex-direction: column; padding: 24px 13px 15px; border-right: 1px solid var(--border); background: var(--card); }
-.sidebar-heading { margin: 2px 11px 13px; color: #83838b; font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.sidebar-heading { display: flex; align-items: center; justify-content: space-between; min-height: 30px; margin: 2px 11px 13px; color: #83838b; font-size: 9px; font-weight: 700; letter-spacing: .1em; }
+.sidebar-heading .service-status-compact { width: 26px; height: 26px; flex-basis: 26px; margin: 0 -5px 0 0; }
+.sidebar-heading .service-status-compact > span { top: calc(100% + 5px); right: 0; left: auto; transform: translateY(4px); }
+.sidebar-heading .service-status-compact > span::before { right: 9px; left: auto; }
+.sidebar-heading .service-status-compact:hover > span, .sidebar-heading .service-status-compact:focus-visible > span, .sidebar-heading .service-status-compact.is-open > span { transform: translateY(0); }
 .nav-link { position: relative; width: 100%; height: 41px; display: flex; align-items: center; gap: 11px; margin: 2px 0; padding: 0 11px; border: 0; border-radius: 8px; color: #66666d; background: transparent; text-align: left; font-size: 12px; cursor: pointer; }
 :root[data-theme="dark"] .nav-link { color: #b1b1b8; }
 .nav-link:hover { color: var(--ink); background: var(--hover); }
@@ -1091,14 +1095,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .thread-file-form input[type="file"] { width: 100%; min-width: 0; max-width: 100%; }
 
 @media (max-width: 767px) {
-  .topbar { display: grid; grid-template-columns: 44px minmax(0, 1fr) auto; grid-template-areas: "menu brand actions" "status status status"; height: auto; min-height: 88px; gap: 0 7px; padding: 6px 11px 4px; }
-  .mobile-menu-icon { grid-area: menu; }
-  .topbar .brand-lockup { grid-area: brand; }
-  .topbar .service-status-compact { grid-area: status; justify-self: start; min-height: 34px; margin: 0 0 0 45px; padding: 0; }
-  .topbar .topbar-right { grid-area: actions; }
-  .workspace { min-height: calc(100vh - 152px); }
-  .sidebar { top: 88px; height: calc(100dvh - 88px); }
-  .nav-scrim { top: 88px; }
+  .workspace { min-height: calc(100vh - 128px); }
   .profile-card { padding: 17px 14px; }
   .profile-photo-frame { width: 84px; flex-basis: 84px; }
   .profile-fields { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 18px 0; }

@@ -78,7 +78,6 @@ export function Shell({ app, active, setActive, children }) {
         <div className="apt-mark apt-mark-image"><img width="810" height="308" src={`${import.meta.env.BASE_URL}assets/logo-apt-login-removebg-preview.png`} alt="Logo Bandar Udara A.P.T. Pranoto" /></div>
         <div className="brand-copy"><strong>E-data AMC</strong><span>APT Pranoto · Samarinda</span></div>
       </div>
-      <ServiceStatus demo={demo} compact />
       <div className="topbar-right">
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
@@ -88,7 +87,7 @@ export function Shell({ app, active, setActive, children }) {
     </header>
     <div className="workspace">
       <aside className={`sidebar ${menuOpen ? 'sidebar-open' : ''}`} aria-label="Navigasi utama">
-        <div className="sidebar-heading">OPERASIONAL</div>
+        <div className="sidebar-heading"><span>OPERASIONAL</span><ServiceStatus demo={demo} compact /></div>
         {items.map(({ id, label, Icon }) => <button key={id} className={`nav-link ${active === id ? 'nav-active' : ''}`} onClick={() => navigate(id)} aria-current={active === id ? 'page' : undefined}><Icon size={18} strokeWidth={1.8} /><span>{label}</span>{id === 'summary' && <span className="nav-live" title="Data harian" />}</button>)}
         <div className="sidebar-bottom"><div className="airport-card">{airportVideo && <video className="airport-card-video" aria-hidden="true" autoPlay muted loop playsInline preload="metadata" src={airportVideo} />}<span className="airport-card-label">BANDAR UDARA</span><strong>AAP <span>·</span> WALS</strong><small>Apron Movement Control</small></div><button className="signed-in signed-in-button" onClick={() => navigate('profile')} aria-label={`Buka profil ${profile.name}`}>
           {profile.avatarUrl ? <img className="avatar" src={profile.avatarUrl} alt="" /> : <span className="avatar">{profile.name?.slice(0, 1).toUpperCase()}</span>}
