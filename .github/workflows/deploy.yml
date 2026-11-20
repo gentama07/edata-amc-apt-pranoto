@@ -18,6 +18,12 @@ jobs:
         with: { node-version: 20, cache: npm }
       - uses: actions/configure-pages@v5
       - run: npm ci
+      - name: Audit dependensi
+        run: npm audit --audit-level=moderate
+      - name: Lint dan tes
+        run: |
+          npm run lint
+          npm test
       - name: Pastikan konfigurasi Supabase tersedia
         run: |
           test -n "$VITE_SUPABASE_URL" || (echo "VITE_SUPABASE_URL belum diisi di GitHub Actions Secrets atau Variables" && exit 1)

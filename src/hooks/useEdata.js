@@ -247,7 +247,7 @@ export function useEdata() {
       const next = [...messages, { id: `message-${crypto.randomUUID()}`, letter_id: letterId, body: body.trim(), sender_id: profile.id, sender_name: profile.name, created_at: new Date().toISOString() }];
       setMessages(next); localStorage.setItem(MESSAGE_STORE, JSON.stringify(next)); return;
     }
-    const { error: insertError } = await supabase.from('correspondence_messages').insert({ letter_id: letterId, body: body.trim(), sender_id: session.user.id });
+    const { error: insertError } = await supabase.from('correspondence_messages').insert({ letter_id: letterId, body: body.trim() });
     if (insertError) throw insertError;
   };
   const signOut = async () => { if (session) await supabase.auth.signOut(); setSession(null); setProfile(null); setOpeningRequested(false); setError(''); };
@@ -304,6 +304,11 @@ export function useEdata() {
   const uploadProfilePhoto = async file => {
     if (!file || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) throw new Error('Pilih foto JPG, PNG, atau WebP.');
     if (file.size > 5 * 1024 * 1024) throw new Error('Ukuran foto maksimal 5 MB.');
+    const bytes = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+    const isJpeg = file.type === 'image/jpeg' && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+    const isPng = file.type === 'image/png' && bytes.slice(0, 8).join(',') === '137,80,78,71,13,10,26,10';
+    const isWebp = file.type === 'image/webp' && new TextDecoder().decode(bytes.slice(0, 4)) === 'RIFF' && new TextDecoder().decode(bytes.slice(8, 12)) === 'WEBP';
+    if (!(isJpeg || isPng || isWebp)) throw new Error('Isi file tidak sesuai dengan format foto JPG, PNG, atau WebP.');
     if (!session) {
       const avatarUrl = await new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -385,6 +390,7 @@ export function useEdata() {
   };
   const changePassword = async (currentPassword, newPassword) => {
     if (!isSupabaseConfigured || !supabase) throw new Error('Ubah kata sandi hanya tersedia saat akun terhubung ke Supabase.');
+    if (newPassword.length < 12 || newPassword.length > 72) throw new Error('Kata sandi baru harus 12–72 karakter.');
     const { data: currentAuth, error: sessionError } = await supabase.auth.getSession();
     const email = currentAuth?.session?.user?.email || session?.user?.email;
     if (sessionError || !email) throw new Error('Sesi login sudah berakhir. Masuk kembali, lalu ubah kata sandi.');
@@ -412,6 +418,7 @@ export function useEdata() {
     }
   };
   const finishPasswordRecovery = async (newPassword) => {
+    if (newPassword.length < 12 || newPassword.length > 72) throw new Error('Kata sandi baru harus 12–72 karakter.');
     const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
     if (updateError) throw updateError;
     setPasswordRecovery(false);

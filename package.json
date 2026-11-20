@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint src tests vite.config.js tailwind.config.js postcss.config.js",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "security:audit": "npm audit --audit-level=moderate"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.0",

@@ -139,7 +139,7 @@ Deno.serve(async request => {
       const token = String(input.token || '')
       const password = String(input.password || '')
       if (!/^\d{6}$/.test(token)) return json({ error: 'Token harus terdiri dari 6 digit.' }, 400, origin)
-      if (password.length < 8 || password.length > 72) return json({ error: 'Kata sandi baru harus 8–72 karakter.' }, 400, origin)
+      if (password.length < 12 || password.length > 72) return json({ error: 'Kata sandi baru harus 12–72 karakter.' }, 400, origin)
       const { data: profile, error: profileError } = await admin.from('profiles').select('id').eq('email', email).eq('active', true).maybeSingle()
       if (profileError) throw profileError
       if (!profile) return json({ error: 'Token tidak valid atau sudah kedaluwarsa. Ajukan pemulihan kepada Admin.' }, 400, origin)
@@ -163,7 +163,7 @@ Deno.serve(async request => {
     return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
   } catch (error) {
     console.error('account-recovery:', error)
-    return json({ error: error instanceof Error ? error.message : 'Pemulihan akun gagal diproses.' }, 500, origin)
+    return json({ error: 'Pemulihan akun gagal diproses. Coba lagi nanti atau hubungi Admin AMC.' }, 500, origin)
   }
 })
 

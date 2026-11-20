@@ -11,7 +11,7 @@ const corsFor = (origin: string | null) => ({
 })
 const json = (data: unknown, status = 200, origin: string | null = null) => new Response(JSON.stringify(data), {
   status,
-  headers: { ...corsFor(origin), 'Content-Type': 'application/json' },
+  headers: { ...corsFor(origin), 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
 })
 const env = (name: string) => {
   const value = Deno.env.get(name)
@@ -40,6 +40,12 @@ Deno.serve(async (request) => {
   const origin = request.headers.get('Origin')
   if (request.method === 'OPTIONS') return new Response('ok', { headers: corsFor(origin) })
   if (request.method !== 'POST') return json({ error: 'Metode tidak didukung.' }, 405, origin)
+  if (origin && !['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173'].includes(origin)) {
+    return json({ error: 'Asal permintaan tidak diizinkan.' }, 403, origin)
+  }
+  if (Number(request.headers.get('Content-Length') || 0) > 10 * 1024 * 1024 + 64 * 1024) {
+    return json({ error: 'Ukuran permintaan melampaui batas.' }, 413, origin)
+  }
 
   try {
     const authorization = request.headers.get('Authorization') || ''
@@ -62,6 +68,9 @@ Deno.serve(async (request) => {
     if (!(file instanceof File)) return json({ error: 'Berkas unggahan tidak ditemukan.' }, 400, origin)
     if (file.size === 0) return json({ error: 'Berkas kosong tidak dapat diunggah.' }, 400, origin)
     if (file.size > 10 * 1024 * 1024) return json({ error: 'Ukuran berkas maksimal 10 MB.' }, 400, origin)
+    if (!/\.pdf$/i.test(file.name) || file.type !== 'application/pdf') return json({ error: 'Lampiran harus berupa berkas PDF.' }, 415, origin)
+    const bytes = await file.arrayBuffer()
+    if (new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') return json({ error: 'Isi berkas bukan PDF yang valid.' }, 415, origin)
 
     if (!letterId) return json({ error: 'Data surat harus disimpan sebelum berkas dikirim.' }, 400, origin)
     const { data: letter, error: letterError } = await userClient.from('incoming_letters')
@@ -107,8 +116,8 @@ Deno.serve(async (request) => {
     const drive = await callAppsScript({
       action: 'upload',
       name: file.name,
-      mime: file.type || 'application/octet-stream',
-      data: encodeBase64(await file.arrayBuffer()),
+      mime: 'application/pdf',
+      data: encodeBase64(bytes),
       destination,
       viewerEmails,
     })
@@ -128,7 +137,8 @@ Deno.serve(async (request) => {
 
     return json({ ok: true, file: attachment.file_name, driveFileId: attachment.drive_file_id, destination }, 200, origin)
   } catch (error) {
-    return json({ error: error instanceof Error ? error.message : 'Unggah ke Google Drive gagal.' }, 500, origin)
+    console.error('drive-sync request failed:', error)
+    return json({ error: 'Layanan arsip gagal memproses permintaan. Hubungi Admin AMC jika masalah berulang.' }, 500, origin)
   }
 })
 

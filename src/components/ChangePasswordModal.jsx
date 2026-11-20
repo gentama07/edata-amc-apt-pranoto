@@ -14,7 +14,7 @@ export default function ChangePasswordModal({ onClose, changePassword }) {
 
   const submit = async event => {
     event.preventDefault(); setError('');
-    if (newPassword.length < 8) { setError('Kata sandi baru minimal 8 karakter.'); return; }
+    if (newPassword.length < 12 || newPassword.length > 72) { setError('Kata sandi baru harus 12–72 karakter.'); return; }
     if (newPassword !== confirmation) { setError('Konfirmasi kata sandi belum sama.'); return; }
     setBusy(true);
     try { await changePassword(oldPassword, newPassword); setSaved(true); }
@@ -29,8 +29,8 @@ export default function ChangePasswordModal({ onClose, changePassword }) {
       <h2 id="password-title">Ubah kata sandi</h2>
       {saved ? <><p>Kata sandi akun Anda sudah diperbarui.</p><div className="modal-actions"><button className="button-primary" onClick={onClose}>Selesai</button></div></> : <form onSubmit={submit}>
         <label className="field">Kata sandi lama<input name="current-password" type="password" value={oldPassword} onChange={event => setOldPassword(event.target.value)} autoComplete="current-password" required /></label>
-        <label className="field">Kata sandi baru<input name="new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} autoComplete="new-password" minLength={8} required /></label>
-        <label className="field">Ulangi kata sandi baru<input name="confirm-password" type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)} autoComplete="new-password" minLength={8} required /></label>
+        <label className="field">Kata sandi baru<input name="new-password" type="password" value={newPassword} onChange={event => setNewPassword(event.target.value)} autoComplete="new-password" minLength={12} maxLength={72} required /></label>
+        <label className="field">Ulangi kata sandi baru<input name="confirm-password" type="password" value={confirmation} onChange={event => setConfirmation(event.target.value)} autoComplete="new-password" minLength={12} maxLength={72} required /></label>
         {error && <div className="login-error" role="alert">{error}</div>}
         <div className="modal-actions"><button className="button-secondary" type="button" onClick={onClose}>Batal</button><button className="button-primary" disabled={busy}>{busy ? 'Menyimpan…' : 'Simpan kata sandi'}</button></div>
       </form>}

@@ -42,6 +42,12 @@ Deno.serve(async request => {
     if (action === 'send') {
       const body = String(input.body || '').trim()
       if (!body || body.length > 2000) return json({ error: 'Pesan harus berisi 1–2.000 karakter.' }, 400, origin)
+      const { count: recentMessages, error: rateError } = await admin.from('support_messages')
+        .select('id', { count: 'exact', head: true })
+        .eq('sender_id', user.id)
+        .gte('created_at', new Date(Date.now() - 60_000).toISOString())
+      if (rateError) throw rateError
+      if ((recentMessages || 0) >= 20) return json({ error: 'Pesan terlalu sering dikirim. Tunggu sebentar sebelum mencoba lagi.' }, 429, origin)
       const { data: message, error } = await admin.from('support_messages').insert({ user_id: targetId, sender_id: user.id, body }).select('id,user_id,sender_id,body,created_at').single()
       if (error) throw error
       if (!isAdmin) {

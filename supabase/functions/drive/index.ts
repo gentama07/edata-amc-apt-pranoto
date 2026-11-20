@@ -4,8 +4,14 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 import { encodeBase64 } from 'https://deno.land/std@0.224.0/encoding/base64.ts'
 
-const cors = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type' }
-const j = (b: unknown, s = 200) => new Response(JSON.stringify(b), { status: s, headers: { ...cors, 'Content-Type': 'application/json' } })
+const allowedOrigins = ['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']
+const cors = (origin: string | null) => ({
+  'Access-Control-Allow-Origin': origin && allowedOrigins.includes(origin) ? origin : allowedOrigins[0],
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Vary': 'Origin',
+})
+const j = (b: unknown, s = 200, origin: string | null = null) => new Response(JSON.stringify(b), { status: s, headers: { ...cors(origin), 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } })
 const E = (k: string) => Deno.env.get(k)!
 
 const guess = (n: string) => /cancel/i.test(n) ? 'Surat Cancel' : /re-?etd/i.test(n) ? 'Re-ETD' : /\bptr\b/i.test(n) ? 'PTR' : 'Lainnya'
@@ -27,31 +33,40 @@ async function script(body: Record<string, unknown>) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
+  const origin = req.headers.get('Origin')
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors(origin) })
+  if (origin && !allowedOrigins.includes(origin)) return j({ error: 'Asal permintaan tidak diizinkan.' }, 403, origin)
+  if (req.method !== 'POST') return j({ error: 'Metode tidak didukung.' }, 405, origin)
+  if (Number(req.headers.get('Content-Length') || 0) > 10 * 1024 * 1024 + 64 * 1024) return j({ error: 'Ukuran permintaan melampaui batas.' }, 413, origin)
   try {
     const url = E('SUPABASE_URL')
     const me = createClient(url, E('SUPABASE_ANON_KEY'), { global: { headers: { Authorization: req.headers.get('Authorization') ?? '' } } })
     const { data: { user } } = await me.auth.getUser()
-    if (!user) return j({ error: 'Belum login.' }, 401)
-    const { data: p } = await me.from('profiles').select('role').eq('id', user.id).single()
-    if (!['personel', 'admin'].includes(p?.role)) return j({ error: 'Hanya personel AMC yang boleh mengakses Drive.' }, 403)
-    const db = createClient(url, E('SUPABASE_SERVICE_ROLE_KEY'))
+    if (!user) return j({ error: 'Sesi login tidak sah atau sudah berakhir.' }, 401, origin)
+    const { data: p } = await me.from('profiles').select('role,active').eq('id', user.id).single()
+    if (!p?.active || !['personel', 'admin'].includes(p.role)) return j({ error: 'Hanya Personel AMC atau Admin aktif yang boleh mengakses arsip.' }, 403, origin)
+    const db = createClient(url, E('SUPABASE_SERVICE_ROLE_KEY'), { auth: { persistSession: false, autoRefreshToken: false } })
 
     if ((req.headers.get('content-type') || '').includes('multipart')) {
       // Unggah surat ke folder Drive, lalu catat di tabel surat
-      const fd = await req.formData(), file = fd.get('file') as File, kategori = String(fd.get('kategori') || 'Lainnya')
+      const fd = await req.formData(), file = fd.get('file'), kategori = String(fd.get('kategori') || 'Lainnya')
+      if (!(file instanceof File)) return j({ error: 'Berkas unggahan tidak ditemukan.' }, 400, origin)
       if (file.size > 10 * 1024 * 1024) return j({ error: 'Ukuran file maksimal 10 MB.' }, 400)
-      const d = await script({ action: 'upload', name: file.name, mime: file.type, data: encodeBase64(await file.arrayBuffer()) })
+      if (!/\.pdf$/i.test(file.name) || file.type !== 'application/pdf') return j({ error: 'Lampiran harus berupa berkas PDF.' }, 415, origin)
+      const bytes = await file.arrayBuffer()
+      if (!bytes.byteLength || new TextDecoder().decode(bytes.slice(0, 5)) !== '%PDF-') return j({ error: 'Isi berkas bukan PDF yang valid.' }, 415, origin)
+      const d = await script({ action: 'upload', name: file.name, mime: 'application/pdf', data: encodeBase64(bytes) })
       await db.from('surat').upsert(toRow(d.file, kategori, user.id), { onConflict: 'drive_file_id' })
-      return j({ ok: true, file: d.file.name })
+      return j({ ok: true, file: d.file.name }, 200, origin)
     }
 
     // Sinkron: salin berkas baru di folder Drive ke tabel surat
     const d = await script({ action: 'list' })
     const rows = d.files.map((f: any) => toRow(f, guess(f.name), user.id))
     if (rows.length) await db.from('surat').upsert(rows, { onConflict: 'drive_file_id', ignoreDuplicates: true })
-    return j({ ok: true, count: rows.length })
+    return j({ ok: true, count: rows.length }, 200, origin)
   } catch (e) {
-    return j({ error: String((e as Error).message || e) }, 500)
+    console.error('drive request failed:', e)
+    return j({ error: 'Layanan arsip gagal memproses permintaan. Hubungi Admin AMC jika masalah berulang.' }, 500, origin)
   }
 })

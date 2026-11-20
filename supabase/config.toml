@@ -1,18 +1,20 @@
 project_id = "edata-amc-apt-pranoto"
 
-# Fungsi memeriksa login dan peran sendiri (profiles.role), jadi gerbang JWT dimatikan
-# agar kompatibel dengan kunci publishable (sb_publishable_...).
 [functions.drive]
-verify_jwt = false
+verify_jwt = true
 
 [functions.drive-sync]
-verify_jwt = false
+verify_jwt = true
 
 [functions.manage-users]
-verify_jwt = false
+verify_jwt = true
 
 [functions.account-recovery]
+# Memerlukan akses tanpa login untuk request/reset; autentikasi Admin diperiksa di dalam fungsi.
 verify_jwt = false
 
 [functions.flight-tracking]
+verify_jwt = true
+
+[functions.support-chat]
 verify_jwt = true
