@@ -37,9 +37,9 @@ jobs:
             echo "::error::Tambahkan GitHub Actions secret SUPABASE_ACCESS_TOKEN untuk mengaktifkan deploy Edge Function."
             exit 1
           fi
-          supabase functions deploy drive --project-ref vokjrinidcsytasjeeuy
-          supabase functions deploy drive-sync --project-ref vokjrinidcsytasjeeuy
-          supabase functions deploy manage-users --project-ref vokjrinidcsytasjeeuy
-          supabase functions deploy account-recovery --project-ref vokjrinidcsytasjeeuy
-          supabase functions deploy flight-tracking --project-ref vokjrinidcsytasjeeuy
-          supabase functions deploy support-chat --project-ref vokjrinidcsytasjeeuy
+          supabase functions deploy drive --remote=vokjrinidcsytasjeeuy --yes
+          supabase functions deploy drive-sync --remote=vokjrinidcsytasjeeuy --yes
+          supabase functions deploy manage-users --remote=vokjrinidcsytasjeeuy --yes
+          supabase functions deploy account-recovery --remote=vokjrinidcsytasjeeuy --yes
+          supabase functions deploy flight-tracking --remote=vokjrinidcsytasjeeuy --yes
+          supabase functions deploy support-chat --remote=vokjrinidcsytasjeeuy --yes
