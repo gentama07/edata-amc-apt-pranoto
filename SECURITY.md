@@ -30,3 +30,13 @@ GitHub Pages does not let this repository set response headers such as HSTS, `X-
 ## Operational checks
 
 Run `npm run security:audit`, `npm run lint`, `npm test`, and `npm run build`. After database changes, inspect Supabase security advisors and verify that anonymous clients cannot read/write app tables or execute privileged functions. Rotate any provider key that has appeared in a screenshot, URL, log, or chat before production use.
+
+## Follow-up audit — 2026-11-20
+
+- The live Supabase project was checked read-only. Application tables have RLS enabled; recovery tables deny direct browser access. Both `profile-avatars` and `airport-video` are private, with 5 MiB image and 25 MiB MP4 limits respectively. Public asset image files have no EXIF/GPS metadata, and the SVG scan found no script or active event handlers.
+- Security improvements are prepared in the repository: shared streamed request-size validation for JSON and multipart endpoints, an active-account check and origin allowlist for flight tracking, generic support-chat errors, trusted-IP-only recovery throttling, reduced exception logging, and HTTPS Google Drive link validation. Regression tests cover malformed/oversized request bodies.
+- The hardened Edge Functions are deployed and active: `flight-tracking` v19, `support-chat` v5, `manage-users` v10, `account-recovery` v12, `drive-sync` v11, and `drive` v10. Each uses the shared bounded-body reader where it accepts a request body; flight tracking now checks active-account status and uses an origin allowlist. The Aviationstack call remains paused.
+- The live Supabase security advisor still reports leaked-password protection disabled and nine authenticated-callable `SECURITY DEFINER` functions. The latter include RLS helpers and two validated application RPCs; review their exposure and consider moving RLS-only helpers to a non-exposed schema before changing grants.
+- An Aviationstack access key was visible in prior screenshots/URLs in the conversation. Rotate it in Aviationstack and update the Supabase secret before enabling provider calls again. Do not reuse the exposed key.
+- Enable leaked-password protection in Supabase Auth password security settings. This dashboard setting is outside the repository and was not changed here.
+- The Drive-link allowlist and the already-requested landing-page update are included in the pending GitHub Pages source publication. Confirm the Pages workflow completes before treating browser changes as live.

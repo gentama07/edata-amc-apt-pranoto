@@ -3,6 +3,7 @@
 // hanya ada di secrets Supabase, tidak pernah sampai ke browser atau ke repo.
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.4'
 import { encodeBase64 } from 'https://deno.land/std@0.224.0/encoding/base64.ts'
+import { readRequestBody } from '../_shared/request.js'
 
 const allowedOrigins = ['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']
 const cors = (origin: string | null) => ({
@@ -49,7 +50,12 @@ Deno.serve(async (req) => {
 
     if ((req.headers.get('content-type') || '').includes('multipart')) {
       // Unggah surat ke folder Drive, lalu catat di tabel surat
-      const fd = await req.formData(), file = fd.get('file'), kategori = String(fd.get('kategori') || 'Lainnya')
+      const requestBody = await readRequestBody(req, 10 * 1024 * 1024 + 64 * 1024)
+      if (!requestBody.ok) return j({ error: requestBody.error }, requestBody.status, origin)
+      let fd: FormData
+      try { fd = await new Request(req.url, { method: 'POST', headers: req.headers, body: requestBody.bytes }).formData() }
+      catch { return j({ error: 'Formulir unggahan tidak valid.' }, 400, origin) }
+      const file = fd.get('file'), kategori = String(fd.get('kategori') || 'Lainnya')
       if (!(file instanceof File)) return j({ error: 'Berkas unggahan tidak ditemukan.' }, 400, origin)
       if (file.size > 10 * 1024 * 1024) return j({ error: 'Ukuran file maksimal 10 MB.' }, 400)
       if (!/\.pdf$/i.test(file.name) || file.type !== 'application/pdf') return j({ error: 'Lampiran harus berupa berkas PDF.' }, 415, origin)
@@ -66,7 +72,7 @@ Deno.serve(async (req) => {
     if (rows.length) await db.from('surat').upsert(rows, { onConflict: 'drive_file_id', ignoreDuplicates: true })
     return j({ ok: true, count: rows.length }, 200, origin)
   } catch (e) {
-    console.error('drive request failed:', e)
+    console.error('drive request failed')
     return j({ error: 'Layanan arsip gagal memproses permintaan. Hubungi Admin AMC jika masalah berulang.' }, 500, origin)
   }
 })

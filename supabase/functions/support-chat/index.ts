@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0'
+import { readJsonBody } from '../_shared/request.js'
 
 const allowedOrigins = ['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']
 const cors = (origin: string | null) => ({
@@ -27,7 +28,9 @@ Deno.serve(async request => {
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
     const { data: actor, error: actorError } = await admin.from('profiles').select('id,display_name,role,active').eq('id', user.id).single()
     if (actorError || !actor?.active) return json({ error: 'Akun tidak aktif.' }, 403, origin)
-    const input = await request.json()
+    const parsed = await readJsonBody(request, 16 * 1024)
+    if (!parsed.ok) return json({ error: parsed.error }, parsed.status, origin)
+    const input = parsed.value
     const action = String(input.action || '')
     const isAdmin = actor.role === 'admin'
     if (!['list', 'send'].includes(action)) return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
@@ -52,7 +55,7 @@ Deno.serve(async request => {
       if (error) throw error
       if (!isAdmin) {
         const { error: notificationError } = await admin.from('admin_notifications').insert({ type: 'support_message', reference_id: message.id, user_id: targetId, title: 'Pesan CS baru', body: `${actor.display_name || 'Pengguna'} mengirim pesan bantuan.` })
-        if (notificationError) console.error('Pesan CS terkirim tetapi notifikasi gagal dibuat:', notificationError)
+        if (notificationError) console.error('Pemberitahuan pesan bantuan gagal dibuat')
       }
       return json({ message }, 201, origin)
     }
@@ -63,8 +66,8 @@ Deno.serve(async request => {
     if (isAdmin) await admin.from('support_messages').update({ admin_read_at: new Date().toISOString() }).eq('user_id', targetId).eq('admin_read_at', null).neq('sender_id', user.id)
     else await admin.from('support_messages').update({ user_read_at: new Date().toISOString() }).eq('user_id', targetId).eq('user_read_at', null).neq('sender_id', user.id)
     return json({ messages: messages || [] }, 200, origin)
-  } catch (error) {
-    console.error('support-chat:', error)
-    return json({ error: error instanceof Error ? error.message : 'Chat gagal diproses.' }, 500, origin)
+  } catch {
+    console.error('support-chat request failed')
+    return json({ error: 'Chat gagal diproses. Coba lagi nanti.' }, 500, origin)
   }
 })

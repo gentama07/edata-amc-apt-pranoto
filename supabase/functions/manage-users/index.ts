@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0'
+import { readJsonBody } from '../_shared/request.js'
 
 const allowedOrigins = ['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']
 const cors = (origin: string | null) => ({
@@ -32,8 +33,9 @@ Deno.serve(async request => {
       .select('role,active').eq('id', user.id).single()
     if (actorError || actor?.role !== 'admin' || !actor.active) return json({ error: 'Aksi ini hanya dapat dilakukan Admin aktif.' }, 403, origin)
 
-    let input: Record<string, unknown>
-    try { input = await request.json() } catch { return json({ error: 'Isi permintaan tidak valid.' }, 400, origin) }
+    const parsed = await readJsonBody(request, 32 * 1024)
+    if (!parsed.ok) return json({ error: parsed.error }, parsed.status, origin)
+    const input = parsed.value
     if (input.action === 'create') {
       const email = String(input.email || '').trim().toLowerCase()
       const password = String(input.password || '')
@@ -90,7 +92,7 @@ Deno.serve(async request => {
     }
     return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
   } catch (error) {
-    console.error('manage-users request failed:', error)
+    console.error('manage-users request failed')
     return json({ error: 'Pengelolaan akun gagal diproses. Coba lagi nanti.' }, 500, origin)
   }
 })

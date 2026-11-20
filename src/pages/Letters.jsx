@@ -6,6 +6,15 @@ import { PageHeading } from '../components/Shell';
 const MAX_PDF_BYTES = 10 * 1024 * 1024;
 const pdfSnapshots = new WeakSet();
 
+function safeDriveUrl(value) {
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' && ['drive.google.com', 'docs.google.com'].includes(url.hostname) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 function correspondenceStatus(letter, allLetters, allMessages, demo) {
   if (letter.senderConfirmedAt && letter.recipientConfirmedAt) return 'Selesai';
   if (letter.direction === 'outbound') return demo || letter.driveFileId ? 'Terkirim' : 'Dalam proses';
@@ -229,8 +238,8 @@ export default function Letters({ letters, messages, profile, canWrite, canReply
     {selected && <section className="panel correspondence-thread"><div className="panel-heading"><div><h2>{selected.subject}</h2><p>{selected.senderOrganization || selected.sender} · {selected.reference}</p></div><button className="close-form" onClick={() => setActiveId('')} aria-label="Tutup detail"><X size={17} /></button></div>
       <div className="completion-confirmations" aria-live="polite"><div><span>Pengirim</span><strong>{selected.senderConfirmedAt ? 'Sudah mengonfirmasi' : 'Menunggu konfirmasi'}</strong></div><div><span>Penerima</span><strong>{selected.recipientConfirmedAt ? 'Sudah mengonfirmasi' : 'Menunggu konfirmasi'}</strong></div>{completionSide(selected) && <button className="button-secondary" onClick={() => confirmComplete(selected)} disabled={busy || Boolean(selected[completionSide(selected) === 'sender' ? 'senderConfirmedAt' : 'recipientConfirmedAt'])}>{selected[completionSide(selected) === 'sender' ? 'senderConfirmedAt' : 'recipientConfirmedAt'] ? 'Konfirmasi Anda tersimpan' : 'Konfirmasi surat selesai'}</button>}</div>
       <div className="thread-body">
-        <article className="thread-entry thread-original"><div className="thread-entry-heading"><strong>{selected.sender}</strong><time>{selected.date}</time></div><p>{selected.subject}</p>{selected.driveWebViewLink && <a href={selected.driveWebViewLink} target="_blank" rel="noreferrer">Buka PDF asli · Google Drive</a>}</article>
-      {thread.map(entry => entry.kind === 'message' ? <article className={`thread-entry ${entry.sender_id === profile.id ? 'thread-own' : ''}`} key={`m-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.sender_name || entry.sender || 'Petugas AMC'}</strong><time>{new Date(entry.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div><p>{entry.body}</p></article> : <article className="thread-entry thread-reply" key={`r-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.senderOrganization || entry.sender || 'AMC'} · surat balasan</strong><time>{entry.date}</time></div><p>{entry.fileName || entry.subject}</p>{entry.driveWebViewLink && <a href={entry.driveWebViewLink} target="_blank" rel="noreferrer">Buka PDF balasan · Google Drive</a>}</article>)}
+        <article className="thread-entry thread-original"><div className="thread-entry-heading"><strong>{selected.sender}</strong><time>{selected.date}</time></div><p>{selected.subject}</p>{safeDriveUrl(selected.driveWebViewLink) && <a href={safeDriveUrl(selected.driveWebViewLink)} target="_blank" rel="noopener noreferrer">Buka PDF asli · Google Drive</a>}</article>
+      {thread.map(entry => entry.kind === 'message' ? <article className={`thread-entry ${entry.sender_id === profile.id ? 'thread-own' : ''}`} key={`m-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.sender_name || entry.sender || 'Petugas AMC'}</strong><time>{new Date(entry.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div><p>{entry.body}</p></article> : <article className="thread-entry thread-reply" key={`r-${entry.id}`}><div className="thread-entry-heading"><strong>{entry.senderOrganization || entry.sender || 'AMC'} · surat balasan</strong><time>{entry.date}</time></div><p>{entry.fileName || entry.subject}</p>{safeDriveUrl(entry.driveWebViewLink) && <a href={safeDriveUrl(entry.driveWebViewLink)} target="_blank" rel="noopener noreferrer">Buka PDF balasan · Google Drive</a>}</article>)}
         {thread.length === 0 && <p className="thread-empty">Belum ada balasan. Pesan baru akan muncul langsung di percakapan ini.</p>}
       </div>
       {canReply && <div className="thread-composer"><form className="thread-chat-form" onSubmit={sendChat}><label className="field">Balas melalui chat<textarea value={chatDraft} onChange={event => setChatDraft(event.target.value)} rows="2" maxLength="5000" placeholder="Tulis pesan untuk pengirim surat…" /></label><button className="button-primary" disabled={busy || !chatDraft.trim()}><MessageCircle size={16} />Kirim pesan</button></form>

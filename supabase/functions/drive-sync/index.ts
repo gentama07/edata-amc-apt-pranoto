@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0'
 import { encodeBase64 } from 'https://deno.land/std@0.224.0/encoding/base64.ts'
+import { readRequestBody } from '../_shared/request.js'
 
 const corsFor = (origin: string | null) => ({
   'Access-Control-Allow-Origin': origin === 'https://gentama07.github.io' || origin === 'http://localhost:5173' || origin === 'http://127.0.0.1:5173'
@@ -43,10 +44,6 @@ Deno.serve(async (request) => {
   if (origin && !['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173'].includes(origin)) {
     return json({ error: 'Asal permintaan tidak diizinkan.' }, 403, origin)
   }
-  if (Number(request.headers.get('Content-Length') || 0) > 10 * 1024 * 1024 + 64 * 1024) {
-    return json({ error: 'Ukuran permintaan melampaui batas.' }, 413, origin)
-  }
-
   try {
     const authorization = request.headers.get('Authorization') || ''
     const supabaseUrl = env('SUPABASE_URL')
@@ -62,7 +59,14 @@ Deno.serve(async (request) => {
     if (!profile.active) return json({ error: 'Akun ini dinonaktifkan.' }, 403, origin)
     if (!['personel', 'admin', 'pimpinan', 'ground_handling'].includes(profile.role)) return json({ error: 'Peran ini tidak dapat mengakses Persuratan.' }, 403, origin)
 
-    const form = await request.formData()
+    const requestBody = await readRequestBody(request, 10 * 1024 * 1024 + 64 * 1024)
+    if (!requestBody.ok) return json({ error: requestBody.error }, requestBody.status, origin)
+    let form: FormData
+    try {
+      form = await new Request(request.url, { method: 'POST', headers: request.headers, body: requestBody.bytes }).formData()
+    } catch {
+      return json({ error: 'Formulir unggahan tidak valid.' }, 400, origin)
+    }
     const file = form.get('file')
     const letterId = String(form.get('letterId') || '')
     if (!(file instanceof File)) return json({ error: 'Berkas unggahan tidak ditemukan.' }, 400, origin)
@@ -137,7 +141,7 @@ Deno.serve(async (request) => {
 
     return json({ ok: true, file: attachment.file_name, driveFileId: attachment.drive_file_id, destination }, 200, origin)
   } catch (error) {
-    console.error('drive-sync request failed:', error)
+    console.error('drive-sync request failed')
     return json({ error: 'Layanan arsip gagal memproses permintaan. Hubungi Admin AMC jika masalah berulang.' }, 500, origin)
   }
 })

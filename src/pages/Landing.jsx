@@ -195,6 +195,35 @@ export default function Landing({ onLogin }) {
         <source src={`${import.meta.env.BASE_URL}assets/top-landing-page-animation.mp4?v=3`} type="video/mp4" />
       </video>
       <div className="landing-hero-shade" aria-hidden="true" />
+      <svg className="landing-flight-field" viewBox="0 0 1440 790" preserveAspectRatio="none" aria-hidden="true">
+        <path className="landing-flight-route route-blue" d="M-80 570C180 300 388 730 650 477S1110 210 1520 92" />
+        <path className="landing-flight-route route-teal" d="M-60 195C215 390 402 112 672 248S1126 690 1510 525" />
+        <path className="landing-flight-route route-amber" d="M182 850C360 550 605 742 844 484S1170 298 1296-56" />
+        <g className="landing-flight-nodes route-blue">
+          <circle className="flight-node-halo" cx="205" cy="410" r="10" />
+          <circle className="flight-node-core" cx="205" cy="410" r="2.8" />
+          <circle className="flight-node-halo" cx="650" cy="477" r="9" />
+          <circle className="flight-node-core" cx="650" cy="477" r="2.5" />
+          <circle className="flight-node-halo" cx="1120" cy="208" r="11" />
+          <circle className="flight-node-core" cx="1120" cy="208" r="3" />
+        </g>
+        <g className="landing-flight-nodes route-teal">
+          <circle className="flight-node-halo" cx="402" cy="112" r="9" />
+          <circle className="flight-node-core" cx="402" cy="112" r="2.5" />
+          <circle className="flight-node-halo" cx="672" cy="248" r="10" />
+          <circle className="flight-node-core" cx="672" cy="248" r="2.8" />
+          <circle className="flight-node-halo" cx="1126" cy="690" r="9" />
+          <circle className="flight-node-core" cx="1126" cy="690" r="2.5" />
+        </g>
+        <g className="landing-flight-nodes route-amber">
+          <circle className="flight-node-halo" cx="605" cy="742" r="9" />
+          <circle className="flight-node-core" cx="605" cy="742" r="2.5" />
+          <circle className="flight-node-halo" cx="844" cy="484" r="10" />
+          <circle className="flight-node-core" cx="844" cy="484" r="2.8" />
+          <circle className="flight-node-halo" cx="1170" cy="298" r="9" />
+          <circle className="flight-node-core" cx="1170" cy="298" r="2.5" />
+        </g>
+      </svg>
       <div className="landing-hero-inner">
         <div className="landing-hero-copy" data-enter>
           <h1 id="landing-title">Operasi apron,<br /><em>tertata dalam satu ruang kerja.</em></h1>

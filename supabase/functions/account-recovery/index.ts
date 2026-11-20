@@ -1,4 +1,5 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.0'
+import { readJsonBody } from '../_shared/request.js'
 
 const allowedOrigins = ['https://gentama07.github.io', 'http://localhost:5173', 'http://127.0.0.1:5173']
 const cors = (origin: string | null) => ({
@@ -33,7 +34,9 @@ Deno.serve(async request => {
     const anonKey = Deno.env.get('SUPABASE_ANON_KEY')!
     const serviceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     const admin = createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } })
-    const input = await request.json()
+    const parsed = await readJsonBody(request, 8 * 1024)
+    if (!parsed.ok) return json({ error: parsed.error }, parsed.status, origin)
+    const input = parsed.value
     const action = String(input.action || '')
 
     if (action === 'list' || action === 'approve' || action === 'reject') {
@@ -87,7 +90,8 @@ Deno.serve(async request => {
     if (action !== 'request' && action !== 'reset') return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
     const email = normalizeEmail(input.email)
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: 'Masukkan alamat email yang valid.' }, 400, origin)
-    const ip = request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    // Trust only the platform-injected client IP. X-Forwarded-For may be supplied by callers.
+    const ip = request.headers.get('cf-connecting-ip') || 'unknown'
     const emailHash = await digest(serviceKey, `email:${email}`)
     const ipHash = await digest(serviceKey, `ip:${ip}`)
     const { count: emailAttempts, error: emailRateError } = await admin.from('account_recovery_attempts')
@@ -131,7 +135,7 @@ Deno.serve(async request => {
         type: 'account_recovery', reference_id: createdRequest.id, user_id: profile.id,
         title: 'Permintaan pemulihan akun', body: `${account?.display_name || 'Pengguna'} mengajukan pemulihan akun.`,
       })
-      if (notificationError) console.error('Gagal membuat notifikasi pemulihan:', notificationError)
+      if (notificationError) console.error('Pemberitahuan pemulihan gagal dibuat')
       return json({ stage: 'submitted' }, 200, origin)
     }
 
@@ -162,7 +166,7 @@ Deno.serve(async request => {
 
     return json({ error: 'Aksi tidak dikenal.' }, 400, origin)
   } catch (error) {
-    console.error('account-recovery:', error)
+    console.error('account-recovery request failed')
     return json({ error: 'Pemulihan akun gagal diproses. Coba lagi nanti atau hubungi Admin AMC.' }, 500, origin)
   }
 })
