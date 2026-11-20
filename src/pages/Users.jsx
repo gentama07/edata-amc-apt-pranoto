@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Check, KeyRound, MessageCircle, Pause, Plus, RefreshCw, Search, Shield, UserRound, X } from 'lucide-react';
+import { Activity, Check, KeyRound, MessageCircle, Pause, Plus, RefreshCw, Search, Shield, UserRound, X } from 'lucide-react';
 import { PageHeading } from '../components/Shell';
 import { airportOptions } from '../config/airportOptions';
 import { supabase } from '../lib/supabase';
 import SupportChatPanel from '../components/SupportChatPanel';
+import { checkServiceHealth, getServiceHistory, getServiceSnapshot, subscribeServiceHealth } from '../lib/serviceMonitor';
 
 const demoProfiles = [
   { id: 'demo-admin', display_name: 'Admin', email: 'admin@demo.local', role: 'admin', active: true },
@@ -19,6 +20,10 @@ export default function Users({ app }) {
   const [newEmail, setNewEmail] = useState(app.profile.email || ''); const [emailState, setEmailState] = useState('');
   const [recoveries, setRecoveries] = useState([]); const [recoveryBusy, setRecoveryBusy] = useState(''); const [issuedToken, setIssuedToken] = useState(null);
   const [query, setQuery] = useState(''); const [chatProfile, setChatProfile] = useState(null);
+  const [serviceHealth, setServiceHealth] = useState(() => app.demo ? { status: 'demo', message: 'Pemeriksaan tidak berjalan pada pratinjau lokal.' } : getServiceSnapshot());
+  const [serviceHistory, setServiceHistory] = useState(getServiceHistory);
+  const [serviceChecking, setServiceChecking] = useState(false);
+  const [serviceLogFocused, setServiceLogFocused] = useState(false);
   const reload = useCallback(async () => {
     if (app.demo) { setProfiles(demoProfiles); return; }
     const { data, error: loadError } = await supabase.from('profiles').select('id,display_name,email,role,active,organization').order('display_name');
@@ -34,22 +39,46 @@ export default function Users({ app }) {
   }, [app.demo]);
   useEffect(() => { reloadRecoveries(); }, [reloadRecoveries]);
   useEffect(() => {
-    const raw = localStorage.getItem('amc-admin-notification-target');
-    if (!raw) return;
-    let target;
-    try { target = JSON.parse(raw); } catch { localStorage.removeItem('amc-admin-notification-target'); return; }
+    const unsubscribe = subscribeServiceHealth(snapshot => {
+      setServiceHealth(snapshot);
+      setServiceHistory(snapshot.history || getServiceHistory());
+    });
+    return unsubscribe;
+  }, []);
+  const consumeNotificationTarget = useCallback(target => {
+    if (target.type === 'service_status') {
+      localStorage.removeItem('amc-admin-notification-target');
+      setServiceLogFocused(true);
+      window.setTimeout(() => document.getElementById('service-status-log')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 180);
+      window.setTimeout(() => setServiceLogFocused(false), 2600);
+    }
     if (target.type === 'support_message' && profiles.length) {
       const profile = profiles.find(row => row.id === target.userId);
       if (profile) { setChatProfile(profile); localStorage.removeItem('amc-admin-notification-target'); }
     }
     if (target.type === 'account_recovery' && recoveries.length) {
-      const timer = window.setTimeout(() => document.querySelector(`[data-recovery-id="${CSS.escape(target.referenceId || '')}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
+      window.setTimeout(() => document.querySelector(`[data-recovery-id="${CSS.escape(target.referenceId || '')}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 120);
       localStorage.removeItem('amc-admin-notification-target');
-      return () => window.clearTimeout(timer);
     }
   }, [profiles, recoveries]);
+  useEffect(() => {
+    const openTarget = event => consumeNotificationTarget(event.detail || {});
+    window.addEventListener('amc-admin-notification-open', openTarget);
+    const raw = localStorage.getItem('amc-admin-notification-target');
+    if (raw) {
+      try { consumeNotificationTarget(JSON.parse(raw)); }
+      catch { localStorage.removeItem('amc-admin-notification-target'); }
+    }
+    return () => window.removeEventListener('amc-admin-notification-open', openTarget);
+  }, [consumeNotificationTarget]);
   const filteredProfiles = useMemo(() => profiles.filter(profile => `${profile.display_name} ${profile.email} ${profile.organization || ''} ${profile.role}`.toLowerCase().includes(query.toLowerCase())), [profiles, query]);
   const activeCount = profiles.filter(profile => profile.active).length;
+  const checkServiceNow = async () => {
+    if (serviceChecking || app.demo) return;
+    setServiceChecking(true);
+    try { await checkServiceHealth(); }
+    finally { setServiceChecking(false); }
+  };
 
   const processRecovery = async (request, action) => {
     setRecoveryBusy(request.id); setError(''); setIssuedToken(null);
@@ -93,6 +122,16 @@ export default function Users({ app }) {
     <PageHeading eyebrow="AKSES & PERAN" title="Manajemen pengguna" description="Buat akun, atur peran, perusahaan, dan status akses." action={!app.demo && <button className="button-primary" onClick={() => setCreateOpen(value => !value)}><Plus size={17} />Buat akun</button>} />
     {app.demo && <div className="inline-notice"><Shield size={17} /><span>Pratinjau lokal: akun dan perubahan peran di bawah ini hanya contoh.</span></div>}
     {error && <div className="inline-error" role="alert">{error}</div>}
+    <section id="service-status-log" className={`panel service-monitor-panel ${serviceLogFocused ? 'service-monitor-focused' : ''}`} aria-labelledby="service-monitor-title">
+      <div className="panel-heading service-monitor-heading"><div><span className="panel-kicker">PEMANTAU LAYANAN</span><h2 id="service-monitor-title">Status & riwayat layanan</h2><p>Pemeriksaan otomatis tiap 30 detik selama aplikasi terbuka.</p></div>{!app.demo && <button className="button-secondary" onClick={checkServiceNow} disabled={serviceChecking}><RefreshCw size={15} className={serviceChecking ? 'service-refreshing' : ''} />{serviceChecking ? 'Memeriksa…' : 'Periksa sekarang'}</button>}</div>
+      <div className={`service-monitor-current service-monitor-${serviceHealth.status}`}>
+        <span className="service-monitor-mark"><Activity size={18} /></span>
+        <div><strong>{app.demo ? 'Pratinjau lokal' : serviceHealth.status === 'online' ? 'Layanan data aktif' : serviceHealth.status === 'checking' ? 'Memeriksa layanan' : 'Layanan sulit dijangkau'}</strong><p>{serviceHealth.message}</p><small>{serviceHealth.checkedAt ? `Pemeriksaan terakhir ${new Date(serviceHealth.checkedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA` : 'Menunggu pemeriksaan pertama.'}</small></div>
+      </div>
+      <div className="service-log-heading"><h3>Riwayat pemeriksaan</h3><span>{serviceHistory.length} catatan</span></div>
+      {serviceHistory.length ? <ol className="service-log-list">{serviceHistory.map(event => <li key={event.id} className={`service-log-entry service-log-${event.status}`}><span className="service-log-mark"><Activity size={14} /></span><div><strong>{event.title}</strong><p>{event.message}</p><time>{new Date(event.checkedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div></li>)}</ol> : <div className="service-log-empty">Belum ada catatan. Pemantau akan menyimpan pemeriksaan pertama saat terhubung.</div>}
+      <div className="service-monitor-footnote">Pemantau tidak membuka data profil. Catatan dan notifikasi status tersimpan di browser ini; perubahan akses atau kredensial tetap memerlukan tindakan Admin.</div>
+    </section>
     {createOpen && <section className="panel user-create-panel"><div className="panel-heading"><div><span className="panel-kicker">AKUN BARU</span><h2>Buat akses operasional</h2></div></div><form onSubmit={create}><div className="form-grid form-grid-2">
       <label className="field">Nama pengguna<input value={form.displayName} onChange={event => setForm(current => ({ ...current, displayName: event.target.value }))} required /></label>
       <label className="field">Email<input type="email" value={form.email} onChange={event => setForm(current => ({ ...current, email: event.target.value }))} required /></label>

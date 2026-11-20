@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Activity, Bell, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import { supabase } from '../lib/supabase';
+import { getServiceHistory, markServiceNotificationRead, subscribeServiceHealth } from '../lib/serviceMonitor';
 import ServiceStatus from './ServiceStatus';
 import SupportChatPanel from './SupportChatPanel';
 
@@ -114,24 +115,47 @@ function AdminNotificationCenter({ onOpenUsers }) {
     let alive = true;
     const load = async () => {
       const { data } = await supabase.from('admin_notifications').select('id,type,reference_id,user_id,title,body,created_at,read_at').order('created_at', { ascending: false }).limit(30);
-      if (alive) setItems(data || []);
+      if (!alive) return;
+      const serviceItems = getServiceHistory().filter(event => event.notification).map(event => ({
+        id: event.id,
+        type: 'service_status',
+        reference_id: event.id,
+        user_id: null,
+        title: event.title,
+        body: event.message,
+        created_at: event.checkedAt,
+        read_at: event.readAt,
+        localOnly: true,
+      }));
+      setItems([...(data || []), ...serviceItems].sort((left, right) => Date.parse(right.created_at) - Date.parse(left.created_at)).slice(0, 30));
     };
     load();
     const channel = supabase.channel('admin-web-notifications').on('postgres_changes', { event: '*', schema: 'public', table: 'admin_notifications' }, load).subscribe();
-    return () => { alive = false; supabase.removeChannel(channel); };
+    const unsubscribe = subscribeServiceHealth(load);
+    const onStorage = event => { if (event.key === 'amc-service-health-history-v1') load(); };
+    window.addEventListener('storage', onStorage);
+    return () => { alive = false; unsubscribe(); window.removeEventListener('storage', onStorage); supabase.removeChannel(channel); };
   }, []);
   const openNotification = async item => {
-    if (!item.read_at) {
+    if (item.type === 'service_status') {
+      markServiceNotificationRead(item.reference_id);
+    } else if (!item.read_at) {
       await supabase.from('admin_notifications').update({ read_at: new Date().toISOString() }).eq('id', item.id);
       setItems(current => current.map(row => row.id === item.id ? { ...row, read_at: new Date().toISOString() } : row));
     }
-    localStorage.setItem('amc-admin-notification-target', JSON.stringify({ type: item.type, referenceId: item.reference_id, userId: item.user_id }));
+    const target = { type: item.type, referenceId: item.reference_id, userId: item.user_id };
+    localStorage.setItem('amc-admin-notification-target', JSON.stringify(target));
+    window.dispatchEvent(new CustomEvent('amc-admin-notification-open', { detail: target }));
     setOpen(false);
     onOpenUsers(item);
   };
   return <div className="admin-notification-center">
     <button className="admin-notification-button" aria-label={`Notifikasi${unread ? `, ${unread} belum dibaca` : ''}`} aria-expanded={open} onClick={() => setOpen(value => !value)}><Bell size={18} />{unread > 0 && <span>{unread > 9 ? '9+' : unread}</span>}</button>
-    {open && <><button className="notification-dismiss" aria-label="Tutup notifikasi" onClick={() => setOpen(false)} /><section className="admin-notification-popover" aria-label="Notifikasi Admin"><header><strong>Notifikasi</strong><span>{unread ? `${unread} belum dibaca` : 'Semua sudah dibaca'}</span></header>{items.length ? <div className="admin-notification-list">{items.map(item => <button key={item.id} className={`admin-notification-item ${item.read_at ? '' : 'notification-unread'}`} onClick={() => openNotification(item)}><i className={item.type === 'account_recovery' ? 'notification-recovery-icon' : 'notification-chat-icon'}>{item.type === 'account_recovery' ? <UserRoundCog size={15} /> : <MessageCircle size={15} />}</i><span><strong>{item.title}</strong><small>{item.body}</small><time>{new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</time></span>{!item.read_at && <b aria-label="Belum dibaca" />}</button>)}</div> : <div className="notification-empty">Belum ada pesan CS atau permintaan pemulihan akun.</div>}<footer><button onClick={() => { setOpen(false); onOpenUsers(); }}>Buka manajemen pengguna</button></footer></section></>}
+    {open && <><button className="notification-dismiss" aria-label="Tutup notifikasi" onClick={() => setOpen(false)} /><section className="admin-notification-popover" aria-label="Notifikasi Admin"><header><strong>Notifikasi</strong><span>{unread ? `${unread} belum dibaca` : 'Semua sudah dibaca'}</span></header>{items.length ? <div className="admin-notification-list">{items.map(item => {
+      const service = item.type === 'service_status';
+      const recovery = item.type === 'account_recovery';
+      return <button key={item.id} className={`admin-notification-item ${item.read_at ? '' : 'notification-unread'}`} onClick={() => openNotification(item)}><i className={service ? 'notification-service-icon' : recovery ? 'notification-recovery-icon' : 'notification-chat-icon'}>{service ? <Activity size={15} /> : recovery ? <UserRoundCog size={15} /> : <MessageCircle size={15} />}</i><span><strong>{item.title}</strong><small>{item.body}</small><time>{new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}{service && ' · Riwayat di perangkat ini'}</time></span>{!item.read_at && <b aria-label="Belum dibaca" />}</button>;
+    })}</div> : <div className="notification-empty">Belum ada pesan CS, permintaan pemulihan, atau perubahan status layanan.</div>}<footer><button onClick={() => { setOpen(false); onOpenUsers(); }}>Buka manajemen pengguna</button></footer></section></>}
   </div>;
 }
 
