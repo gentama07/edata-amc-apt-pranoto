@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Activity, Bell, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
+import { Activity, AlertTriangle, Bell, ClipboardList, FileBarChart2, FileText, LayoutDashboard, LogOut, Menu, MessageCircle, Moon, Plane, Sun, UserRoundCog, X } from 'lucide-react';
 import { formatWita } from '../lib/time';
 import { supabase } from '../lib/supabase';
 import { getServiceHistory, markServiceNotificationRead, subscribeServiceHealth } from '../lib/serviceMonitor';
@@ -28,6 +28,10 @@ export function Shell({ app, active, setActive, children }) {
   const [openingVideo, setOpeningVideo] = useState('');
   const [openingVideoReady, setOpeningVideoReady] = useState(false);
   const [supportOpen, setSupportOpen] = useState(false);
+  const [logoutConfirmOpen, setLogoutConfirmOpen] = useState(false);
+  const logoutButtonRef = useRef(null);
+  const cancelLogoutRef = useRef(null);
+  const confirmLogoutRef = useRef(null);
   useEffect(() => {
     if (!app.openingRequested || window.matchMedia('(prefers-reduced-motion: reduce)').matches || sessionStorage.getItem(openingKey)) return;
     sessionStorage.setItem(openingKey, '1');
@@ -71,6 +75,27 @@ export function Shell({ app, active, setActive, children }) {
     : [...navItems.filter(item => !item.write || canWrite), ...(profile.role === 'admin' ? [{ id: 'users', label: 'Pengguna', Icon: UserRoundCog }] : [])];
   const navigate = id => { if (id !== 'summary') setShowOpening(false); setActive(id); setMenuOpen(false); };
   const handleSignOut = () => { sessionStorage.removeItem(openingKey); signOut(); };
+  const cancelSignOut = useCallback(() => {
+    setLogoutConfirmOpen(false);
+    window.requestAnimationFrame(() => logoutButtonRef.current?.focus());
+  }, []);
+  useEffect(() => {
+    if (!logoutConfirmOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    cancelLogoutRef.current?.focus();
+    const onKeyDown = event => {
+      if (event.key === 'Escape') { event.preventDefault(); cancelSignOut(); }
+      if (event.key === 'Tab') {
+        const first = cancelLogoutRef.current;
+        const last = confirmLogoutRef.current;
+        if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+        else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => { document.body.style.overflow = previousOverflow; document.removeEventListener('keydown', onKeyDown); };
+  }, [logoutConfirmOpen, cancelSignOut]);
 
   return <div className="app-frame min-h-screen">
     <a className="skip-link" href="#main-content">Lewati ke konten utama</a>
@@ -82,11 +107,11 @@ export function Shell({ app, active, setActive, children }) {
         <div className="brand-copy"><strong>E-data AMC</strong><span>APT Pranoto · Samarinda</span></div>
       </div>
       <div className="topbar-right">
+        <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         {profile.role === 'admin' && !demo && <AdminNotificationCenter onOpenUsers={() => navigate('users')} />}
-        <span className={`role-badge role-${profile.role}`}>{profile.role === 'ground_handling' ? 'Ground Handling' : profile.role}</span>
-        <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label="Ganti tema" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-        <button className="logout-button" aria-label="Keluar" onClick={handleSignOut}><LogOut size={16} /><span>Keluar</span></button>
+        <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
+        <button ref={logoutButtonRef} className="logout-button" aria-label="Keluar" onClick={() => setLogoutConfirmOpen(true)}><LogOut size={16} /><span>Keluar</span></button>
       </div>
     </header>
     <div className="workspace">
@@ -102,6 +127,7 @@ export function Shell({ app, active, setActive, children }) {
       <main className="main-content" id="main-content" tabIndex="-1">{app.error && <div className="toast-error" role="status" aria-live="polite"><span>{app.error}</span><button onClick={() => app.setError('')} aria-label="Tutup pesan">×</button></div>}{active === 'summary' && showOpening ? openingVideo ? <>{!openingVideoReady && <div className="opening-video" role="status" aria-label="Menyiapkan video pembuka" />}<Opening src={openingVideo} visible={openingVideoReady} onReady={() => setOpeningVideoReady(true)} onDone={finishOpening} /></> : <div className="opening-video" role="status" aria-label="Memuat video pembuka" /> : children}</main>
     </div>
     <nav className="bottom-nav" aria-label="Navigasi bawah">{items.map(({ id, label, Icon }) => <button key={id} onClick={() => navigate(id)} className={active === id ? 'bottom-active' : ''} aria-current={active === id ? 'page' : undefined}><Icon size={19} /><span>{label === 'Log pergerakan' ? 'Log' : label === 'Input data' ? 'Input' : label === 'Pengguna' ? 'Pengguna' : label}</span></button>)}</nav>
+    {logoutConfirmOpen && <div className="signout-backdrop" onMouseDown={event => { if (event.target === event.currentTarget) cancelSignOut(); }}><section className="signout-dialog" role="alertdialog" aria-modal="true" aria-labelledby="signout-title" aria-describedby="signout-description"><span className="signout-warning-icon"><AlertTriangle size={21} aria-hidden="true" /></span><h2 id="signout-title">Keluar dari akun?</h2><p id="signout-description">Sesi operasional Anda akan diakhiri pada perangkat ini.</p><div className="signout-actions"><button ref={cancelLogoutRef} type="button" className="button-secondary" onClick={cancelSignOut}>Batal</button><button ref={confirmLogoutRef} type="button" className="button-danger signout-confirm-button" onClick={handleSignOut}><LogOut size={15} />Keluar</button></div></section></div>}
     {profile.role !== 'admin' && !demo && <><button className="support-fab" onClick={() => setSupportOpen(true)}><MessageCircle size={17} /><span>Bantuan</span></button>{supportOpen && <SupportChatPanel app={app} onClose={() => setSupportOpen(false)} />}</>}
   </div>;
 }
