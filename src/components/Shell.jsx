@@ -159,6 +159,7 @@ function WebNotificationCenter({ app, onOpenUsers, onOpenSupport }) {
         body: event.message,
         created_at: event.checkedAt,
         read_at: event.readAt,
+        serviceStatus: event.status,
         localOnly: true,
       }));
       const messageItems = (messageResult.data || []).map(message => ({
@@ -206,7 +207,9 @@ function WebNotificationCenter({ app, onOpenUsers, onOpenSupport }) {
     {open && <><button className="notification-dismiss" aria-label="Tutup notifikasi" onClick={() => setOpen(false)} /><section className="admin-notification-popover" aria-label="Notifikasi"><header><strong>Notifikasi</strong><span>{unread ? `${unread} belum dibaca` : 'Semua sudah dibaca'}</span></header>{items.length ? <div className="admin-notification-list">{items.map(item => {
       const service = item.type === 'service_status';
       const recovery = item.type === 'account_recovery';
-      return <button key={item.id} className={`admin-notification-item ${item.read_at ? '' : 'notification-unread'}`} onClick={() => openNotification(item)}><i className={service ? 'notification-service-icon' : recovery ? 'notification-recovery-icon' : 'notification-chat-icon'}>{service ? <Activity size={15} /> : recovery ? <UserRoundCog size={15} /> : <MessageCircle size={15} />}</i><span><strong>{item.title}</strong><small>{item.body}</small><time>{new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}{service && ' · Riwayat di perangkat ini'}</time></span>{!item.read_at && <b aria-label="Belum dibaca" />}</button>;
+      const serviceTone = service ? item.serviceStatus || (item.title?.toLowerCase().includes('sulit') ? 'issue' : 'online') : '';
+      const serviceClass = serviceTone === 'issue' ? 'notification-service-issue' : serviceTone === 'checking' ? 'notification-service-checking' : 'notification-service-icon';
+      return <button key={item.id} className={`admin-notification-item ${item.read_at ? '' : 'notification-unread'}`} onClick={() => openNotification(item)}><i className={service ? serviceClass : recovery ? 'notification-recovery-icon' : 'notification-chat-icon'}>{service ? <Activity size={15} /> : recovery ? <UserRoundCog size={15} /> : <MessageCircle size={15} />}</i><span><strong>{item.title}</strong><small>{item.body}</small><time>{new Date(item.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}{service && ' · Riwayat di perangkat ini'}</time></span>{!item.read_at && <b aria-label="Belum dibaca" />}</button>;
     })}</div> : <div className="notification-empty">{isAdmin ? 'Belum ada pesan CS, permintaan pemulihan, atau perubahan status layanan.' : 'Belum ada pesan baru atau perubahan status layanan.'}</div>}<footer><button onClick={() => { setOpen(false); isAdmin ? onOpenUsers() : onOpenSupport(); }}>{isAdmin ? 'Buka manajemen pengguna' : 'Buka bantuan'}</button></footer></section></>}
   </div>;
 }

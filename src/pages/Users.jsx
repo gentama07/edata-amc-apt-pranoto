@@ -19,6 +19,7 @@ export default function Users({ app }) {
   const [form, setForm] = useState(initialForm); const [createOpen, setCreateOpen] = useState(false);
   const [newEmail, setNewEmail] = useState(app.profile.email || ''); const [emailState, setEmailState] = useState('');
   const [recoveries, setRecoveries] = useState([]); const [recoveryBusy, setRecoveryBusy] = useState(''); const [issuedToken, setIssuedToken] = useState(null);
+  const [tokenExpired, setTokenExpired] = useState(false); const [countdownNow, setCountdownNow] = useState(Date.now());
   const [query, setQuery] = useState(''); const [chatProfile, setChatProfile] = useState(null);
   const [serviceHealth, setServiceHealth] = useState(() => app.demo ? { status: 'demo', message: 'Pemeriksaan tidak berjalan pada pratinjau lokal.' } : getServiceSnapshot());
   const [serviceHistory, setServiceHistory] = useState(getServiceHistory);
@@ -38,6 +39,18 @@ export default function Users({ app }) {
     setRecoveries(data?.requests || []);
   }, [app.demo]);
   useEffect(() => { reloadRecoveries(); }, [reloadRecoveries]);
+  useEffect(() => {
+    if (!issuedToken) return undefined;
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      setCountdownNow(now);
+      if (Date.parse(issuedToken.expiresAt) <= now) {
+        setIssuedToken(null);
+        setTokenExpired(true);
+      }
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [issuedToken]);
   useEffect(() => {
     const unsubscribe = subscribeServiceHealth(snapshot => {
       setServiceHealth(snapshot);
@@ -73,6 +86,11 @@ export default function Users({ app }) {
   }, [consumeNotificationTarget]);
   const filteredProfiles = useMemo(() => profiles.filter(profile => `${profile.display_name} ${profile.email} ${profile.organization || ''} ${profile.role}`.toLowerCase().includes(query.toLowerCase())), [profiles, query]);
   const activeCount = profiles.filter(profile => profile.active).length;
+  const tokenRemainingMs = issuedToken ? Math.max(0, Date.parse(issuedToken.expiresAt) - countdownNow) : 0;
+  const tokenRemainingSeconds = Math.ceil(tokenRemainingMs / 1000);
+  const tokenDurationMs = issuedToken ? Math.max(1, Date.parse(issuedToken.expiresAt) - issuedToken.issuedAt) : 1;
+  const tokenProgress = issuedToken ? Math.min(100, Math.max(0, (tokenRemainingMs / tokenDurationMs) * 100)) : 0;
+  const tokenCountdownLabel = `${String(Math.floor(tokenRemainingSeconds / 60)).padStart(2, '0')}:${String(tokenRemainingSeconds % 60).padStart(2, '0')}`;
   const checkServiceNow = async () => {
     if (serviceChecking || app.demo) return;
     setServiceChecking(true);
@@ -81,11 +99,11 @@ export default function Users({ app }) {
   };
 
   const processRecovery = async (request, action) => {
-    setRecoveryBusy(request.id); setError(''); setIssuedToken(null);
+    setRecoveryBusy(request.id); setError(''); setIssuedToken(null); setTokenExpired(false);
     try {
       const { data, error: actionError } = await supabase.functions.invoke('account-recovery', { body: { action, requestId: request.id } });
       if (actionError) throw actionError;
-      if (data?.token) setIssuedToken({ token: data.token, expiresAt: data.expiresAt, email: request.profile?.email });
+      if (data?.token) { setTokenExpired(false); setCountdownNow(Date.now()); setIssuedToken({ token: data.token, expiresAt: data.expiresAt, issuedAt: Date.now(), email: request.profile?.email }); }
       await reloadRecoveries();
     } catch (reason) { setError(reason.message || 'Permintaan pemulihan gagal diproses.'); }
     finally { setRecoveryBusy(''); }
@@ -123,14 +141,13 @@ export default function Users({ app }) {
     {app.demo && <div className="inline-notice"><Shield size={17} /><span>Pratinjau lokal: akun dan perubahan peran di bawah ini hanya contoh.</span></div>}
     {error && <div className="inline-error" role="alert">{error}</div>}
     <section id="service-status-log" className={`panel service-monitor-panel ${serviceLogFocused ? 'service-monitor-focused' : ''}`} aria-labelledby="service-monitor-title">
-      <div className="panel-heading service-monitor-heading"><div><span className="panel-kicker">PEMANTAU LAYANAN</span><h2 id="service-monitor-title">Status & riwayat layanan</h2><p>Pemeriksaan otomatis tiap 30 detik selama aplikasi terbuka.</p></div>{!app.demo && <button className="button-secondary" onClick={checkServiceNow} disabled={serviceChecking}><RefreshCw size={15} className={serviceChecking ? 'service-refreshing' : ''} />{serviceChecking ? 'Memeriksa…' : 'Periksa sekarang'}</button>}</div>
+      <div className="panel-heading service-monitor-heading"><div><span className="panel-kicker">PEMANTAU LAYANAN</span><h2 id="service-monitor-title">Status & riwayat layanan</h2></div>{!app.demo && <button className="button-secondary" onClick={checkServiceNow} disabled={serviceChecking}><RefreshCw size={15} className={serviceChecking ? 'service-refreshing' : ''} />{serviceChecking ? 'Memeriksa…' : 'Periksa sekarang'}</button>}</div>
       <div className={`service-monitor-current service-monitor-${serviceHealth.status}`}>
         <span className="service-monitor-mark"><Activity size={18} /></span>
         <div><strong>{app.demo ? 'Pratinjau lokal' : serviceHealth.status === 'online' ? 'Layanan data aktif' : serviceHealth.status === 'checking' ? 'Memeriksa layanan' : 'Layanan sulit dijangkau'}</strong><p>{serviceHealth.message}</p><small>{serviceHealth.checkedAt ? `Pemeriksaan terakhir ${new Date(serviceHealth.checkedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA` : 'Menunggu pemeriksaan pertama.'}</small></div>
       </div>
       <div className="service-log-heading"><h3>Riwayat pemeriksaan</h3><span>{serviceHistory.length} catatan</span></div>
       {serviceHistory.length ? <ol className="service-log-list">{serviceHistory.map(event => <li key={event.id} className={`service-log-entry service-log-${event.status}`}><span className="service-log-mark"><Activity size={14} /></span><div><strong>{event.title}</strong><p>{event.message}</p><time>{new Date(event.checkedAt).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Makassar' })} WITA</time></div></li>)}</ol> : <div className="service-log-empty">Belum ada catatan. Pemantau akan menyimpan pemeriksaan pertama saat terhubung.</div>}
-      <div className="service-monitor-footnote">Pemantau tidak membuka data profil. Catatan dan notifikasi status tersimpan di browser ini; perubahan akses atau kredensial tetap memerlukan tindakan Admin.</div>
     </section>
     {createOpen && <section className="panel user-create-panel"><div className="panel-heading"><div><span className="panel-kicker">AKUN BARU</span><h2>Buat akses operasional</h2></div></div><form onSubmit={create}><div className="form-grid form-grid-2">
       <label className="field">Nama pengguna<input value={form.displayName} onChange={event => setForm(current => ({ ...current, displayName: event.target.value }))} required /></label>
@@ -139,8 +156,9 @@ export default function Users({ app }) {
       <label className="field">Peran<select value={form.role} onChange={event => setForm(current => ({ ...current, role: event.target.value, organization: event.target.value === 'ground_handling' ? current.organization || airportOptions.handlers[0] : '' }))}><option value="personel">Personel AMC</option><option value="pimpinan">Pimpinan</option><option value="ground_handling">Ground Handling</option><option value="admin">Admin</option></select></label>
       {form.role === 'ground_handling' && <label className="field">Perusahaan<select value={form.organization} onChange={event => setForm(current => ({ ...current, organization: event.target.value }))} required>{airportOptions.handlers.map(name => <option key={name}>{name}</option>)}</select></label>}
     </div><div className="form-actions"><button type="button" className="button-secondary" onClick={() => setCreateOpen(false)}>Batal</button><button className="button-primary" disabled={saving === 'create'}>{saving === 'create' ? 'Membuat…' : 'Buat akun'}</button></div></form></section>}
-    {!app.demo && <section className="panel recovery-admin-panel"><div className="panel-heading"><div><span className="panel-kicker">VERIFIKASI MANUAL</span><h2>Pemulihan akun</h2><p>Pastikan identitas pemohon melalui jalur resmi sebelum menyetujui. Token hanya tampil sekali dan berlaku 15 menit.</p></div><button className="button-secondary" onClick={reloadRecoveries} disabled={Boolean(recoveryBusy)}><RefreshCw size={15} />Perbarui</button></div>
-      {issuedToken && <div className="recovery-token-callout" role="status"><KeyRound size={18} /><div><strong>Token untuk {issuedToken.email}</strong><code>{issuedToken.token}</code><span>Berlaku sampai {new Date(issuedToken.expiresAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}. Sampaikan token ini langsung kepada pemilik akun.</span></div><button className="button-secondary" onClick={() => navigator.clipboard?.writeText(issuedToken.token)}>Salin token</button></div>}
+    {!app.demo && <section className="panel recovery-admin-panel"><div className="panel-heading"><div><span className="panel-kicker">VERIFIKASI MANUAL</span><h2>Pemulihan akun</h2></div><button className="button-secondary" onClick={reloadRecoveries} disabled={Boolean(recoveryBusy)}><RefreshCw size={15} />Perbarui</button></div>
+      {issuedToken && <div className="recovery-token-callout" role="group" aria-label="Token pemulihan"><KeyRound size={18} /><div><strong>Token untuk {issuedToken.email}</strong><code>{issuedToken.token}</code><div className="recovery-token-countdown"><span role="timer" aria-label={`Token kedaluwarsa dalam ${tokenCountdownLabel}`}>Kedaluwarsa {tokenCountdownLabel}</span><div className="recovery-token-progress" role="progressbar" aria-label="Sisa masa berlaku token" aria-valuemin="0" aria-valuemax="100" aria-valuenow={Math.round(tokenProgress)}><i style={{ width: `${tokenProgress}%` }} /></div></div><span>Sampaikan token ini langsung kepada pemilik akun.</span></div><button className="button-secondary" onClick={() => navigator.clipboard?.writeText(issuedToken.token)}>Salin token</button></div>}
+      {tokenExpired && <div className="recovery-token-expired" role="status">Token pemulihan sudah kedaluwarsa. Buat token baru bila masih diperlukan.</div>}
       {recoveries.length === 0 ? <div className="recovery-empty">Belum ada riwayat permintaan pemulihan.</div> : <div className="recovery-request-list">{recoveries.map(request => <article className="recovery-request" data-recovery-id={request.id} key={request.id}><div className="recovery-request-person"><strong>{request.profile?.display_name || 'Nama belum diatur'}</strong><span>{request.profile?.email || 'Akun tidak ditemukan'} · {request.profile?.role || '—'}</span></div><span className={`recovery-state recovery-${request.status}`}>{({ pending: 'Menunggu Admin', approved: 'Disetujui', resetting: 'Sedang diproses', completed: 'Selesai', rejected: 'Ditolak', expired: 'Kedaluwarsa', locked: 'Terkunci' })[request.status] || request.status}</span><small>{new Date(request.last_requested_at).toLocaleString('id-ID')} · {request.request_count} pengajuan</small>{request.status === 'pending' && <div className="recovery-actions"><button className="button-primary" onClick={() => processRecovery(request, 'approve')} disabled={Boolean(recoveryBusy)}><Check size={15} />{recoveryBusy === request.id ? 'Memproses…' : 'Setujui & buat token'}</button><button className="button-secondary" onClick={() => processRecovery(request, 'reject')} disabled={Boolean(recoveryBusy)}><X size={15} />Tolak</button></div>}</article>)}</div>}
     </section>}
     <section className="panel user-create-panel"><div className="panel-heading"><div><span className="panel-kicker">EMAIL ADMIN</span><h2>Alamat akun Anda</h2></div></div><form className="own-email-form" onSubmit={updateOwnEmail}><label className="field">Email baru<input type="email" value={newEmail} onChange={event => setNewEmail(event.target.value)} required /></label><button className="button-secondary">Simpan email</button>{emailState && <span role="status">{emailState}</span>}</form></section>

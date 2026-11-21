@@ -767,6 +767,11 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .recovery-token-callout > div { display: grid; flex: 1; gap: 5px; }
 .recovery-token-callout code { font-size: 24px; font-weight: 700; letter-spacing: .2em; }
 .recovery-token-callout span { color: #486a52; font-size: 11px; }
+.recovery-token-countdown { display: grid; grid-template-columns: auto minmax(90px, 160px); align-items: center; gap: 8px; margin-top: 3px; }
+.recovery-token-countdown [role="timer"] { min-width: 92px; color: inherit; font-variant-numeric: tabular-nums; font-weight: 650; }
+.recovery-token-progress { height: 5px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, currentColor 14%, transparent); }
+.recovery-token-progress > i { display: block; height: 100%; border-radius: inherit; background: currentColor; transition: width 1s linear; }
+.recovery-token-expired { margin: 0 18px 14px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; color: var(--muted); background: var(--card-soft); font-size: 11px; }
 .password-recovery-card { animation: recovery-arrive .48s cubic-bezier(.2,.72,.26,1) both; transform-origin: center; }
 .password-recovery-card .login-card-icon { animation: recovery-icon-arrive .6s .08s cubic-bezier(.2,.72,.26,1) both; }
 @keyframes recovery-arrive { from { opacity: 0; transform: translateY(18px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -816,6 +821,8 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .notification-chat-icon { color: var(--blue); background: rgba(0,102,204,.1); }
 .notification-recovery-icon { color: var(--amber); background: var(--amber-bg); }
 .notification-service-icon { color: var(--green); background: var(--green-bg); }
+.notification-service-issue { color: var(--red); background: var(--red-bg); }
+.notification-service-checking { color: var(--amber); background: var(--amber-bg); }
 .admin-notification-item > span { min-width: 0; display: grid; gap: 3px; }
 .admin-notification-item strong { font-size: 11px; }
 .admin-notification-item small { color: var(--muted); font-size: 10px; line-height: 1.4; }
@@ -897,6 +904,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .recovery-request > small { grid-column: 1 / -1; }
   .recovery-token-callout { align-items: flex-start; flex-wrap: wrap; }
   .recovery-token-callout > div { min-width: calc(100% - 40px); }
+  .recovery-token-countdown { grid-template-columns: minmax(0, 1fr) minmax(90px, 1.5fr); }
   .users-panel-heading { align-items: stretch; flex-direction: column; }
   .users-search { width: 100%; }
   .managed-user-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 13px 12px; padding: 15px; }
@@ -945,6 +953,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
 }
 @media (prefers-reduced-motion: reduce) {
   .password-recovery-card, .password-recovery-card .login-card-icon, .admin-notification-popover, .support-chat-backdrop, .support-chat-panel { animation: none !important; }
+  .recovery-token-progress > i { transition: none; }
   .login-left::after, .service-online i, .service-checking i, .login-story[data-enter], .login-story h1 { animation: none !important; }
 }
 
