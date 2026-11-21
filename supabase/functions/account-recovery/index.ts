@@ -39,7 +39,7 @@ Deno.serve(async request => {
     const input = parsed.value
     const action = String(input.action || '')
 
-    if (action === 'list' || action === 'approve' || action === 'reject') {
+    if (action === 'list' || action === 'approve' || action === 'reject' || action === 'renew') {
       const authorization = request.headers.get('Authorization') || ''
       const sessionClient = createClient(url, anonKey, { global: { headers: { Authorization: authorization } } })
       const { data: { user }, error: authError } = await sessionClient.auth.getUser()
@@ -65,7 +65,8 @@ Deno.serve(async request => {
       const { data: row, error: findError } = await admin.from('account_recovery_requests')
         .select('id,user_id,status').eq('id', requestId).single()
       if (findError || !row) return json({ error: 'Permintaan pemulihan tidak ditemukan.' }, 404, origin)
-      if (row.status !== 'pending') return json({ error: 'Permintaan ini sudah diproses.' }, 409, origin)
+      const allowedStatuses = action === 'approve' || action === 'reject' ? ['pending'] : ['approved', 'expired', 'locked']
+      if (!allowedStatuses.includes(row.status)) return json({ error: action === 'renew' ? 'Token hanya dapat diterbitkan ulang setelah permintaan disetujui Admin.' : 'Permintaan ini sudah diproses.' }, 409, origin)
       const { data: target, error: targetError } = await admin.from('profiles').select('active').eq('id', row.user_id).single()
       if (targetError || !target?.active) return json({ error: 'Akun pemohon sudah tidak aktif.' }, 409, origin)
       if (action === 'reject') {
@@ -78,12 +79,15 @@ Deno.serve(async request => {
       const tokenHash = await digest(serviceKey, token)
       const now = new Date()
       const expiresAt = new Date(now.getTime() + 15 * 60_000).toISOString()
-      const { data: approved, error } = await admin.from('account_recovery_requests').update({
-        status: 'approved', approved_by: user.id, approved_at: now.toISOString(), token_hash: tokenHash,
+      const updates = {
+        status: 'approved', token_hash: tokenHash,
         token_expires_at: expiresAt, token_attempts: 0, token_claimed_at: null, updated_at: now.toISOString(),
-      }).eq('id', row.id).eq('status', 'pending').select('id').maybeSingle()
+        ...(action === 'approve' ? { approved_by: user.id, approved_at: now.toISOString() } : {}),
+      }
+      const { data: approved, error } = await admin.from('account_recovery_requests').update(updates)
+        .eq('id', row.id).in('status', allowedStatuses).select('id').maybeSingle()
       if (error) throw error
-      if (!approved) return json({ error: 'Permintaan sudah diproses oleh Admin lain.' }, 409, origin)
+      if (!approved) return json({ error: 'Status permintaan berubah. Muat ulang daftar pemulihan lalu coba lagi.' }, 409, origin)
       return json({ ok: true, token, expiresAt }, 200, origin)
     }
 
@@ -109,25 +113,32 @@ Deno.serve(async request => {
       if (!profile) return json({ stage: 'submitted' }, 200, origin)
       const now = new Date().toISOString()
       const { data: open, error } = await admin.from('account_recovery_requests').select('id,status,token_expires_at,request_count')
-        .eq('user_id', profile.id).in('status', ['pending','approved','resetting']).maybeSingle()
+        .eq('user_id', profile.id).in('status', ['pending','approved','resetting','expired','locked'])
+        .order('last_requested_at', { ascending: false }).limit(1).maybeSingle()
       if (error) throw error
-      if (open?.status === 'approved' && open.token_expires_at && new Date(open.token_expires_at).getTime() > Date.now()) {
-        const { error: updateError } = await admin.from('account_recovery_requests').update({ request_count: open.request_count + 1, last_requested_at: now, updated_at: now }).eq('id', open.id)
-        if (updateError) throw updateError
-        return json({ stage: 'token_required' }, 200, origin)
+      if (open?.status === 'approved') {
+        if (open.token_expires_at && new Date(open.token_expires_at).getTime() > Date.now()) {
+          const { error: updateError } = await admin.from('account_recovery_requests').update({ request_count: open.request_count + 1, last_requested_at: now, updated_at: now }).eq('id', open.id).eq('status', 'approved')
+          if (updateError) throw updateError
+          return json({ stage: 'token_required' }, 200, origin)
+        }
+        return json({ stage: 'token_reissue_required' }, 200, origin)
       }
       if (open?.status === 'pending') {
-        const { error: updateError } = await admin.from('account_recovery_requests').update({ request_count: open.request_count + 1, last_requested_at: now, updated_at: now }).eq('id', open.id)
+        const { error: updateError } = await admin.from('account_recovery_requests').update({ request_count: open.request_count + 1, last_requested_at: now, updated_at: now }).eq('id', open.id).eq('status', 'pending')
         if (updateError) throw updateError
         return json({ stage: 'submitted' }, 200, origin)
       }
-      const resettingExpired = open?.status === 'resetting' && open.token_expires_at && new Date(open.token_expires_at).getTime() <= Date.now()
-      if (open?.status === 'approved' || resettingExpired) {
-        const { error: expireError } = await admin.from('account_recovery_requests').update({ status: 'expired', token_hash: null, updated_at: now }).eq('id', open.id)
-        if (expireError) throw expireError
+      if (open?.status === 'approved' || open?.status === 'expired' || open?.status === 'locked') {
+        return json({ stage: 'token_reissue_required' }, 200, origin)
       }
-      // A resetting token is short-lived and single-use; wait until its claim expires before opening another request.
-      if (open?.status === 'resetting' && !resettingExpired) return json({ stage: 'submitted' }, 200, origin)
+      if (open?.status === 'resetting') {
+        const resettingExpired = open.token_expires_at && new Date(open.token_expires_at).getTime() <= Date.now()
+        if (!resettingExpired) return json({ stage: 'submitted' }, 200, origin)
+        const { error: releaseError } = await admin.from('account_recovery_requests').update({ status: 'approved', token_hash: null, token_claimed_at: null, updated_at: now }).eq('id', open.id).eq('status', 'resetting')
+        if (releaseError) throw releaseError
+        return json({ stage: 'token_reissue_required' }, 200, origin)
+      }
       const { data: createdRequest, error: insertError } = await admin.from('account_recovery_requests').insert({ user_id: profile.id }).select('id').single()
       if (insertError) throw insertError
       const { data: account } = await admin.from('profiles').select('display_name').eq('id', profile.id).maybeSingle()
@@ -146,11 +157,11 @@ Deno.serve(async request => {
       if (password.length < 12 || password.length > 72) return json({ error: 'Kata sandi baru harus 12–72 karakter.' }, 400, origin)
       const { data: profile, error: profileError } = await admin.from('profiles').select('id').eq('email', email).eq('active', true).maybeSingle()
       if (profileError) throw profileError
-      if (!profile) return json({ error: 'Token tidak valid atau sudah kedaluwarsa. Ajukan pemulihan kepada Admin.' }, 400, origin)
+      if (!profile) return json({ error: 'Token tidak valid atau sudah kedaluwarsa. Hubungi Admin AMC untuk token pengganti.' }, 400, origin)
       const tokenHash = await digest(serviceKey, token)
       const { data: requestId, error: claimError } = await admin.rpc('claim_account_recovery_token', { p_user_id: profile.id, p_token_hash: tokenHash })
       if (claimError) throw claimError
-      if (!requestId) return json({ error: 'Token tidak valid atau sudah kedaluwarsa. Periksa token atau hubungi Admin.' }, 400, origin)
+      if (!requestId) return json({ error: 'Token tidak valid atau sudah kedaluwarsa. Hubungi Admin AMC untuk token pengganti dari pengajuan yang sama.' }, 400, origin)
 
       const { error: passwordError } = await admin.auth.admin.updateUserById(profile.id, { password })
       if (passwordError) {

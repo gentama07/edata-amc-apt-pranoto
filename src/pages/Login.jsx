@@ -5,16 +5,14 @@ import { isSupabaseConfigured } from '../lib/supabase';
 import ServiceStatus from '../components/ServiceStatus';
 
 function passwordResetError(message = '') {
-  if (/redirect|url/i.test(message)) {
-    return 'Tautan pemulihan belum dapat dikirim. Minta Admin memeriksa URL pengalihan pada konfigurasi Auth Supabase.';
-  }
   if (/email.*invalid|invalid.*email/i.test(message)) {
     return 'Alamat email tidak dapat diproses. Periksa kembali formatnya atau hubungi Admin untuk memastikan alamat akun Anda.';
   }
   if (/rate|too many|security purposes/i.test(message)) {
-    return 'Permintaan terlalu sering. Tunggu beberapa menit sebelum meminta tautan pemulihan lagi.';
+    return 'Permintaan terlalu sering. Tunggu beberapa menit sebelum mencoba lagi.';
   }
-  return 'Tautan pemulihan belum dapat dikirim. Coba lagi beberapa saat atau hubungi Admin AMC.';
+  if (/redirect|url/i.test(message)) return 'Konfigurasi pemulihan bermasalah. Hubungi Admin AMC untuk memeriksa pengaturan Supabase.';
+  return 'Permintaan pemulihan belum dapat diproses. Coba lagi beberapa saat atau hubungi Admin AMC.';
 }
 
 export default function Login({ app, portalMode = false, onBack }) {
@@ -45,6 +43,8 @@ export default function Login({ app, portalMode = false, onBack }) {
           if (result?.stage === 'token_required') {
             setUseRecoveryToken(true);
             setMessage({ type: 'success', text: 'Permintaan pemulihan sudah disetujui. Masukkan token 6 digit dari Admin dan buat kata sandi baru.' });
+          } else if (result?.stage === 'token_reissue_required') {
+            setMessage({ type: 'error', text: 'Permintaan Anda masih tercatat. Token kedaluwarsa atau terkunci; Admin dapat menerbitkan token pengganti tanpa pengajuan baru.' });
           } else {
             setMessage({ type: 'success', text: 'Permintaan diterima. Setelah Admin menyetujui, pilih “Sudah memiliki token?” untuk menyelesaikan pemulihan.' });
           }
@@ -83,7 +83,7 @@ export default function Login({ app, portalMode = false, onBack }) {
       <div className="login-card" id="login-form" tabIndex="-1">
         {onBack && <button type="button" className="login-home-link" onClick={onBack}><ArrowLeft size={15} aria-hidden="true" /><span>Kembali ke beranda</span></button>}
         <h2>{forgot ? 'Pulihkan akses akun' : 'Masuk ke E-data AMC'}</h2>
-        {forgot && <p className="login-subtitle">{useRecoveryToken ? 'Masukkan token 6 digit dari Admin dan buat kata sandi baru. Token berlaku selama 15 menit.' : 'Ajukan pemulihan akun. Setelah disetujui Admin, masukkan token untuk membuat kata sandi baru.'}</p>}
+        {forgot && <p className="login-subtitle">{useRecoveryToken ? 'Masukkan token 6 digit dari Admin dan buat kata sandi baru. Jika token kedaluwarsa, minta Admin menerbitkan pengganti dari permintaan yang sama.' : 'Ajukan pemulihan akun. Setelah disetujui Admin, masukkan token untuk membuat kata sandi baru.'}</p>}
         {app.demo && <div className="login-demo-banner"><ShieldCheck size={16} aria-hidden="true" /><div><strong>Mode Pratinjau Lokal aktif</strong><span>Supabase belum dikonfigurasi. Data pratinjau hanya tersimpan di browser ini.</span></div></div>}
         {app.error && <div className="login-error" role="alert">{app.error}</div>}
         {message && <div className={`login-feedback feedback-${message.type}`} role={message.type === 'error' ? 'alert' : 'status'}>{message.text}</div>}
@@ -112,9 +112,9 @@ export default function Login({ app, portalMode = false, onBack }) {
           {!forgot && <p className="login-security"><ShieldCheck size={14} aria-hidden="true" /> Akses akun dilindungi kebijakan peran dan database.</p>}
           <button type="button" className="text-link login-forgot" onClick={() => {
             setMessage(null);
-            if (forgot && useRecoveryToken) { setUseRecoveryToken(false); setPassword(''); setConfirmPassword(''); setRecoveryToken(''); }
-            else if (forgot) { setForgot(false); setUseRecoveryToken(false); setPassword(''); setConfirmPassword(''); setRecoveryToken(''); }
-            else { setForgot(true); setUseRecoveryToken(false); }
+            if (!forgot) { setForgot(true); setUseRecoveryToken(false); }
+            else if (!useRecoveryToken) { setUseRecoveryToken(true); setPassword(''); setConfirmPassword(''); setRecoveryToken(''); }
+            else { setUseRecoveryToken(false); setPassword(''); setConfirmPassword(''); setRecoveryToken(''); }
           }}>
             {forgot ? useRecoveryToken ? 'Kembali ke permintaan pemulihan' : 'Sudah memiliki token?' : 'Lupa kata sandi?'}
           </button>
