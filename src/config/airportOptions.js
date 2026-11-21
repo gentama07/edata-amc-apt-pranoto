@@ -1,9 +1,10 @@
 export const airportOptions = {
-  operators: ['Batik Air', 'Super Air Jet', 'Citilink', 'Wings Air', 'Susi Air', 'Smart Aviation', 'Pelita Air', 'Trigana Air', 'Charter/VIP'],
-  aircraftTypes: ['A320', 'B738', 'ATR72-500', 'ATR72-600', 'C208B (Grand Caravan)', 'L410', 'B735'],
+  operators: ['Super Air Jet', 'Batik Air', 'Wings Air', 'Citilink', 'Garuda Indonesia', 'Smart Aviation', 'Charter/VIP'],
+  aircraftTypes: ['ATR 72-500', 'ATR 72-600', 'A320', 'A320N', 'B737', 'C208B Grand Caravan'],
+  movementHandlers: ['Gapura', 'Angkasa Jaya', 'GSA', 'AMC'],
   handlers: ['Gapura Angkasa', 'JAS (Jasa Angkasa Semesta)', 'Kokapura', 'Self-Handling', 'Lainnya'],
   routes: ['AAP (Samarinda)', 'CGK (Jakarta)', 'SUB (Surabaya)', 'YIA (Yogyakarta)', 'UPG (Makassar)', 'BPN (Balikpapan)', 'BEJ (Berau)', 'TRK (Tarakan)', 'MLN (Malinau)', 'TJS (Tanjung Selor)', 'LBW (Long Bawan)', 'Datah Dawai', 'Melak'],
-  stands: ['Stand 1', 'Stand 2', 'Stand 3', 'Stand 4', 'Stand 5', 'Stand 6'],
+  stands: ['Stand 1', 'Stand 2', 'Stand 3', 'Stand 4', 'Stand 5', 'Stand 6', 'Stand 7', 'Stand 8', 'Stand 9'],
   riu: ['Domestik', 'Internasional', 'Charter', 'VIP', 'Military'],
 };
 

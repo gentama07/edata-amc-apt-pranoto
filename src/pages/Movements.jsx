@@ -22,6 +22,11 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
   const [direction, setDirection] = useState('');
   const [confirm, setConfirm] = useState(null);
   const [sort, setSort] = useState({ key: 'date', asc: false });
+  const operatorFilterOptions = useMemo(() => {
+    const knownOperators = new Set(airportOptions.operators);
+    const previousOperators = [...new Set(rows.map(row => row.operator).filter(value => value && !knownOperators.has(value)))];
+    return [...airportOptions.operators, ...previousOperators];
+  }, [rows]);
   const [autoScroll, setAutoScroll] = useState(() => !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   const dialogRef = useRef(null);
   const tableScrollRef = useRef(null);
@@ -75,7 +80,7 @@ export default function Movements({ rows, selectedDate, canWrite, onInput, onEdi
     <section className="panel log-panel">
       <div className="log-toolbar">
         <div className="search-field"><Search size={17} /><input autoComplete="off" name="movement-search" aria-label="Cari pergerakan" placeholder="Cari operator, registrasi, penerbangan…" value={query} onChange={event => setQuery(event.target.value)} /></div>
-        <label className="filter-label">Operator<select name="operator-filter" aria-label="Filter operator" value={operator} onChange={event => setOperator(event.target.value)}><option value="">Semua operator</option>{airportOptions.operators.map(item => <option key={item}>{item}</option>)}</select></label>
+        <label className="filter-label">Operator<select name="operator-filter" aria-label="Filter operator" value={operator} onChange={event => setOperator(event.target.value)}><option value="">Semua operator</option>{operatorFilterOptions.map(item => <option key={item}>{item}</option>)}</select></label>
         <label className="filter-label">Arah<select name="direction-filter" aria-label="Filter arah penerbangan" value={direction} onChange={event => setDirection(event.target.value)}><option value="">Semua arah</option><option value="arr">Kedatangan (ARR)</option><option value="dep">Keberangkatan (DEP)</option><option value="turnaround">Transit / Turnaround</option></select></label>
         <button className="button-secondary filter-reset" onClick={reset}><FilterX size={15} />Reset filter</button>
       </div>

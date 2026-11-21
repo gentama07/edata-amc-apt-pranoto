@@ -5,27 +5,74 @@ import { validMovementTimes } from '../lib/time';
 import { PageHeading } from './Shell';
 
 const blank = date => ({ date, operator: '', aircraftType: '', registration: '', flightArr: '', flightDep: '', origin: '', destination: '', handler: '', stand: '', riu: 'Domestik', sta: '', ata: '', blockOn: '', std: '', blockOff: '', atd: '', paxArr: '', paxDep: '', baggageArrKg: '', baggageDepKg: '', cargoArrKg: '', cargoDepKg: '', remark: '' });
+const OTHER_OPTION = '__other__';
+const customChoiceOptions = {
+  operator: airportOptions.operators,
+  aircraftType: airportOptions.aircraftTypes,
+  handler: airportOptions.movementHandlers,
+};
 
 function Field({ label, name, children, required, hint, error }) {
   return <div className="field"><label htmlFor={name}>{label}{required && <span className="required-mark"> *</span>}</label>{children}{hint && <small className="field-hint">{hint}</small>}{error && <small className="field-error">{error}</small>}</div>;
 }
-const select = (name, value, onChange, options, placeholder) => <select id={name} name={name} value={value || ''} onChange={onChange}><option value="">{placeholder || 'Pilih opsi'}</option>{options.map(option => <option key={option} value={option}>{option}</option>)}</select>;
+const select = (name, value, onChange, options, placeholder, allowOther = false) => {
+  const isCustomValue = allowOther && value && value !== OTHER_OPTION && !options.includes(value);
+  const selectedValue = isCustomValue ? OTHER_OPTION : value || '';
+  return <select id={name} name={name} value={selectedValue} onChange={onChange}>
+    <option value="">{placeholder || 'Pilih opsi'}</option>
+    {options.map(option => <option key={option} value={option}>{option}</option>)}
+    {allowOther && <option value={OTHER_OPTION}>Lainnya</option>}
+  </select>;
+};
 const input = (name, value, onChange, type = 'text', props = {}) => <input id={name} name={name} type={type} value={value ?? ''} onChange={onChange} {...props} />;
 
 export default function MovementForm({ date, initial, onCancel, onSave, setError }) {
   const [step, setStep] = useState(0);
   const [form, setForm] = useState(() => initial ? { ...blank(date), ...initial } : blank(date));
+  const [customValues, setCustomValues] = useState({ operator: '', aircraftType: '', handler: '' });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  useEffect(() => { setForm(initial ? { ...blank(date), ...initial } : blank(date)); setStep(0); setErrors({}); }, [initial, date]);
+  useEffect(() => {
+    const nextForm = initial ? { ...blank(date), ...initial } : blank(date);
+    const nextCustomValues = { operator: '', aircraftType: '', handler: '' };
+    Object.entries(customChoiceOptions).forEach(([name, options]) => {
+      if (nextForm[name] && !options.includes(nextForm[name])) {
+        nextCustomValues[name] = nextForm[name];
+        nextForm[name] = OTHER_OPTION;
+      }
+    });
+    setForm(nextForm);
+    setCustomValues(nextCustomValues);
+    setStep(0);
+    setErrors({});
+  }, [initial, date]);
   const update = event => setForm(current => ({ ...current, [event.target.name]: event.target.value }));
+  const updateChoice = name => event => {
+    update(event);
+    if (event.target.value !== OTHER_OPTION) setCustomValues(current => ({ ...current, [name]: '' }));
+  };
+  const updateCustomValue = name => event => {
+    setCustomValues(current => ({ ...current, [name]: event.target.value }));
+  };
+  const resolvedValue = name => form[name] === OTHER_OPTION ? customValues[name].trim() : form[name];
+  const otherInput = (name, label) => form[name] === OTHER_OPTION && <input
+    id={`${name}-other`}
+    type="text"
+    value={customValues[name]}
+    onChange={updateCustomValue(name)}
+    aria-label={`${label} lainnya`}
+    autoComplete="off"
+    placeholder={`Isi ${label.toLocaleLowerCase('id-ID')} lainnya`}
+    maxLength={80}
+  />;
 
   const validateStep = () => {
     const next = {};
     if (step === 0) {
       if (!form.date) next.date = 'Tanggal operasional wajib diisi.';
-      if (!form.operator) next.operator = 'Operator wajib dipilih.';
-      if (!form.aircraftType) next.aircraftType = 'Tipe pesawat wajib dipilih.';
+      if (!resolvedValue('operator')) next.operator = form.operator === OTHER_OPTION ? 'Isi nama operator lainnya.' : 'Operator wajib dipilih.';
+      if (!resolvedValue('aircraftType')) next.aircraftType = form.aircraftType === OTHER_OPTION ? 'Isi tipe pesawat lainnya.' : 'Tipe pesawat wajib dipilih.';
+      if (form.handler === OTHER_OPTION && !resolvedValue('handler')) next.handler = 'Isi nama Ground Handling lainnya.';
       if (!form.registration.trim()) next.registration = 'Registrasi pesawat wajib diisi.';
       if (!form.flightArr.trim() && !form.flightDep.trim()) next.flightArr = 'Isi nomor penerbangan ARR, DEP, atau keduanya.';
       if (!form.stand) next.stand = 'Parking stand wajib dipilih.';
@@ -42,7 +89,7 @@ export default function MovementForm({ date, initial, onCancel, onSave, setError
     event.preventDefault(); if (!validateStep()) return;
     if (step < 2) { setStep(step + 1); return; }
     setSaving(true);
-    try { await onSave({ ...form, paxArr: Number(form.paxArr || 0), paxDep: Number(form.paxDep || 0), baggageArrKg: Number(form.baggageArrKg || 0), baggageDepKg: Number(form.baggageDepKg || 0), cargoArrKg: Number(form.cargoArrKg || 0), cargoDepKg: Number(form.cargoDepKg || 0) }); onCancel(); }
+    try { await onSave({ ...form, operator: resolvedValue('operator'), aircraftType: resolvedValue('aircraftType'), handler: resolvedValue('handler'), paxArr: Number(form.paxArr || 0), paxDep: Number(form.paxDep || 0), baggageArrKg: Number(form.baggageArrKg || 0), baggageDepKg: Number(form.baggageDepKg || 0), cargoArrKg: Number(form.cargoArrKg || 0), cargoDepKg: Number(form.cargoDepKg || 0) }); onCancel(); }
     catch (error) { setError(error.message || 'Data tidak dapat disimpan.'); }
     finally { setSaving(false); }
   };
@@ -54,14 +101,14 @@ export default function MovementForm({ date, initial, onCancel, onSave, setError
       <form onSubmit={save} noValidate>
         {step === 0 && <div className="wizard-content"><div className="form-section-intro"><div className="flight-icon"><PlaneTakeoff size={21} aria-hidden="true" /></div><div><h2>Data penerbangan</h2><p>Identitas pesawat, rute, dan penempatan di apron.</p></div></div><div className="form-grid form-grid-3">
           <Field label="Tanggal operasional" name="date" required>{input('date', form.date, update, 'date', { required: true })}</Field>
-          <Field label="Operator" name="operator" required error={errors.operator}>{select('operator', form.operator, update, airportOptions.operators)}</Field>
-          <Field label="Tipe pesawat" name="aircraftType" required error={errors.aircraftType}>{select('aircraftType', form.aircraftType, update, airportOptions.aircraftTypes)}</Field>
+          <Field label="Operator" name="operator" required error={errors.operator}>{select('operator', form.operator, updateChoice('operator'), airportOptions.operators, undefined, true)}{otherInput('operator', 'Operator')}</Field>
+          <Field label="Tipe pesawat" name="aircraftType" required error={errors.aircraftType}>{select('aircraftType', form.aircraftType, updateChoice('aircraftType'), airportOptions.aircraftTypes, undefined, true)}{otherInput('aircraftType', 'Tipe pesawat')}</Field>
           <Field label="Registrasi" name="registration" required error={errors.registration}>{input('registration', form.registration, update, 'text', { placeholder: 'Contoh: PK-WJL', autoComplete: 'off' })}</Field>
           <Field label="Nomor penerbangan ARR" name="flightArr" error={errors.flightArr}>{input('flightArr', form.flightArr, update, 'text', { placeholder: 'Contoh: IW-1368' })}</Field>
           <Field label="Nomor penerbangan DEP" name="flightDep">{input('flightDep', form.flightDep, update, 'text', { placeholder: 'Contoh: IW-1369' })}</Field>
           <Field label="Origin" name="origin">{select('origin', form.origin, update, airportOptions.routes)}</Field>
           <Field label="Destination" name="destination">{select('destination', form.destination, update, airportOptions.routes)}</Field>
-          <Field label="Ground handling" name="handler">{select('handler', form.handler, update, airportOptions.handlers)}</Field>
+          <Field label="Ground handling" name="handler" error={errors.handler}>{select('handler', form.handler, updateChoice('handler'), airportOptions.movementHandlers, undefined, true)}{otherInput('handler', 'Ground Handling')}</Field>
           <Field label="Parking stand" name="stand" required error={errors.stand}>{select('stand', form.stand, update, airportOptions.stands)}</Field>
           <Field label="RIU" name="riu">{select('riu', form.riu, update, airportOptions.riu)}</Field>
         </div></div>}
@@ -76,7 +123,7 @@ export default function MovementForm({ date, initial, onCancel, onSave, setError
           <Field label="Kargo datang (ARR · kg)" name="cargoArrKg" error={errors.cargoArrKg}>{input('cargoArrKg', form.cargoArrKg, update, 'number', { min: 0, step: '0.1', placeholder: '0' })}</Field>
           <Field label="Kargo berangkat (DEP · kg)" name="cargoDepKg" error={errors.cargoDepKg}>{input('cargoDepKg', form.cargoDepKg, update, 'number', { min: 0, step: '0.1', placeholder: '0' })}</Field>
           <Field label="Remark operasional" name="remark" hint="Catat kondisi apron, keterlambatan, atau informasi penting lainnya."><textarea id="remark" name="remark" value={form.remark} onChange={update} rows={4} placeholder="Tulis catatan operasional…" /></Field>
-        </div><div className="review-strip"><span>RINGKASAN</span><strong>{form.operator || 'Operator belum dipilih'} · {form.registration || 'Registrasi belum diisi'}</strong><small>{form.flightArr || '—'} / {form.flightDep || '—'} · {form.stand || 'Stand belum dipilih'}</small></div></div>}
+        </div><div className="review-strip"><span>RINGKASAN</span><strong>{resolvedValue('operator') || 'Operator belum dipilih'} · {form.registration || 'Registrasi belum diisi'}</strong><small>{form.flightArr || '—'} / {form.flightDep || '—'} · {form.stand || 'Stand belum dipilih'}</small></div></div>}
         <div className="wizard-actions">{step > 0 ? <button type="button" className="button-secondary" onClick={() => { setErrors({}); setStep(step - 1); }}><ArrowLeft size={16} />Langkah sebelumnya</button> : <span className="required-note"><span className="required-mark">*</span> Wajib diisi</span>}<button type="submit" className="button-primary" disabled={saving}>{saving ? 'Menyimpan…' : step === 2 ? <><Check size={16} />Simpan pergerakan</> : <>Lanjutkan<ArrowRight size={16} /></>}</button></div>
       </form>
     </section>

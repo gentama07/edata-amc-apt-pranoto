@@ -1,14 +1,14 @@
 import { airportDate } from './time';
 
 const today = airportDate();
-const make = (id, values) => ({ id, date: today, operator: 'Wings Air', aircraftType: 'ATR72-600', registration: 'PK-WJL', origin: 'BPN (Balikpapan)', destination: 'AAP (Samarinda)', handler: 'Gapura Angkasa', stand: 'Stand 2', riu: 'Domestik', paxArr: 62, paxDep: 59, baggageArrKg: 210, baggageDepKg: 200, cargoArrKg: 65, cargoDepKg: 55, remark: '', ...values });
+const make = (id, values) => ({ id, date: today, operator: 'Wings Air', aircraftType: 'ATR 72-600', registration: 'PK-WJL', origin: 'BPN (Balikpapan)', destination: 'AAP (Samarinda)', handler: 'Gapura', stand: 'Stand 2', riu: 'Domestik', paxArr: 62, paxDep: 59, baggageArrKg: 210, baggageDepKg: 200, cargoArrKg: 65, cargoDepKg: 55, remark: '', ...values });
 
 export const initialMovements = [
   make('demo-1', { flightArr: 'IW-1368', flightDep: 'IW-1369', sta: '06:25', ata: '06:38', blockOn: '06:44', std: '07:10', blockOff: '07:12', atd: '07:20', registration: 'PK-WJL', stand: 'Stand 2', remark: 'Rotasi pagi, boarding tepat waktu.' }),
   make('demo-2', { operator: 'Batik Air', aircraftType: 'A320', registration: 'PK-LUV', flightArr: 'ID-6674', flightDep: 'ID-6675', origin: 'CGK (Jakarta)', destination: 'AAP (Samarinda)', sta: '08:10', ata: '08:54', blockOn: '09:02', std: '09:35', blockOff: '09:41', atd: '09:48', stand: 'Stand 1', paxArr: 148, paxDep: 141, baggageArrKg: 1180, baggageDepKg: 1150, cargoArrKg: 260, cargoDepKg: 230, remark: 'Kedatangan tertunda karena cuaca.' }),
-  make('demo-3', { operator: 'Susi Air', aircraftType: 'C208B (Grand Caravan)', registration: 'PK-BVM', flightArr: 'SI-734', flightDep: '', origin: 'Datah Dawai', destination: 'AAP (Samarinda)', sta: '10:15', ata: '10:09', blockOn: '10:15', std: '', blockOff: '', atd: '', stand: 'Stand 4', paxArr: 9, paxDep: 0, baggageArrKg: 42, baggageDepKg: 0, cargoArrKg: 18, cargoDepKg: 0, remark: 'Standby menunggu cuaca.' }),
+  make('demo-3', { operator: 'Susi Air', aircraftType: 'C208B Grand Caravan', registration: 'PK-BVM', flightArr: 'SI-734', flightDep: '', origin: 'Datah Dawai', destination: 'AAP (Samarinda)', sta: '10:15', ata: '10:09', blockOn: '10:15', std: '', blockOff: '', atd: '', stand: 'Stand 4', paxArr: 9, paxDep: 0, baggageArrKg: 42, baggageDepKg: 0, cargoArrKg: 18, cargoDepKg: 0, remark: 'Standby menunggu cuaca.' }),
   make('demo-4', { operator: 'Super Air Jet', aircraftType: 'A320', registration: 'PK-SAW', flightArr: 'IU-654', flightDep: 'IU-655', origin: 'SUB (Surabaya)', destination: 'AAP (Samarinda)', sta: '12:30', ata: '12:26', blockOn: '12:33', std: '13:15', blockOff: '13:18', atd: '13:27', stand: 'Stand 3', paxArr: 162, paxDep: 157, baggageArrKg: 1360, baggageDepKg: 1320, cargoArrKg: 190, cargoDepKg: 170 }),
-  make('demo-5', { operator: 'Smart Aviation', aircraftType: 'C208B (Grand Caravan)', registration: 'PK-SNA', flightArr: 'SI-211', flightDep: '', origin: 'AAP (Samarinda)', destination: 'Melak', sta: '14:20', ata: '14:16', blockOn: '14:23', std: '', blockOff: '', atd: '', stand: 'Stand 5', paxArr: 7, paxDep: 0, baggageArrKg: 25, baggageDepKg: 0, cargoArrKg: 32, cargoDepKg: 0 }),
+  make('demo-5', { operator: 'Smart Aviation', aircraftType: 'C208B Grand Caravan', registration: 'PK-SNA', flightArr: 'SI-211', flightDep: '', origin: 'AAP (Samarinda)', destination: 'Melak', sta: '14:20', ata: '14:16', blockOn: '14:23', std: '', blockOff: '', atd: '', stand: 'Stand 5', paxArr: 7, paxDep: 0, baggageArrKg: 25, baggageDepKg: 0, cargoArrKg: 32, cargoDepKg: 0 }),
 ];
 
 export const initialLetters = [
