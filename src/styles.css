@@ -833,6 +833,18 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .admin-notification-popover > footer button { border: 0; color: var(--blue); background: transparent; font-size: 10px; cursor: pointer; }
 @keyframes notification-arrive { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 .service-monitor-panel { scroll-margin-top: 24px; overflow: hidden; transition: border-color .2s ease, box-shadow .2s ease; }
+.users-oversight-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: stretch; gap: 14px; margin-bottom: 18px; }
+.users-oversight-grid-single { grid-template-columns: minmax(0, 1fr); }
+.users-oversight-grid > .panel { min-width: 0; min-height: 0; margin-bottom: 0; }
+.users-oversight-grid .service-monitor-panel, .users-oversight-grid .recovery-admin-panel { display: flex; flex-direction: column; }
+.users-oversight-grid .service-log-list, .users-oversight-grid .recovery-request-list { max-height: 330px; overflow: auto; overscroll-behavior: contain; }
+.users-oversight-grid .recovery-request { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; padding: 14px 18px; }
+.users-oversight-grid .recovery-request-person { overflow-wrap: anywhere; }
+.users-oversight-grid .recovery-request > small, .users-oversight-grid .recovery-actions { grid-column: 1 / -1; }
+.users-oversight-grid .recovery-token-callout { min-width: 0; flex-wrap: wrap; }
+.users-oversight-grid .recovery-token-callout > div { min-width: 0; overflow-wrap: anywhere; }
+.users-oversight-grid .service-monitor-heading { align-items: flex-start; }
+.users-oversight-grid .service-monitor-heading .button-secondary { flex: 0 0 auto; white-space: nowrap; }
 .service-monitor-focused { border-color: color-mix(in srgb, var(--blue) 52%, var(--border)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--blue) 12%, transparent); }
 .service-monitor-heading { align-items: center; }
 .service-monitor-heading > div { min-width: 0; }
@@ -859,6 +871,9 @@ button, a, input, select, textarea { touch-action: manipulation; }
 .service-log-empty { padding: 12px 20px 17px; border-top: 1px solid var(--hairline); color: var(--muted); font-size: 10px; }
 .service-monitor-footnote { padding: 11px 20px; border-top: 1px solid var(--hairline); color: var(--muted); background: var(--card-soft); font-size: 9px; line-height: 1.5; }
 .service-refreshing { animation: service-spin .8s linear infinite; }
+@media (max-width: 1100px) {
+  .users-oversight-grid:not(.users-oversight-grid-single) { grid-template-columns: minmax(0, 1fr); }
+}
 @keyframes service-spin { to { transform: rotate(360deg); } }
 .signout-backdrop { position: fixed; z-index: 120; inset: 0; display: grid; place-items: center; padding: 20px; background: rgba(8,10,14,.46); backdrop-filter: blur(9px) saturate(1.08); -webkit-backdrop-filter: blur(9px) saturate(1.08); animation: signout-backdrop-in .18s ease both; }
 .signout-dialog { width: min(100%, 410px); padding: 25px; border: 1px solid rgba(255,255,255,.62); border-radius: 16px; color: var(--ink); background: rgba(255,255,255,.84); box-shadow: 0 22px 70px rgba(0,0,0,.26), inset 0 1px 0 rgba(255,255,255,.65); backdrop-filter: blur(24px) saturate(1.25); -webkit-backdrop-filter: blur(24px) saturate(1.25); animation: signout-dialog-in .22s cubic-bezier(.2,.72,.26,1) both; }
