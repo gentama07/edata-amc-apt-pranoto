@@ -7,7 +7,6 @@ import { supabase } from '../lib/supabase';
 
 const airportCode = 'AAP';
 const airportPosition = [-0.375556, 117.251389];
-const trackingApiPaused = true;
 
 function validCoordinates(live) {
   if (!live || typeof live !== 'object') return false;
@@ -161,7 +160,6 @@ export default function FlightTracking() {
   const landedCount = flights.filter(flight => String(flight.flight_status || '').toLowerCase() === 'landed').length;
 
   const loadFlights = useCallback(async (flightIata = appliedSearch, nextDirection = direction) => {
-    if (trackingApiPaused) return;
     if (!supabase) {
       setError('Koneksi layanan belum dikonfigurasi.');
       setLoading(false);
@@ -187,7 +185,6 @@ export default function FlightTracking() {
   }, [appliedSearch, direction]);
 
   useEffect(() => {
-    if (trackingApiPaused) return;
     if (initialRequestStarted.current) return;
     initialRequestStarted.current = true;
     loadFlights('');
@@ -208,31 +205,6 @@ export default function FlightTracking() {
   };
 
   const title = direction === 'arrivals' ? 'Kedatangan ke AAP' : 'Keberangkatan dari AAP';
-  if (trackingApiPaused) return <>
-    <div className="flight-page-heading">
-      <h1>Tracking penerbangan</h1>
-    </div>
-    <section className="flight-tracking-panel flight-paused-panel" aria-labelledby="flight-paused-title">
-      <div className="flight-paused-state" role="status">
-        <div className="flight-paused-radar" aria-hidden="true">
-          <svg viewBox="0 0 96 96">
-            <circle className="flight-radar-ring flight-radar-ring-outer" cx="48" cy="48" r="36" />
-            <circle className="flight-radar-ring" cx="48" cy="48" r="24" />
-            <circle className="flight-radar-ring" cx="48" cy="48" r="12" />
-            <path className="flight-radar-sweep" d="M48 48V12A36 36 0 0 1 78 28Z" />
-            <path className="flight-radar-arm" d="M48 48V12" />
-            <circle className="flight-radar-blip flight-radar-blip-one" cx="67" cy="32" r="3" />
-            <circle className="flight-radar-blip flight-radar-blip-two" cx="31" cy="55" r="2.5" />
-            <circle className="flight-radar-center" cx="48" cy="48" r="3.5" />
-          </svg>
-        </div>
-        <span className="flight-paused-label">SEMENTARA DIJEDA</span>
-        <h2 id="flight-paused-title">Pengambilan data penerbangan dihentikan</h2>
-        <span className="flight-paused-footnote">Tracking akan tersedia kembali setelah penggunaan API dinyatakan aman.</span>
-      </div>
-      <div className="flight-source"><span><i />Sumber data: Aviationstack · sementara dijeda</span><span>Tidak ada permintaan API yang berjalan</span></div>
-    </section>
-  </>;
   return <>
     <div className="flight-page-heading">
       <div><h1>Tracking penerbangan</h1></div>
