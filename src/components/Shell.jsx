@@ -111,7 +111,7 @@ export function Shell({ app, active, setActive, children }) {
         <div className="clock-block"><span className="clock-time">{formatWita(now, false)}</span><span className="clock-date">{formatWita(now).split(' · ')[1]}</span></div>
         {profile.role === 'admin' && !demo && <AdminNotificationCenter onOpenUsers={() => navigate('users')} />}
         <button className="icon-button theme-toggle" title={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} aria-label={theme === 'dark' ? 'Gunakan tema terang' : 'Gunakan tema gelap'} onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
-        <button ref={logoutButtonRef} className="logout-button" aria-label="Keluar" onClick={() => setLogoutConfirmOpen(true)}><LogOut size={16} /><span>Keluar</span></button>
+        <button ref={logoutButtonRef} className="logout-button" aria-label="Keluar" title="Keluar" onClick={() => setLogoutConfirmOpen(true)}><LogOut size={17} aria-hidden="true" /></button>
       </div>
     </header>
     <div className="workspace">

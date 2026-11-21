@@ -85,6 +85,8 @@ button:disabled { opacity: .58; cursor: not-allowed; }
 .topbar-right .admin-notification-button, .topbar-right .theme-toggle { width: 40px; height: 40px; flex: 0 0 40px; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; color: #f5f5f7; background: rgba(255,255,255,.035); }
 .topbar-right .admin-notification-button:hover, .topbar-right .admin-notification-button[aria-expanded="true"], .topbar-right .theme-toggle:hover { border-color: rgba(255,255,255,.36); background: rgba(255,255,255,.1); }
 .topbar-right .theme-toggle:focus-visible, .topbar-right .admin-notification-button:focus-visible { outline-color: #8abff3; }
+.topbar-right .logout-button { width: 40px; min-width: 40px; height: 40px; flex: 0 0 40px; justify-content: center; padding: 0; border-color: rgba(255,255,255,.18); background: rgba(255,255,255,.035); }
+.topbar-right .logout-button:hover { border-color: rgba(240,140,129,.7); background: rgba(190,35,35,.18); box-shadow: none; }
 .clock-block { display: flex; flex-direction: column; align-items: flex-end; margin-right: 5px; font-variant-numeric: tabular-nums; }
 .clock-time { font-size: 13px; font-weight: 600; letter-spacing: -.14px; }
 .clock-date { margin-top: 2px; color: #c2c2c7; font-size: 10px; text-transform: capitalize; }
@@ -486,7 +488,7 @@ button, a, input, select, textarea { touch-action: manipulation; }
   .clock-time { font-size: 10px; }
   .clock-date { font-size: 8px; }
   .role-badge { height: 22px; padding: 0 7px; font-size: 8px; }
-  .topbar-right .admin-notification-button, .topbar-right .theme-toggle { width: 44px; height: 44px; flex-basis: 44px; }
+  .topbar-right .admin-notification-button, .topbar-right .theme-toggle, .topbar-right .logout-button { width: 44px; height: 44px; flex-basis: 44px; }
   .logout-button { width: 44px; height: 44px; justify-content: center; padding: 0; border: 1px solid rgba(255,255,255,.18); border-radius: 8px; }
   .logout-button span { display: none; }
   .workspace { min-height: calc(100vh - 128px); }
