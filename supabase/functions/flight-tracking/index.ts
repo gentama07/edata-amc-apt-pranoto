@@ -15,7 +15,7 @@ const json = (body: unknown, status = 200, origin: string | null = null) => new 
 const cache = new Map<string, { expiresAt: number; payload: unknown }>()
 const airportIata = 'AAP'
 const cacheTtlMs = 30_000
-const aviationstackPaused = true
+const aviationstackPaused = false
 
 function publishableKey() {
   const legacy = Deno.env.get('SUPABASE_ANON_KEY')
