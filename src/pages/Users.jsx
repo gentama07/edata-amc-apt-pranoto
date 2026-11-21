@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Check, KeyRound, MessageCircle, Pause, Plus, RefreshCw, Search, Shield, UserRound, X } from 'lucide-react';
 import { PageHeading } from '../components/Shell';
 import { airportOptions } from '../config/airportOptions';
@@ -29,6 +29,7 @@ export default function Users({ app }) {
   const [serviceHistory, setServiceHistory] = useState(getServiceHistory);
   const [serviceChecking, setServiceChecking] = useState(false);
   const [serviceLogFocused, setServiceLogFocused] = useState(false);
+  const recoveryRefreshInFlight = useRef(false);
   const reload = useCallback(async () => {
     if (app.demo) { setProfiles(demoProfiles); return; }
     const { data, error: loadError } = await supabase.from('profiles').select('id,display_name,email,role,active,organization').order('display_name');
@@ -36,13 +37,45 @@ export default function Users({ app }) {
     setProfiles(data || []);
   }, [app.demo]);
   useEffect(() => { reload(); }, [reload]);
-  const reloadRecoveries = useCallback(async () => {
+  const reloadRecoveries = useCallback(async ({ silent = false } = {}) => {
     if (app.demo) return;
-    const { data, error: requestError } = await supabase.functions.invoke('account-recovery', { body: { action: 'list' } });
-    if (requestError) { setError(requestError.message || 'Permintaan pemulihan gagal dimuat.'); return; }
-    setRecoveries(data?.requests || []);
+    if (recoveryRefreshInFlight.current) return;
+    recoveryRefreshInFlight.current = true;
+    try {
+      const { data, error: requestError } = await supabase.functions.invoke('account-recovery', { body: { action: 'list' } });
+      if (requestError) {
+        if (!silent) setError(requestError.message || 'Permintaan pemulihan gagal dimuat.');
+        return;
+      }
+      const nextRequests = data?.requests || [];
+      setRecoveries(current => JSON.stringify(current) === JSON.stringify(nextRequests) ? current : nextRequests);
+    } catch (requestError) {
+      if (!silent) setError(requestError.message || 'Permintaan pemulihan gagal dimuat.');
+    } finally {
+      recoveryRefreshInFlight.current = false;
+    }
   }, [app.demo]);
   useEffect(() => { reloadRecoveries(); }, [reloadRecoveries]);
+  useEffect(() => {
+    if (!issuedToken?.requestId) return;
+    const matchingRequest = recoveries.find(request => request.id === issuedToken.requestId);
+    if (matchingRequest?.status === 'completed') {
+      setIssuedToken(null);
+      setTokenExpired(false);
+    }
+  }, [issuedToken, recoveries]);
+  useEffect(() => {
+    if (app.demo) return undefined;
+    const refreshIfVisible = () => {
+      if (document.visibilityState === 'visible') reloadRecoveries({ silent: true });
+    };
+    const timer = window.setInterval(refreshIfVisible, 5000);
+    document.addEventListener('visibilitychange', refreshIfVisible);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', refreshIfVisible);
+    };
+  }, [app.demo, reloadRecoveries]);
   useEffect(() => {
     if (!issuedToken) return undefined;
     const timer = window.setInterval(() => {
@@ -107,7 +140,7 @@ export default function Users({ app }) {
     try {
       const { data, error: actionError } = await supabase.functions.invoke('account-recovery', { body: { action, requestId: request.id } });
       if (actionError) throw actionError;
-      if (data?.token) { setTokenExpired(false); setCountdownNow(Date.now()); setIssuedToken({ token: data.token, expiresAt: data.expiresAt, issuedAt: Date.now(), email: request.profile?.email }); }
+      if (data?.token) { setTokenExpired(false); setCountdownNow(Date.now()); setIssuedToken({ token: data.token, expiresAt: data.expiresAt, issuedAt: Date.now(), email: request.profile?.email, requestId: request.id }); }
       await reloadRecoveries();
     } catch (reason) { setError(reason.message || 'Permintaan pemulihan gagal diproses.'); }
     finally { setRecoveryBusy(''); }
